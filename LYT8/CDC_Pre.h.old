@@ -1,0 +1,42 @@
+//==============================================================================
+// CDC_Pre.h 
+//==============================================================================
+
+#include "asl.h"
+#include "function.h"
+
+void CDC_Pre_user_init(test_function& func);
+
+// ***********************************************************
+
+void initialize_CDC_Pre(short test_entry,test_function& func,char **function_name)
+{
+	func.dlog->set_datalog_inactive();
+
+	CDC_Pre_user_init(func);
+
+	func.dlog->test_offset = test_entry + 1;
+}
+
+// ***********************************************************
+
+void setup_CDC_Pre(test_function &func,char **function_name,char *heading_line,unsigned short *want_print,char manual_setup)
+{
+}
+
+// ***********************************************************
+enum CDC_Pre{
+	A_fNum_CDC_Pre,
+	A_CV_CDCpt_S,
+	A_CDC_Pt_S,
+	A_CDC_Target_S,
+	A_CDC_TrCode_S,
+	A_CDC_BitCode_S,
+	A_EEtr_CDC1_S,
+	A_EEtr_CDC2_S,
+	A_EEtr_CDC3_S,
+	A_ISvth_CDCpost_S,
+	A_CDC_Sim_S,
+	A_CDC_Sim_Chg_S,
+	A_CDC_Pre_TT
+};

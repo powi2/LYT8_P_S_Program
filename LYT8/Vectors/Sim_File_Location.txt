@@ -1,0 +1,3 @@
+a sample simulation testbench for reference: 
+
+\\pishare02\npi\binno\Test\Test Plan\from DESIGN\Primary\sampleTestbenchesI2C\stim_i2c_SCANtesting.vams 
