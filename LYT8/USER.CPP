@@ -54,6 +54,11 @@
 02/22/19 CX v0.0043cxC- Added Fosc_P, TonMin_P, TonMin_Slope_P functions and coding
 02/26/19 CX v0.0046cxD- Finish TonMin_P and TonMin_Slope_P and Offset_P
 03/01/19 CX v0.0046cxE- Finish iUV_P.
+03/14/19 CX v0.46cxF  - Finish ILIM_Pre, Working on NTC_Pre
+03/14/19 CX v0.46cxG  - NTC_Pre coding in progress
+03/19/19 CX v0.46cxH  - Done with NTC_Pre coding.  WIP for trimming
+03/20/19 CX v0.46cxI  - Update some simulation coding for NTC.  WIP
+03/21/19 CX v0.46cxJ  - Add simulation coding for iOV, NTC.  Need to work on other Primary trim simulations.
 
 History Revisions (Above)
 */
@@ -177,7 +182,7 @@ Dvi *BPS_dvi     = dvi_21;      //DVI_21_0
 Dvi *UV_dvi      = dvi_21;      //DVI_21_1
 
 Ovi *HSG_ovi     = ovi_1;      //OVI_1_0
-Ovi *BCLMP_ovi   = ovi_1;      //OVI_1_1
+Ovi *BUFCLMP_ovi   = ovi_1;      //OVI_1_1
 Ovi	*IS_ovi      = ovi_1;      //OVI_1_2,OVI_1_4
 Ovi *NC_ovi      = ovi_1;      //OVI_1_3
 Ovi	*TS_ovi      = ovi_1;	   //OVI_1_5
@@ -243,13 +248,13 @@ float g_HBP_Pre_S = 0;
 STRING Table_Rev_Trimops = 0;
 
 /* ======================  Die Parameters  =========================================*/
-int  gMOSFET_SIZE_Trimops	=0;
-int  g_DevNum_Trimops		=0;
-int  gDLM_BV_Trimops		=0;
-int  gDLM_Size_Trimops		=0;
+int  g_DevNum_Trimops	=0;
+int  g_BV_Trimops		=0;
+int  g_FET_Size_Trimops	=0;
 
 /* ======================  Test Flow Control Parameter  ============================*/
 //int  g_First_Time_Run =1;
+bool  g_Require_PartID = true;
 int	  AbortTest =0; 
 int	  g_Trim_Enable_P =0;
 int   g_Trim_Enable_S = 0;
@@ -259,7 +264,7 @@ int   g_TstTime_Enble_P = 0;
 char* Part_ID_Trimops;
 char *PrgRev;
 char *FamilyName;
-int	 gDevFamily_Trimops =0;
+int	 g_DevFamily_Trimops =0;
 char g_OperCode[50] ={0};
 char g_DevName[50]	={0};
 
@@ -270,9 +275,10 @@ int  g_Rel_Enable_P = 0;
 //int  Golden_Unit_Prg =0;
 int	 g_Char_Enable_P=0;
 int g_Debug = 0;
+
 // ======================  Debug Parameters ============================ //
-bool BPP_4p7uF = false;
-bool BPP_p47uF = false;
+char *g_Func_name;
+char *g_WAVE_NAME = "NoWaveName"; 
 
 // ======================  Setup Variable  ============================//
 //STRING CURRENT_SERIAL_NUM; 
@@ -289,7 +295,7 @@ CMicroTimer mytimer;
 LONGLONG starttime;
 LONGLONG stoptime;
 int DEBUG =0;
-char *WAVE_NAME = "NoWaveName"; 
+//char *WAVE_NAME = "NoWaveName"; 
 
 //=======================    Golden Unit Variables    ===============================//
 bool GoldenUnit = false;
@@ -366,33 +372,16 @@ int Low_pat_start, Low_pat_stop,
 	FWPK_test_pulses_start3_single, FWPK_test_pulses_stop3_single,
 	FWPK_test_pulses_start4_single, FWPK_test_pulses_stop4_single,
 	FWPK_test_pulses_start5_single, FWPK_test_pulses_stop5_single,
-	//FWPK_test_pulses_start2, FWPK_test_pulses_stop2,
-	//FWPK_test_pulses_start3, FWPK_test_pulses_stop3,
-	//FWPK_test_pulses_start4, FWPK_test_pulses_stop4,
-	//FWPK_test_pulses_start5, FWPK_test_pulses_stop5,
-	//FWPK_test_pulses_start6, FWPK_test_pulses_stop6,
-	//FWPK_test_pulses_start7, FWPK_test_pulses_stop7,
-	//FWPK_test_pulses_start8, FWPK_test_pulses_stop8,
-	//FWPK_test_pulses_start9, FWPK_test_pulses_stop9,
-	//FWPK_test_pulses_start10, FWPK_test_pulses_stop10,
-	//FWPK_test_pulses_start11, FWPK_test_pulses_stop11,
-	//FWPK_test_pulses_start12, FWPK_test_pulses_stop12,
-	//FWPK_test_pulses_start13, FWPK_test_pulses_stop13,
-	//FWPK_test_pulses_start14, FWPK_test_pulses_stop14,
-	//FWPK_test_pulses_start15, FWPK_test_pulses_stop15,
 	HIZallChannels_start, HIZallChannels_stop,
 	Vout_loop_pulse_start, Vout_loop_pulse_stop,
 	FW_Neg_loop_pulse_start, FW_Neg_loop_pulse_stop,
 	Vpin_loop_pulse_start, Vpin_loop_pulse_stop,
 	FB_100kHz_loop_pulse_start, FB_100kHz_loop_pulse_stop, 
 	FB_100kHz_100_pulses_start, FB_100kHz_100_pulses_stop,
-	/*FB_100kHz_ILIM_pulse_start, FB_100kHz_ILIM_pulse_stop,*/
-	/*FB_100kHz_ILIM_18_pulse_stop,*/
 	FB_tOVL_start, FB_tOVL_stop,
 	AF_Vpin_Clk_pulse_start, AF_Vpin_Clk_pulse_stop,
 	AF_Vpin_Clk_pulse_start_132kHz, AF_Vpin_Clk_pulse_stop_132kHz,
 	AF_Vpin_Data_pulse_start,AF_Vpin_Data_pulse_stop;
-	//AF_Vout_pulse_start, AF_Vout_pulse_stop;
 
 	int Vpin_100kHz_ILIM_pulse_start;
 	int Vpin_100kHz_ILIM_pulse_stop;
@@ -458,35 +447,63 @@ int	  g_tHandshake_SSS =0.0;
 ofstream dumparray;
 /*============================    Anti-Fuse Variables   ===============================*/
 //Primary
-int gP_AF_Start_Addr_Primary			=0,
-	gP_AF_Start_Addr_IOV				=0,
-	gP_AF_Start_Addr_ILIM				=0,
-	gP_AF_Start_Addr_TonMax				=0,
-	gP_AF_Start_Addr_tOVL				=0,
-	gP_AF_Start_Addr_Freq				=0,
-	gP_AF_Start_Addr_IuvIov_Disable		=0,
-	gP_AF_Start_Addr_Iuv_10uA			=0,
-	gP_AF_Start_Addr_UV_400ms_dly		=0,
-	gP_AF_Start_Addr_LatchOFF_aft_AR	=0,
-	gP_AF_Start_Addr_Disable_AR			=0,
-	gP_AF_Start_Addr_didt_comp			=0,
-	gP_AF_Start_Addr_OT_Hys_30C			=0,
-	gP_AF_Start_Addr_LatchOFF_w_OT		=0,
-	gP_AF_Start_Addr_Disable_ILIM_Select=0,
-	gP_AF_Start_Addr_Select_ILIM_Incr	=0,
-	gP_AF_Start_Addr_minus_20pct_ILIM	=0,
-	gP_AF_Start_Addr_plus_20pct_ILIM	=0,
-	gP_AF_Start_Addr_Samsung_Mode		=0,
-	gP_AF_Start_Addr_OTP				=0,
-	gP_AF_Start_Addr_SDS_OFF			=0,
-	gP_AF_Start_Addr_Rcv				=0,
-	gP_AF_Start_Addr_Driver_Size		=0,
-	gP_AF_Start_Addr_Rsense_up			=0,
-	gP_AF_Start_Addr_Vx_adjust			=0,
-	gP_AF_Start_Addr_ILIM_Ratio			=0,
-	gP_AF_Start_Addr_ILIM_TC			=0,
-	gP_AF_Start_Addr_AR_Request			=0,
-	gP_AF_Start_Addr_ZF					=0;
+int 	gP_Reg_Start_Bit_SiID		=	0	,
+		gP_Reg_Start_Bit_fOSC		=	0	,
+		gP_Reg_Start_Bit_yInter		=	0	,
+		gP_Reg_Start_Bit_ILIM		=	0	,
+		gP_Reg_Start_Bit_ArSkip		=	0	,
+		gP_Reg_Start_Bit_ArOnT		=	0	,
+		gP_Reg_Start_Bit_ArOffT		=	0	,
+		gP_Reg_Start_Bit_StrFREQ	=	0	,
+		gP_Reg_Start_Bit_OnTSL		=	0	,
+		gP_Reg_Start_Bit_ShuntEn	=	0	,
+		gP_Reg_Start_Bit_RcvTH		=	0	,
+		gP_Reg_Start_Bit_GanMode	=	0	,
+		gP_Reg_Start_Bit_VxTrim		=	0	,
+		gP_Reg_Start_Bit_DrSize		=	0	,
+		gP_Reg_Start_Bit_AROn512	=	0	,
+		gP_Reg_Start_Bit_GanDLy1	=	0	,
+		gP_Reg_Start_Bit_IlimTc		=	0	,
+		gP_Reg_Start_Bit_SDTemp		=	0	,
+		gP_Reg_Start_Bit_DOPL		=	0	,
+		gP_Reg_Start_Bit_DisIlimCap	=	0	,
+		gP_Reg_Start_Bit_ILIMP		=	0	,
+		gP_Reg_Start_Bit_uVADC		=	0	,
+		gP_Reg_Start_Bit_StrTTFB	=	0	,
+		gP_Reg_Start_Bit_EndTTFB	=	0	,
+		gP_Reg_Start_Bit_TsADC		=	0	,
+		gP_Reg_Start_Bit_UV10pct	=	0	,
+		gP_Reg_Start_Bit_IOV		=	0	,
+		gP_Reg_Start_Bit_TonM		=	0	;
+
+int 	gP_Total_Bits_SiID			=	0	,
+		gP_Total_Bits_fOSC			=	0	,
+		gP_Total_Bits_yInter		=	0	,
+		gP_Total_Bits_ILIM			=	0	,
+		gP_Total_Bits_ArSkip		=	0	,
+		gP_Total_Bits_ArOnT			=	0	,
+		gP_Total_Bits_ArOffT		=	0	,
+		gP_Total_Bits_StrFREQ		=	0	,
+		gP_Total_Bits_OnTSL			=	0	,
+		gP_Total_Bits_ShuntEn		=	0	,
+		gP_Total_Bits_RcvTH			=	0	,
+		gP_Total_Bits_GanMode		=	0	,
+		gP_Total_Bits_VxTrim		=	0	,
+		gP_Total_Bits_DrSize		=	0	,
+		gP_Total_Bits_AROn512		=	0	,
+		gP_Total_Bits_GanDLy1		=	0	,
+		gP_Total_Bits_IlimTc		=	0	,
+		gP_Total_Bits_SDTemp		=	0	,
+		gP_Total_Bits_DOPL			=	0	,
+		gP_Total_Bits_DisIlimCap	=	0	,
+		gP_Total_Bits_ILIMP			=	0	,
+		gP_Total_Bits_uVADC			=	0	,
+		gP_Total_Bits_StrTTFB		=	0	,
+		gP_Total_Bits_EndTTFB		=	0	,
+		gP_Total_Bits_TsADC			=	0	,
+		gP_Total_Bits_UV10pct		=	0	,
+		gP_Total_Bits_IOV			=	0	,
+		gP_Total_Bits_TonM			=	0	;
 
 
 //Secondary
@@ -637,6 +654,9 @@ int gTrim_SdwReg111_Trimops  = 0;
 int g_SiliconRev_Pri = 1; // Primary silicon revision //
 int g_SiliconRev_Sec = 1; // Secondary silicon revision //
 
+uint16_t EEpr_Bank_P[5] = {0};
+uint16_t EEpr_Array_S[5] = {0};
+
 /*=======================    IzPre Function Variables    ===============================*/
 float	gIzpt_NoZ_s=0.0, gIZ_NoZ_s=0.0;
 float   gVread_AF_primary =0.0, gVread_AF_secondary =0.0;
@@ -732,39 +752,35 @@ float	gIFB_130mA_pt_S		=0.0;
 float	gIFB_TH_pt_S		=0.0;
 float   gIFB_exp_S			=0.0;
 
+/*======================    Dtemp Variables    ====================================*/
+float	g_Dtemp_TARGET_P=0;
+
 /*======================    ILIM Variables    ====================================*/
 float	gVped_Ilim =0.0, gVped_Ilim_Incr=0.0;
 float	gVind_RM =0.0;
 float g_Vpedestal = 0;
 
-float	gILIM_TARGET_S_Trimops=0.0;
-float	gILIM_LO_TARGET=0.0;
-float	gILIM_LO_Med_TARGET=0.0;
-float	gILIM_UP_Med_TARGET=0.0;
-float	gI2F_S_TARGET=0.0;
+float	g_ILIM_TARGET_P=0.0;
+float	g_ILIM_TARGET_Trimops_P=0.0;
+float	g_ILIM_LO_TARGET=0.0;
+float	g_ILIM_LO_Med_TARGET=0.0;
+float	g_ILIM_UP_Med_TARGET=0.0;
+float	g_I2F_S_TARGET=0.0;
 float   g_DIDT_TARGET = 0.0;
-float   gILIM_pt_S =0.0;
-float   gILIM_exp_S =0.0;
-float	gILIM_I2f_pt_S =0.0;
+float   g_ILIM_pt_S =0.0;
+float   g_ILIM_exp_S =0.0;
+float	g_ILIM_I2f_pt_S =0.0;
 
 // For Capture and Find ILIM with digitizer
-float   gIlim_Incr_max=0.0;
-float	gIlim_gain =0.0, g_BUFgain=0.0;
-int		SAMPLE_SIZE=0;
+float   g_Ilim_Incr_max=0.0;
+float	g_Ilim_gain =0.0, g_BUFgain=0.0;
+int		g_SAMPLE_SIZE=0;
 
-int		FIND_RDSON_Peak_FLAG	=0;
-int		FIND_RDSON_Spec_FLAG	=0;
-int		gFind_ILIM_Jitter		=0;
-float	gIdmax[4000]				={-100.0};
-int		gIdmax_addr[4000]		={0};
-float	gIdmax_Jitter_132kHz	=0;
-float	gIdmin_Jitter_132kHz	=0;
-float	gIdmax_Jitter_18kHz		=0;
-float	gIdmin_Jitter_18kHz		=0;
-//float	Ton[10]					= {0.0};
-//float	Toff[10]				= {0.0};
-
-//bool	g_ILIM_INCR_secondary_control_active = false;
+int		g_FIND_RDSON_Peak_FLAG	=0;
+int		g_FIND_RDSON_Spec_FLAG	=0;
+int		g_Find_ILIM_Jitter		=0;
+float	g_Idmax[4000]				={-100.0};
+int		g_Idmax_addr[4000]		={0};
 
 float	gTon_1stP			=0.0;
 float	gTon_2ndP			=0.0;
@@ -772,15 +788,15 @@ float	gTon_3rdP			=0.0;
 float	gToff_1stP			=0.0;
 float	gToff_2ndP			=0.0;
 float	gToff_3rdP			=0.0;
-float	gILIM_pct_1stP		=0.0;
-float	gILIM_pct_2ndP		=0.0;
-float	gILIM_pct_3rdP		=0.0;
+float	g_ILIM_pct_1stP		=0.0;
+float	g_ILIM_pct_2ndP		=0.0;
+float	g_ILIM_pct_3rdP		=0.0;
 float   gRTM_Slope			=0.0;
 float   gtDelta_RTM_Slope	=0.0;
 float	gtDelta_RTM_Slope_200us =0.0;
 float	gi_pct_drop_RTM		=0.0;
-float	gILIM_200us_S		=0.0;
-float   gILIM_200us_pct_S   =0.0;
+float	g_ILIM_200us_S		=0.0;
+float   g_ILIM_200us_pct_S   =0.0;
 /*=======================    CV_CC_CB_Vout Function Variables    ===============================*/
 float gISvth =0.0;
 float MEAS_Isvth_FLAG =0;
@@ -924,7 +940,6 @@ int Gage_pretrig_samples = 1024; //must be divisible by 32
 	////int g_TM_ANA; // WR_Word, Rev2 silicon //
 	////int g_EEP_CMD; // WR_Byte //	
 	////int g_TM_EN; // WR_Word //
-
 
 
 	//------------------------------------------------------------------------------------------------
@@ -1126,6 +1141,12 @@ int g_S_TrimRegister[80]     = {0};
 int g_TrimRegisterTemp_P[80] = {0};
 int g_S_TrimRegisterTemp[80] = {0};
 int g_TrimBank[5]            = {0};
+int	g_E0_start_bit = 0;
+int	g_E2_start_bit = 16;
+int	g_E4_start_bit = 32;
+int	g_E6_start_bit = 48;
+int	g_E8_start_bit = 64;
+
 //----------------------------
 int g_binary_array[30] = {0};
 int g_Read_HiByte_Mem[30] = {0};
@@ -1161,7 +1182,9 @@ bool g_DDD_Load_Finished = false;
 float g_IsDAC_Sim_S = 0;
 CMicroTimer g_mytimer; // Class used for measuring time intervals //
 int g_PartFailed = 0;
-int g_SaveAwav = 0;
+int g_Save_Awav_TextDebug_ALL		= 0;
+int g_Save_Awav_TextDebug_Dtemp	= 0;
+
 int g_xChk_P[100] = {0};
 float g_ILIM_S = 0;
 float g_DDD_High = 0;
@@ -2050,7 +2073,7 @@ void user_load(void)
 	theLimitSetName >> Part_ID_LimitSet  >> g_OperCode >> dummy >> dummy;
 
 	// Test Program Rev //
-	PrgRev = "0.0046cxE"; // This should be identical to PiSetProgramName() function call. //
+	PrgRev = "0.46cxJ"; // This should be identical to PiSetProgramName() function call. //
 	FamilyName = "LYT8"; // This should be identical to PiSetProgramName() function call. //
 
 	// Modify AutoCorrReport file to share one golden unit for multiple devices of same family. //
@@ -2106,27 +2129,52 @@ void user_load(void)
 	PiEnableGoldenUnit();
 
 	// Test Program Rev //
-	PiSetProgramName("LYT8 0.0046cxE");
+	PiSetProgramName("LYT8 0.46cxJ");
 
 	// Setup //
 	PiUserLoad( );
 
-	// Initialize DDD //
+
+	//Make sure both FamilyName and ProgramRev are less than or equal to 10 characters
+	int FamilyName_char_count	=0,
+		PrgRev_char_count		=0, 
+		i						=0;
+
+	for(i=0; FamilyName[i] !=0; i++)
+		FamilyName_char_count++;
+
+	for(i=0; PrgRev[i] !=0; i++)
+		PrgRev_char_count++;
+
+	//10 character is the maximum number of characters allow for FamilyName and ProgramRev
+	if(FamilyName_char_count >10 || PrgRev_char_count>10)
+		DisplayErrorMessage("ProgramName either have PrgRev > 10 character or FamilyName > 10 characters.  Not able to upload data to YMS");
+
+	//mode_change();
+	STRING load_message = "DDD load";
+	SendCommStatus(load_message);
 	DDD_init();
+
 
 	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
 	// XP Gage digitizer Setup STARTS //
 	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
 	// Gage Initialization
+	load_message = "Gage Init start";
+	SendCommStatus(load_message);
+	delay(100);
 	dig_ok = Gage_loadtime_setup();	//call this only once
 
 	Gage_cal_table_setup_xp();
-
 	Gage_init();			//can be called multiple times
 	delay(1);
 
     // Gage Calibration (the following function call will calibrate current range)
 	i32Status = CsDo(hSystem, ACTION_CALIB);	//Gage will calibrate for current range
+	load_message = "Gage Init end";
+	SendCommStatus(load_message);
+	delay(100);
+
 	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
 	// XP Gage digitizer Setup ENDS //
 	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
@@ -2135,37 +2183,46 @@ void user_load(void)
 	//HL added this section just for Binno DSM initialization.
 	if(1)
 	{
-			int ret = -1;
-			float dret = -1;
-			cout << endl << endl << "Start DSM Loading."<<endl;                                 
-			//ret = DSM_init(DSM_CONTEXT); //only call at start of lot
-			//dret = DSM_version(); //1.5
-			//dret = DSM_firmware(DSM_CONTEXT); //1.5
+		load_message = "DSM init start";
+		SendCommStatus(load_message);
+		delay(100);
+
+		int ret = -1;
+		float dret = -1;
+		cout << endl << endl << "Start DSM Loading."<<endl;                                 
+		//ret = DSM_init(DSM_CONTEXT); //only call at start of lot
+		//dret = DSM_version(); //1.5
+		//dret = DSM_firmware(DSM_CONTEXT); //1.5
 
 
-			DSM_init(0);
-			int ver = DSM_version(); //1.5
-			int firmware = DSM_firmware(DSM_CONTEXT); //1.5
-			printf("ver = %i, firmware = %i\n",ver,firmware);
+		DSM_init(0);
+		int ver = DSM_version(); //1.5
+		int firmware = DSM_firmware(DSM_CONTEXT); //1.5
+		printf("ver = %i, firmware = %i\n",ver,firmware);
+
+		
 
 			
+		DSM_set_vector_clock_freq(DSM_CONTEXT, 1200);//Freq in kHZ
+		DSM_set_I2C_clock_freq(DSM_CONTEXT, 100);
+		DSM_set_drv_comp(DSM_CONTEXT,DRV_COMP_ALL,	2.5); 
+		DSM_set_high_level(DSM_CONTEXT,		ALL_CH, 5);	//DOUT high levels						     
+		DSM_set_low_level(DSM_CONTEXT,		ALL_CH, 0);
+		DSM_set_voltage_ref(DSM_CONTEXT,	ALL_CH, 2.0);
+		DSM_set_voltage_I2C(DSM_CONTEXT,			3.3);
+		DSM_enable_outputs(DSM_CONTEXT, NONE_CH);       //Disable outputs
+		DSM_enable_open_drain(DSM_CONTEXT, NONE_CH);    //Disable Open Drain
+		DSM_set_no_delay(DSM_CONTEXT);                  //Set 0 second delay	
 
-				
-			DSM_set_vector_clock_freq(DSM_CONTEXT, 1200);//Freq in kHZ
-			DSM_set_I2C_clock_freq(DSM_CONTEXT, 100);
-			DSM_set_drv_comp(DSM_CONTEXT,DRV_COMP_ALL,	2.5); 
-			DSM_set_high_level(DSM_CONTEXT,		ALL_CH, 5);	//DOUT high levels						     
-			DSM_set_low_level(DSM_CONTEXT,		ALL_CH, 0);
-			DSM_set_voltage_ref(DSM_CONTEXT,	ALL_CH, 2.0);
-			DSM_set_voltage_I2C(DSM_CONTEXT,			3.3);
-			DSM_enable_outputs(DSM_CONTEXT, NONE_CH);       //Disable outputs
-			DSM_enable_open_drain(DSM_CONTEXT, NONE_CH);    //Disable Open Drain
-			DSM_set_no_delay(DSM_CONTEXT);                  //Set 0 second delay	
+		RelayController relays = RelayController(5,//num drivers
+									500000,//hz
+									1/*1*/,//pinswap
+									1);// din edge
 
-			RelayController relays = RelayController(5,//num drivers
-										500000,//hz
-										1/*1*/,//pinswap
-										1);// din edge
+		load_message = "DSM init end";
+		SendCommStatus(load_message);
+		delay(100);
+
 	}
 	//if (0)//g_Enable_ScanChain)//HL disabled for Binno.
 	//{
@@ -2564,6 +2621,9 @@ void user_load(void)
 	//	// DSM MODULE CODE //
 	//}
 
+	load_message = "Load Complete";
+	SendCommStatus(load_message);
+	delay(100);
 }
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
@@ -3383,46 +3443,108 @@ void mode_change(void)
 	if (!strnicmp( g_OperCode, "2400", 4 ))
 		g_OPCODE = 2400;
 
-	// TM InvSyn_IM settings for handshake (Diode added to keep FW above -300mV)
-	HANDSHAKE_Vd_TM = 2.0; // Set Drain pull up voltage. 
+ //*******************************  PartID  *************************************
+	char*	Part_id_name;
+	int		str_cmp_result	= 99;
+	int		length			= 0;
+	string	str_Part_id_name;
+	if(GoldenUnit==false)
+	{
+		if(g_Require_PartID)
+		{
+			Part_id_name = PiGetPartID();			// Get partID from Lot info field
+			Part_id_name = strupr(Part_id_name);	// Convert to Upper case.
+			str_Part_id_name = Part_id_name;
+			length = str_Part_id_name.length();
 
-	// NM InvSyn_IM setting for handshake
-	HANDSHAKE_Vd_NM = 5.0; // Set Drain pull up voltage to be above Test Mode Vthres (3V)
+			//	Delete the "-TL" at the end of the device ID if it's there.
+			if (str_Part_id_name.substr(length-3,length) == "-TL")
+			{
+				strcpy(Part_id_name, str_Part_id_name.substr(0, length-3).c_str());	// Remove "-TL" at the end of Part ID.
+			}
+			//if(!(str_cmp_result = (strcmp(Part_id_name,"SC1542K"))))//Append "-HCode"
+			//{
+			//	strcat(Part_id_name,"-HC16");
+			//}
+
+			//Part_id_name = "SC1538"; // Debug //
+			printf("\nPart ID = %s\n",Part_id_name);
+
+			if((strcmp(Part_id_name,"NONE")) == 0)
+			{
+				DisplayErrorMessage("'Part ID' must be entered in 'New Lot Information' pop-up screen");
+				DisplayErrorMessage("Program can not run.  Please re-enter New Lot Info");
+				g_DevNum_Trimops = 0;
+				return;
+				//exit(0);
+			}
+		}
+	}
 
 	// VBP setup //
 	gVshunt_BPP = 5.5; // vBPP does not want to go above 5.5V according to Lance
 	gVshunt_BPS = 5.5; // vBPS does not want to go above 5.5V according to Giao
 
-	// Primary AF global trim bit locations //
-	gP_AF_Start_Addr_Primary = 1;	
-	gP_AF_Start_Addr_IOV = 1; // bits 1 to 5 
-	gP_AF_Start_Addr_ILIM = 6; // bits 6 to 9
-	gP_AF_Start_Addr_tOVL = 10; // bits 10 to 12
-	gP_AF_Start_Addr_Freq = 13; // bits 13 to 15
-	gP_AF_Start_Addr_IuvIov_Disable = 16;	
-	gP_AF_Start_Addr_Iuv_10uA = 17;	
-	gP_AF_Start_Addr_UV_400ms_dly = 18;	
-	gP_AF_Start_Addr_LatchOFF_aft_AR = 19; // Latch OFF after any AR
-	gP_AF_Start_Addr_Disable_AR = 20; // Disable AR if not switching (TV)
-	gP_AF_Start_Addr_didt_comp = 21; // didt comp
-	gP_AF_Start_Addr_OT_Hys_30C = 22; // OT 30C hysteresis
-	gP_AF_Start_Addr_LatchOFF_w_OT = 23; // Latch OFF with OT
-	gP_AF_Start_Addr_Disable_ILIM_Select = 24; // Disable ILIM Select via BP Cap
-	gP_AF_Start_Addr_Select_ILIM_Incr = 25; // Select Standard or Increased ILIM
-	gP_AF_Start_Addr_minus_20pct_ILIM = 26;	
-	gP_AF_Start_Addr_plus_20pct_ILIM = 27;	
-	gP_AF_Start_Addr_Samsung_Mode = 28;	
-	gP_AF_Start_Addr_OTP = 29; // bits 29 to 31
-	gP_AF_Start_Addr_SDS_OFF = 32; // bit 32 //
-	gP_AF_Start_Addr_Rcv = 33; // bits 33 to 35
-	gP_AF_Start_Addr_Driver_Size = 36; // bits 36 to 39
-	gP_AF_Start_Addr_Rsense_up = 40;	
-	gP_AF_Start_Addr_Vx_adjust = 41; // bits 41 to 45
-	gP_AF_Start_Addr_ILIM_Ratio = 46; // bits 46 to 49 (ILIM Ratio = ILIM+1 / ILIM)
-	gP_AF_Start_Addr_ILIM_TC = 50; // bits 50 to 53
-	gP_AF_Start_Addr_ZF = 54;	
-	gP_AF_Start_Addr_AR_Request = 54; // AR request instead of latchoff request
-	gP_AF_Start_Addr_ZF = 55;	
+	// Primary global register trim bit locations //
+	gP_Reg_Start_Bit_SiID		=	0	;
+	gP_Reg_Start_Bit_fOSC		=	8	;
+	gP_Reg_Start_Bit_yInter		=	12	;
+	gP_Reg_Start_Bit_ILIM		=	16	;
+	gP_Reg_Start_Bit_ArSkip		=	21	;
+	gP_Reg_Start_Bit_ArOnT		=	22	;
+	gP_Reg_Start_Bit_ArOffT		=	23	;
+	gP_Reg_Start_Bit_StrFREQ	=	25	;
+	gP_Reg_Start_Bit_OnTSL		=	26	;
+	gP_Reg_Start_Bit_ShuntEn	=	31	;
+	gP_Reg_Start_Bit_RcvTH		=	32	;
+	gP_Reg_Start_Bit_GanMode	=	35	;
+	gP_Reg_Start_Bit_VxTrim		=	36	;
+	gP_Reg_Start_Bit_DrSize		=	41	;
+	gP_Reg_Start_Bit_AROn512	=	45	;
+	gP_Reg_Start_Bit_GanDLy1	=	46	;
+	gP_Reg_Start_Bit_IlimTc		=	48	;
+	gP_Reg_Start_Bit_SDTemp		=	52	;
+	gP_Reg_Start_Bit_DOPL		=	54	;
+	gP_Reg_Start_Bit_DisIlimCap	=	55	;
+	gP_Reg_Start_Bit_ILIMP		=	56	;
+	gP_Reg_Start_Bit_uVADC		=	57	;
+	gP_Reg_Start_Bit_StrTTFB	=	61	;
+	gP_Reg_Start_Bit_EndTTFB	=	64	;
+	gP_Reg_Start_Bit_TsADC		=	67	;
+	gP_Reg_Start_Bit_UV10pct	=	71	;
+	gP_Reg_Start_Bit_IOV		=	72	;
+	gP_Reg_Start_Bit_TonM		=	77	;
+
+
+	gP_Total_Bits_SiID			=	8	;
+	gP_Total_Bits_fOSC			=	4	;
+	gP_Total_Bits_yInter		=	4	;
+	gP_Total_Bits_ILIM			=	5	;
+	gP_Total_Bits_ArSkip		=	1	;
+	gP_Total_Bits_ArOnT			=	1	;
+	gP_Total_Bits_ArOffT		=	2	;
+	gP_Total_Bits_StrFREQ		=	1	;
+	gP_Total_Bits_OnTSL			=	5	;
+	gP_Total_Bits_ShuntEn		=	1	;
+	gP_Total_Bits_RcvTH			=	3	;
+	gP_Total_Bits_GanMode		=	1	;
+	gP_Total_Bits_VxTrim		=	5	;
+	gP_Total_Bits_DrSize		=	4	;
+	gP_Total_Bits_AROn512		=	1	;
+	gP_Total_Bits_GanDLy1		=	2	;
+	gP_Total_Bits_IlimTc		=	4	;
+	gP_Total_Bits_SDTemp		=	2	;
+	gP_Total_Bits_DOPL			=	1	;
+	gP_Total_Bits_DisIlimCap	=	1	;
+	gP_Total_Bits_ILIMP			=	1	;
+	gP_Total_Bits_uVADC			=	4	;
+	gP_Total_Bits_StrTTFB		=	3	;
+	gP_Total_Bits_EndTTFB		=	3	;
+	gP_Total_Bits_TsADC			=	4	;
+	gP_Total_Bits_UV10pct		=	1	;
+	gP_Total_Bits_IOV			=	5	;
+	gP_Total_Bits_TonM			=	3	;
+
 
 	// Initialize global variables //
 	gLoadBoard_SubType = 6205; // Loadboard Subtype for Hardware ID. //HL changed to 6205
@@ -3435,7 +3557,7 @@ void mode_change(void)
 	gContactor_SubType = 3550; // CB ID. ATE test variable, trimops table not used. //
 	gVped_Ilim = 45; // gVped_ILIM. ATE test variable, trimops table not used. //				
 	gVped_Ilim_Incr = 45; // gVped_Ilim_Incr. ATE test variable, trimops table not used. //			
-	gIlim_gain = 0.5; // Ilim_gain. ATE test variable, trimops table not used. //			
+	g_Ilim_gain = 0.5; // Ilim_gain. ATE test variable, trimops table not used. //			
 	gDATT_pulse_time = 200; // DATT_tPulse. ATE test variable, trimops table not used. //		
 	gNorm_x_lim = -0.01;
 	gNorm_n_lim = 0.01;
@@ -3503,7 +3625,9 @@ void mode_change(void)
 	g_iOVm_TARGET_Trimops_P = 54.55e-6;
 	g_iUVp_TARGET_Trimops_P = 12.50e-6;
 	g_iUVm_TARGET_Trimops_P =  9.63e-6;
-
+	g_ILIM_TARGET_Trimops_P = 5.0;
+	g_ILIM_TARGET_P			= 5.0;
+	g_Dtemp_TARGET_P		= 256;
 	// Retreive Trim option values
 	// Set trim option values as Long and double
 	// HL disabled for Binno preliminary trimming.
@@ -3515,7 +3639,7 @@ void mode_change(void)
 	////////g_DevNum_Trimops = trimops->GetTrimOpAsLong(trimops_num++); // DevNum.  Device Number //
 	////////g_MOSFET_SIZE_Trimops = trimops->GetTrimOpAsLong(trimops_num++); // Die Size. //
 	////////g_iOVp_TARGET_Trimops = trimops->GetTrimOpAsDouble(trimops_num++) / 1e6; // iOV+.  (uA to A) // 
-	////////g_ILIM_TARGET_S_Trimops = trimops->GetTrimOpAsDouble(trimops_num++) / 1000; // ILIM.  (mA to A) //
+	////////g_ILIM_TARGET_Trimops_P = trimops->GetTrimOpAsDouble(trimops_num++) / 1000; // ILIM.  (mA to A) //
 	////////g_tOVL_TARGET_Trimops = trimops->GetTrimOpAsDouble(trimops_num++) / 1e6; // tOVL.  (us to S) //
 	////////g_FOSC_TARGET_P_Trimops = trimops->GetTrimOpAsDouble(trimops_num++) * 1000.0; // Fosc_P.  (kHz to Hz) //
 	////////g_Trim_iov_Off_P_Trimops = trimops->GetTrimOpAsLong(trimops_num++); // IovOFF. //
@@ -3665,8 +3789,8 @@ void mode_change(void)
 	
 
 	// Secondary AF global paramters initialize //		
-	gIlim_Incr_max = gILIM_TARGET_S_Trimops + 0.275; // ILIM target + 275mA
-	gI2F_S_TARGET = gILIM_TARGET_S_Trimops *gILIM_TARGET_S_Trimops * gFOSC_TARGET_S_Trimops * 1e-3;	
+	g_Ilim_Incr_max = g_ILIM_TARGET_Trimops_P + 0.275; // ILIM target + 275mA
+	g_I2F_S_TARGET = g_ILIM_TARGET_Trimops_P *g_ILIM_TARGET_Trimops_P * gFOSC_TARGET_S_Trimops * 1e-3;	
 
 	// Setup Hardware ID //
 	//HardwareList.VerifyRequiredBoardList();
@@ -3710,7 +3834,7 @@ void mode_change(void)
 
 
 	// Setup Digitizer //
-	INNO_Gage_ChanAB_setup(0.10); // Setup for Gage Digitizer Channels A,B trigger level
+	BINNO_Gage_ChanAB_setup(0.10); // Setup for Gage Digitizer Channels A,B trigger level
 }
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
@@ -6492,7 +6616,7 @@ float Rdson_Buffer_Cal(float res_div_ratio)
 ////	BC_ovi->set_voltage(BC_ch, (ChB_vrng-0.6),VOLT_5_RANGE);	// OVI_1_3 Account for one diode drop
 //////	delay(1);
 ////
-////	Gage_Setup_Acquisition_xp(SAMPLE_RATE_Hz,SAMPLE_SIZE); 
+////	Gage_Setup_Acquisition_xp(SAMPLE_RATE_Hz,g_SAMPLE_SIZE); 
 //////	delay(2);
 ////
 ////	gage_input_control_xp (GAGE_CHAN_B,		// channel
@@ -6506,7 +6630,7 @@ float Rdson_Buffer_Cal(float res_div_ratio)
 ////			vrng_b,								// range for CHA trigger
 ////			GAGE_POSITIVE,						// slope
 ////			1.0,								// 1.0V trigger level 
-////	   		SAMPLE_SIZE);						// 20ns * GAGE_WAVEFORM_BUFFER_SIZE
+////	   		g_SAMPLE_SIZE);						// 20ns * GAGE_WAVEFORM_BUFFER_SIZE
 ////	delay(3);
 ////	
 ////	Gage_Start_Capture( );
@@ -6523,7 +6647,7 @@ float Rdson_Buffer_Cal(float res_div_ratio)
 ////	delay(2);
 ////
 ////	// Save captured data as .awav file. //
-////	if (g_SaveAwav)
+////	if (g_Save_Awav_TextDebug_ALL)
 ////	{
 ////			double *capture_data_B = (double *)malloc((GAGE_WAVEFORM_BUFFER_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
 ////			for( i = 0; i < (GAGE_WAVEFORM_BUFFER_SIZE-10); i++)
@@ -6545,7 +6669,7 @@ float Rdson_Buffer_Cal(float res_div_ratio)
 ////
 ////	lcnt =0;
 ////	vsample =0.0;
-////	for (iaddr = 100 ; iaddr<SAMPLE_SIZE; iaddr+=25)
+////	for (iaddr = 100 ; iaddr<g_SAMPLE_SIZE; iaddr+=25)
 ////	{
 ////		vsample += Gage_chan_b_voltage[iaddr];
 ////		lcnt ++;
@@ -6566,7 +6690,7 @@ float Rdson_Buffer_Cal(float res_div_ratio)
 ////	Open_relay(K2);
 ////	delay(1);
 ////
-////	Idmax_exp = gIlim_Incr_max*gIlim_gain *1.2;// Increase 20% to cover the highest ILIM pretrim
+////	Idmax_exp = g_Ilim_Incr_max*g_ILIM_gain *1.2;// Increase 20% to cover the highest ILIM pretrim
 ////	ilim_trig_lev = 0.10;	// Set a higher trigger level to have a consistency point of capture. HQL 07/08/14
 ////
 ////	if(Idmax_exp < 0.5)	
@@ -6597,7 +6721,7 @@ float Rdson_Buffer_Cal(float res_div_ratio)
 ////			vrng_a,								// range for CHA trigger
 ////			GAGE_NEGATIVE,						// slope
 ////			0.1,								// Tigger level in Volt (100mV)
-////	   		SAMPLE_SIZE);						// 20ns * GAGE_WAVEFORM_BUFFER_SIZE
+////	   		g_SAMPLE_SIZE);						// 20ns * GAGE_WAVEFORM_BUFFER_SIZE
 ////	*/
 	return buf_gain;
 }
@@ -7472,9 +7596,9 @@ void Connect_InvSyn_IM(int Vd_Input_Mode)
 ////		InvSyn_REF_ovi->set_voltage(InvSyn_ch, 3.0, VOLT_20_RANGE); // OVI_1_4	"Size x8 Vref max = 5V/2 (2.5V), so 3/2 = 1.5V (good margin)"
 ////	if(Vd_Input_Mode == Low_Vd_Input)
 ////	{
-////		if(gMOSFET_SIZE_Trimops==8)
+////		if(g_FET_Size_Trimops==8)
 ////			InvSyn_REF_ovi->set_voltage(InvSyn_ch, 1.5, VOLT_20_RANGE);	// OVI_1_4	
-////		if(gMOSFET_SIZE_Trimops==5)
+////		if(g_FET_Size_Trimops==5)
 ////			InvSyn_REF_ovi->set_voltage(InvSyn_ch, 3.0, VOLT_20_RANGE);	// OVI_1_4	
 ////		else
 ////			InvSyn_REF_ovi->set_voltage(InvSyn_ch, 1.5, VOLT_20_RANGE);	// OVI_1_4	
@@ -7521,630 +7645,474 @@ void Disconnect_InvSyn_IM()
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
 //=================== INNOSW XP gage digitizer functions ===================
-void INNO_Gage_ChanAB_setup(float ilim_trig_lev)
+void BINNO_Gage_ChanAB_setup(float ilim_trig_lev)
 {
-////	// Split this setup portion out from Gage_Capture_Ilim() function due to 4ms excution time on each input control
-////	// and trig control statement. Only excute this once for the whole test program.
-////	// 03/15/13 - As of today, Gage Razor changing range still takes 34ms. Therefore, only one range is used for the entire program
-////	//			  for now. In the future, when the new Gage Razor driver without long delay is available,
-////	//			  this can be modified to adjust ranges for different ILIM. 
-////	int vrng_a=0, vrng_b=0;
-////	float ChA_vrng =0.0, ChB_vrng =0.0;
-////	float Idmax_exp=0.0, Vdmax_exp=0.0;
-////
-////	if(SAMPLE_SIZE > GAGE_WAVEFORM_BUFFER_SIZE)
-////	{ 
-////		return;
-////	}
-////
-////	Idmax_exp = gIlim_Incr_max*gIlim_gain *1.2;// Increase 20% to cover the highest ILIM pretrim
-////	//ilim_trig_lev = 0.10;	// Set a higher trigger level to have a consistency point of capture. HQL 07/08/14
-////
-////	if(Idmax_exp < 0.5)	
-////	{	
-////		vrng_a = GAGE_PM_500_MV;
-////		ChA_vrng =0.5;
-////	}
-////	else if(Idmax_exp >= 0.5 && Idmax_exp < 1.0)
-////	{		
-////		vrng_a = GAGE_PM_1_V;
-////		ChA_vrng = 1.0; 
-////	}
-////	else if(Idmax_exp >= 1.0 && Idmax_exp < 2.0)	
-////	{	
-////		vrng_a = GAGE_PM_2_V;
-////		ChA_vrng = 2.0; 
-////	}
-////	else if(Idmax_exp >= 2.0)
-////	{	
-////		vrng_a = GAGE_PM_5_V;
-////		ChA_vrng = 5.0;
-////	}
-////
-////	vrng_b = GAGE_PM_5_V;
-////	ChB_vrng = 5.0;
-////
-//////	Set up Buffer Clamp
-////	BC_ovi->set_current(BC_ch, 30e-3,		RANGE_30_MA);
-////	BC_ovi->set_voltage(BC_ch, (ChB_vrng-0.6),VOLT_5_RANGE);	// OVI_1_3 Account for one diode drop
-////
-////	Gage_Setup_Acquisition_xp(SAMPLE_RATE_Hz,SAMPLE_SIZE); 
-////
-////	gage_input_control_xp (GAGE_CHAN_A,		// channel
-////			GAGE_INPUT_ENABLE,					// enable / disable
-////			GAGE_DC,							// coupling
-////			vrng_a|GAGE_1_MOHM_INPUT);		// range, impedance
-////
-////	gage_input_control_xp (GAGE_CHAN_B,		// channel
-////			GAGE_INPUT_ENABLE,					// enable / disable
-////			GAGE_DC,							// coupling
-////			vrng_b|GAGE_1_MOHM_INPUT);			// range, impedance
-////
-////	gage_trigger_control_xp (GAGE_CHAN_A,		// trigger source
-////			GAGE_DC,							// coupling for ext trig
-////			vrng_a,								// range for CHA trigger
-////			GAGE_NEGATIVE,						// slope
-////			ilim_trig_lev,						// Tigger level in Volt
-////	   		SAMPLE_SIZE);						// 20ns * GAGE_WAVEFORM_BUFFER_SIZE
+	// Split this setup portion out from Gage_Capture_Ilim() function due to 4ms excution time on each input control
+	// and trig control statement. Only excute this once for the whole test program.
+	// 03/15/13 - As of today, Gage Razor changing range still takes 34ms. Therefore, only one range is used for the entire program
+	//			  for now. In the future, when the new Gage Razor driver without long delay is available,
+	//			  this can be modified to adjust ranges for different ILIM. 
+	int vrng_a=0, vrng_b=0;
+	float ChA_vrng =0.0, ChB_vrng =0.0;
+	float Idmax_exp=0.0, Vdmax_exp=0.0;
+
+	if(g_SAMPLE_SIZE > GAGE_WAVEFORM_BUFFER_SIZE)
+	{ 
+		return;
+	}
+
+	Idmax_exp = g_Ilim_Incr_max*g_Ilim_gain *1.2;// Increase 20% to cover the highest ILIM pretrim
+	//ilim_trig_lev = 0.10;	// Set a higher trigger level to have a consistency point of capture. HQL 07/08/14
+
+	if(Idmax_exp < 0.5)	
+	{	
+		vrng_a = GAGE_PM_500_MV;
+		ChA_vrng =0.5;
+	}
+	else if(Idmax_exp >= 0.5 && Idmax_exp < 1.0)
+	{		
+		vrng_a = GAGE_PM_1_V;
+		ChA_vrng = 1.0; 
+	}
+	else if(Idmax_exp >= 1.0 && Idmax_exp < 2.0)	
+	{	
+		vrng_a = GAGE_PM_2_V;
+		ChA_vrng = 2.0; 
+	}
+	else if(Idmax_exp >= 2.0)
+	{	
+		vrng_a = GAGE_PM_5_V;
+		ChA_vrng = 5.0;
+	}
+
+	vrng_b = GAGE_PM_5_V;
+	ChB_vrng = 5.0;
+
+//	Set up Buffer Clamp
+	BUFCLMP_ovi->set_current(BUFCLMP_ch, 30e-3,			RANGE_30_MA);
+	BUFCLMP_ovi->set_voltage(BUFCLMP_ch, (ChB_vrng-0.6),VOLT_5_RANGE);	// OVI_1_3 Account for one diode drop
+
+	Gage_Setup_Acquisition_xp(SAMPLE_RATE_Hz,g_SAMPLE_SIZE); 
+
+	gage_input_control_xp (GAGE_CHAN_A,		// channel
+			GAGE_INPUT_ENABLE,					// enable / disable
+			GAGE_DC,							// coupling
+			vrng_a|GAGE_1_MOHM_INPUT);		// range, impedance
+
+	gage_input_control_xp (GAGE_CHAN_B,		// channel
+			GAGE_INPUT_ENABLE,					// enable / disable
+			GAGE_DC,							// coupling
+			vrng_b|GAGE_1_MOHM_INPUT);			// range, impedance
+
+	gage_trigger_control_xp (GAGE_CHAN_A,		// trigger source
+			GAGE_DC,							// coupling for ext trig
+			vrng_a,								// range for CHA trigger
+			GAGE_NEGATIVE,						// slope
+			ilim_trig_lev,						// Tigger level in Volt
+	   		g_SAMPLE_SIZE);						// 20ns * GAGE_WAVEFORM_BUFFER_SIZE
 }
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
 void Gage_Find_Ilim(float *Idmax_ave, float *DiDt_ave, float *Ton_ave, float *Rdson_peak_ave, float *Rdson_spec_ave)
 {
-	////*Idmax_ave =0.0;
-	////*DiDt_ave  =0.0;
-	////*Ton_ave   =0.0;
-	////*Rdson_peak_ave =0.0;
-	////*Rdson_spec_ave =0.0;
+	*Idmax_ave =0.0;
+	*DiDt_ave  =0.0;
+	*Ton_ave   =0.0;
+	*Rdson_peak_ave =0.0;
+	*Rdson_spec_ave =0.0;
 
-	////if (!trig_ok || !data_ok)
-	////{
-	////	//Bad acquisition
-	////	*Idmax_ave		=999.0;
-	////	*DiDt_ave		=999.0;
-	////	*Ton_ave		=999.0;
-	////	*Rdson_peak_ave =999.0;
-	////	*Rdson_spec_ave =999.0;
-	////	return;
-	////}
+	if (!trig_ok || !data_ok)
+	{
+		//Bad acquisition
+		*Idmax_ave		=999.0;
+		*DiDt_ave		=999.0;
+		*Ton_ave		=999.0;
+		*Rdson_peak_ave =999.0;
+		*Rdson_spec_ave =999.0;
+		g_ILIM_pct_1stP	= 0.0;
+		g_ILIM_pct_2ndP	= 0.0;
+		g_ILIM_pct_3rdP	= 0.0;
+		return;
+	}
 
-	////int	PULSE_NUM_NEED  =0;		// Define min pulses numbers need to be caputre. 4*7.5us = 30us. 2K sample allows 40us. 4K -> 80us
-	////int	PULSE_NUM_PROCESSED =0; // Actual num pulses Processed. Exclude first pulse in ave calculation 
-	////int StartAddress=0;
-	////int pulse_cnt =0;
-	////int icnt =0; 
-	////float Vdson_peak_ave =0.0;
-	////float Vped_threshold =0.0;
-	////
-	////// Variables for ILIM peak tests
-	////float ACgnd[400]      ={0.0};
-	////float ACgnd_Ave[400]  ={0.0};
-	////float Id05us_Ave[400] ={0.0};
-	////float pulse_width[400]={0.0};
-	////float Ton[400]		 ={0.0};
-	////float Toff[400]		 ={0.0};
-	////float DiDt[400]		 ={0.0};
-	////int Id05us_Addr[400]  ={0};
-	////int ACgnd_addr[400]   ={1000};				// GND is taken before device turns on
-	////int gnd_add_offset	= 0;
-	////float Data_range = 0;
-	////int QtySamples = 125;
-	////float DataValue = 0;
-	////float NoiseLevel = 0;
-	////int QtyNext = 10;
-	////float DataNext = 0;
-	////int TurnOnAddress = 0;
-	////float Data_max = 0;
-	////float Data_min = 0;
-	////float Data_sum = 0;
-	////int GND_addr = 0;
-	////int GND_count = 15;
-	////int NoTurnOn = 0;
-	////float MultFactor = 0;
-	////int OnCount = 0;
-	////int OnCount2 = 0;
-	////int k = 0;
-	////int Look_Ahead_Qty = 10;
-	////int Look_Back_Qty = 10;
+	int	PULSE_NUM_NEED  =0;		// Define min pulses numbers need to be caputre. 4*7.5us = 30us. 2K sample allows 40us. 4K -> 80us
+	int	PULSE_NUM_PROCESSED =0; // Actual num pulses Processed. Exclude first pulse in ave calculation 
+	int start_addr=0;
+	int pulse_cnt =0;
+	int icnt =0; 
+	float Vdson_peak_ave =0.0;
+	float Vped_threshold =0.0;
+	
+	// Variables for ILIM peak tests
+	float ACgnd[400]      ={0.0};
+	float ACgnd_Ave[400]  ={0.0};
+	float Id05us_Ave[400] ={0.0};
+	float pulse_width[400]={0.0};
+	float Ton[400]		 ={0.0};
+	float Toff[400]		 ={0.0};
+	float DiDt[400]		 ={0.0};
+	int Id05us_Addr[400]  ={0};
+	int ACgnd_addr[400]   ={1000};				// GND is taken before device turns on
+	int gnd_addr_offset	= 0;
 
-	////// Variables for Rdson_spec tests at 10% ILIM_NORM level
-	////float Ilim_spec =0.0;
-	////float Vdson_spec[400] ={0.0};
-	////float Idson_spec[400] ={0.0};
-	////float Rdson_spec[400] ={0.0};
-	////float Vdson_spec_ave =0.0;
-	////float Idson_spec_ave =0.0;
-	////int Id_spec_addr[400] ={0};
+	// Variables for Rdson_spec tests at 10% ILIM_NORM level
+	float Ilim_spec =0.0;
+	float Vdson_spec[400] ={0.0};
+	float Idson_spec[400] ={0.0};
+	float Rdson_spec[400] ={0.0};
+	float Vdson_spec_ave =0.0;
+	float Idson_spec_ave =0.0;
+	int Id_spec_addr[400] ={0};
+	float istep_downdelta = 0.0;
 
-	////float Id_temp =0.0;
-	////float Id_one_data_pts =0.0;
-	////int	  lcnt =0, i=0;
-	////int	  ave_start_pulse =0;
-	////int	  ave_pulses	  =0;
-	////int	  ave_end_pulse	  =0;
+	float Id_temp =0.0;
+	float Id_one_data_pts =0.0;
+	int	  lcnt =0, i=0;
+	int	  ave_start_pulse =0;
+	int	  ave_pulses	  =0;
+	int	  ave_end_pulse	  =0;
 
-	////float Period=0.0;
-	////int	  Sample_per_cycle=0;
-	//////int   FIND_ILIM_LO_FLAG=0;
+	float Period=0.0;
+	int	  Sample_per_cycle=0;
+	int   FIND_ILIM_LO_FLAG=0;
 
-	////float Off_Time=0.0;
-	////float RTM_High_Id=0.0,
-	////	  RTM_Low_Id=0.0;
+	float Off_Time=0.0;
+	float RTM_High_Id=0.0,
+		  RTM_Low_Id=0.0;
 
-	////char wave_name_Id[150] ="/0"; 
-	////char wave_name_Vd[150] ="/0"; 
+	char wave_name_Id[150] ="/0"; 
+	char wave_name_Vd[150] ="/0"; 
+	char debug_file_name[150] ="/0"; 
 
-	////// Set MultFactor per device //
-	////MultFactor = 3.0;
-	////if (!strnicmp(Part_ID_LimitSet, "INN3365", 7))
-	////{
-	////	MultFactor = 9;
-	////	NoiseLevel = 0.002;
-	////}
-	////if (!strnicmp(Part_ID_LimitSet, "INN3375", 7))
-	////{
-	////	MultFactor = 9;
-	////	NoiseLevel = 0.002;
-	////}
-	////if (!strnicmp(Part_ID_LimitSet, "INN3366", 7))
-	////{
-	////	MultFactor = 13;
-	////	NoiseLevel = 0.002;
-	////}
-	////if (!strnicmp(Part_ID_LimitSet, "INN3376", 7))
-	////{
-	////	MultFactor = 20;
-	////	NoiseLevel = 0.002;
-	////}
-	////if (!strnicmp(Part_ID_LimitSet, "INN3367", 7))
-	////{
-	////	MultFactor = 4;
-	////	NoiseLevel = 0.011;
-	////}
-	////if (!strnicmp(Part_ID_LimitSet, "INN3377", 7))
-	////{
-	////	MultFactor = 8;
-	////	NoiseLevel = 0.002;
-	////}
-	////if (!strnicmp(Part_ID_LimitSet, "SC1750", 6))
-	////{
-	////	MultFactor = 8;
-	////	NoiseLevel = 0.002;
-	////}
-	////if (!strnicmp(Part_ID_LimitSet, "INN3368", 7))
-	////{
-	////	MultFactor = 3.0;
-	////	NoiseLevel = 0.0114;
-	////}
-	////if (!strnicmp(Part_ID_LimitSet, "SC1738", 6))
-	////{
-	////	MultFactor = 3.0;
-	////	NoiseLevel = 0.0114;
-	////}
 
-	////if(gFind_ILIM_Jitter)		PULSE_NUM_NEED  =100;	//If fosc = 100kHz, every pulse would take 10us.  100 pulses would take 1ms
-	////else						PULSE_NUM_NEED  =26;	//If fosc = 100kHz, every pulse would take 10us.  27  pulses would take 270us
 
-	////Period = 1/(100e3-10e3);		//Takes care of device with Jitter up to 10kHz from 100kHz
-	////SAMPLE_RATE_s = 20e-9;
-	////Sample_per_cycle = Period/SAMPLE_RATE_s;
+	//if(gFind_ILIM_Jitter)		PULSE_NUM_NEED  =100;	//If fosc = 100kHz, every pulse would take 10us.  100 pulses would take 1ms
+	//else						PULSE_NUM_NEED  =26;	//If fosc = 100kHz, every pulse would take 10us.  27  pulses would take 270us
 
-	//////transfer data to PC (XP)
-	////Gage_Transfer_Data (GAGE_CHAN_A);	//transfer data to Gage_chan_a_voltage array
-	////if(FIND_RDSON_Peak_FLAG || FIND_RDSON_Spec_FLAG)
-	////	Gage_Transfer_Data (GAGE_CHAN_B);	//transfer data to Gage_chan_b_voltage array
+	PULSE_NUM_NEED		= 26;
 
-	////// Save captured data as .awav file. //
-	////if (g_SaveAwav)
-	////{
-	////	//double *capture_data = (double *)malloc((GAGE_WAVEFORM_BUFFER_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
-	////	double *capture_data = (double *)malloc((SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
-	////	//for( i = 0; i < (GAGE_WAVEFORM_BUFFER_SIZE-10); i++)
-	////	for( i = 0; i < (SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD - 10); i++)
-	////	{	
-	////		capture_data[i] = (double)(Gage_chan_a_voltage[i]); // XP //	
-	////	}
-	////	if(WAVE_NAME == "ILIM_Pre")
-	////		CreateAwav(	capture_data, // Data array //
-	////					SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD - 10, // Size of array //
-	////					20.0e-9, // Sampling period //				 
-	////					"e:\\dl4\\Inno_ILIM_Pre.awav"); // Output file and path //
-	////	if(WAVE_NAME == "ILIM_NORM")
-	////		CreateAwav(	capture_data, // Data array //
-	////					SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD - 10, // Size of array //
-	////					20.0e-9, // Sampling period //				 
-	////					"e:\\dl4\\Inno_ILIM_NORM.awav"); // Output file and path //
-	////	if(WAVE_NAME == "ILIM_P1")
-	////		CreateAwav(	capture_data, // Data array //
-	////					SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD - 10, // Size of array //
-	////					20.0e-9, // Sampling period //				 
-	////					"e:\\dl4\\Inno_ILIM_P1.awav"); // Output file and path //
-	////	if(WAVE_NAME == "ILIM_P1_RDSON_PEAK")
-	////	{
-	////		//double *capture_data_B = (double *)malloc((GAGE_WAVEFORM_BUFFER_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
-	////		double *capture_data_B = (double *)malloc((SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
-	////		//for( i = 0; i < (GAGE_WAVEFORM_BUFFER_SIZE-10); i++)
-	////		for( i = 0; i < (SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD - 10); i++)
-	////		{	
-	////			capture_data_B[i] = (double)(Gage_chan_b_voltage[i]); // XP //	
-	////		}
-	////		CreateAwav(	capture_data, // Data array //
-	////					SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD - 10, // Size of array //
-	////					20.0e-9, // Sampling period //				 
-	////					"e:\\dl4\\ILIM_peak_rslt.awav"); // Output file and path //
-	////		CreateAwav(	capture_data_B, // Data array //
-	////					SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD - 10, // Size of array //
-	////					20.0e-9, // Sampling period //				 
-	////					"e:\\dl4\\Rdson_peak_rslt.awav"); // Output file and path //
-	////		free (capture_data_B);
-	////	}
-	////	free (capture_data);
-	////}
-	////for (icnt=0; icnt<PULSE_NUM_NEED; icnt++)
-	////{
-	////	gIdmax[icnt] = -100;
-	////	gIdmax_addr[icnt]  = 0;
-	////}
-	////PULSE_NUM_PROCESSED =0; // Actual num pulses Processed. Exclude first pulse in ave calculation 
-	////*Idmax_ave =0.0;
-	////*DiDt_ave  =0.0;
-	////*Ton_ave   =0.0;
-	////*Rdson_peak_ave =0.0;
-	////*Rdson_spec_ave =0.0;
-	////Vdson_peak_ave =0.0;
+	Period				= 1/(100e3-10e3);		//Takes care of device with Jitter up to 10kHz from 100kHz
+	SAMPLE_RATE_s		= 20e-9;
+	Sample_per_cycle	= Period/SAMPLE_RATE_s;
 
-	////// Find the noise level. //
-	//////Data_max = -99999;
-	//////Data_min = 99999;
-	//////for (i=1;i<(QtySamples+1);i++)
-	//////{
-	//////	DataValue = Gage_chan_a_voltage[i];
-	//////	if(DataValue < Data_min)
-	//////		Data_min = DataValue;
-	//////	if(DataValue > Data_max)
-	//////		Data_max = DataValue;
-	//////}
-	//////Data_range = Data_max - Data_min;
-	//////NoiseLevel = Data_range;
+	for (icnt=0; icnt<PULSE_NUM_NEED; icnt++)
+	{
+		g_Idmax[icnt]		= -100;
+		g_Idmax_addr[icnt]	= 0;
+	}
 
-	////StartAddress = QtyNext + 10;
+	//transfer data to PC (XP)
+	Gage_Transfer_Data (GAGE_CHAN_A);	//transfer data to Gage_chan_a_voltage array
+	if(g_FIND_RDSON_Peak_FLAG || g_FIND_RDSON_Spec_FLAG)
+		Gage_Transfer_Data (GAGE_CHAN_B);	//transfer data to Gage_chan_b_voltage array
+	
+//	start_addr = 300;					// Skip 6us from negative trigger edge
+//	start_addr = 1300;					// Skip the first 3 initial pulses (all 3 of them lower than ILIM)
+	start_addr = 0;						// Include the 1st 3 pulses for datalog.
 
-	////// Look for part turn on. //
-	//////TurnOnAddress = 1;
-	//////for(i=StartAddress; i < (StartAddress+(5*Period/20e-9)); i++)
-	//////{
-	//////	DataValue = Gage_chan_a_voltage[i];
-	//////	DataNext = Gage_chan_a_voltage[i + QtyNext];
-	//////	Data_range = DataNext - DataValue;
-	//////	if (Data_range > MultFactor*NoiseLevel) // Turn-on found //
-	//////	{
-	//////		TurnOnAddress = i + QtyNext;
-	//////		break; // Out of for loop. //
-	//////	}
-	//////}
-	//////StartAddress = TurnOnAddress + 15; // Jump ahead 300nsec to avoid leading edge spike. //
+	while (Gage_chan_a_voltage[start_addr]< 0.0 && start_addr < g_SAMPLE_SIZE)
+		start_addr+=1;					// Fast forward by 1 samples at rate of 20ns/sample
 
-	////// Look for part turn on. //
-	////TurnOnAddress = 1;
-	////for(i=StartAddress; i < (StartAddress+(5*Period/20e-9)); i++)
-	////{
-	////	DataValue = Gage_chan_a_voltage[i];
-	////	DataNext = Gage_chan_a_voltage[i + QtyNext];
-	////	Data_range = DataNext - DataValue;
-	////	if (Data_range > MultFactor*NoiseLevel) // Turn-on found //
-	////	{
-	////		// Look at 10 samples after turn-on edge to make sure part is really on and not just a noise spike //
-	////		OnCount = 0;
-	////		for (k=1; k < (Look_Ahead_Qty+1); k++)
-	////		{
-	////			DataValue = Gage_chan_a_voltage[i];
-	////			DataNext = Gage_chan_a_voltage[i + QtyNext+k];
-	////			Data_range = DataNext - DataValue;
-	////			if (Data_range > MultFactor*NoiseLevel)
-	////				OnCount++;
-	////		}
+	start_addr += 8;	//Fast forward by 8 samples (This also jump over the FET turn-on spike)
 
-	////		// Look at ten samples prior to turn-on to make sure part is really on and not a noise spike.  
-	////		// The samples just prior to the turn-on edge should all be near the same level. //
-	////		OnCount2 = 0;
-	////		for (k=1; k < (Look_Back_Qty+1); k++)
-	////		{
-	////			DataValue = Gage_chan_a_voltage[i];
-	////			DataNext = Gage_chan_a_voltage[i - k];
-	////			Data_range = DataNext - DataValue;
-	////			if (Data_range<0) // Remove negative //
-	////				Data_range *= -1;
-	////			if (Data_range < MultFactor*NoiseLevel/2)
-	////				OnCount2++;
-	////		}
-	////		if (OnCount > (Look_Ahead_Qty-1) && OnCount2 > (Look_Back_Qty-1) ) // Real turn-on found //
-	////		{
-	////			TurnOnAddress = i + QtyNext;
-	////			break; // Out of for loop. //
-	////		}
-	////	}
-	////}
-	////StartAddress = TurnOnAddress + 15; // Jump ahead 300nsec to avoid leading edge spike. //
+	// Error check
+	if ((start_addr + Sample_per_cycle + 125) > g_SAMPLE_SIZE ) 	// Searching window = Period + 2.5us(from next pulse).  
+	{
+		*Idmax_ave  = 999.0;
+		return;
+	}
 
-	////// Error check
-	////if ((StartAddress + Sample_per_cycle + 125) > SAMPLE_SIZE ) 	// Searching window = Period + 2.5us(from next pulse).  
-	////{
-	////	*Idmax_ave  = 999.0;
-	////	return;
-	////}
+	FIND_ILIM_LO_FLAG = 1;
 
-	//////FIND_ILIM_LO_FLAG = 1;
+	// Search for the peak
+	while ((pulse_cnt<= PULSE_NUM_NEED)&& (start_addr < g_SAMPLE_SIZE))
+	{
+		// Find Idmax
+//		for(icnt = start_addr; icnt< start_addr + Sample_per_cycle + 125 ; icnt++)		
+		for(icnt = start_addr; icnt< start_addr + 300 ; icnt++)	// To avoid intermittence failure for RDSON reading. HQL 07/08/14	
+		{// Searching window = Period + 2.5us(from next pulse). 
+			if((Gage_chan_a_voltage[icnt] > g_Idmax[pulse_cnt])&& Gage_chan_a_voltage[icnt]>50e-3)
+			{
+				g_Idmax[pulse_cnt] = Gage_chan_a_voltage[icnt];
+				g_Idmax_addr[pulse_cnt] = icnt;
+			}
+			//if (MOSFET_SIZE==8 && g_ILIM_TARGET_S > 2.2)
+			if(1)
+			{
+				//First pulse breaks out of loop if Gage_chan_a_voltage starts dropping and greater than 50mV
+				if(  FIND_ILIM_LO_FLAG == 1												&&
+					(Gage_chan_a_voltage[icnt] - Gage_chan_a_voltage[icnt-1]) < -20e-3	&&   //10/16/17. HL problem here to cause wrong ILIM Peak
+					 Gage_chan_a_voltage[icnt] > 50e-3										)
+				{
+					FIND_ILIM_LO_FLAG = 0;
+					break;
+				}				
+			}
+			////else
+			////{
+			////	//First pulse breaks out of loop if Gage_chan_a_voltage starts dropping and greater than 50mV
+			////	if(  FIND_ILIM_LO_FLAG == 1												&&
+			////		(Gage_chan_a_voltage[icnt] - Gage_chan_a_voltage[icnt-1]) < -5e-3	&& 
+			////		 Gage_chan_a_voltage[icnt] > 50e-3										)
+			////	{
+			////		FIND_ILIM_LO_FLAG = 0;
+			////		break;
+			////	}
+			////}
 
-	////// Search for the peak
-	////pulse_cnt =0;
-	////while ((pulse_cnt<= PULSE_NUM_NEED)&& ((StartAddress + Sample_per_cycle + 125) < SAMPLE_SIZE))
-	////{
-	////	// Find Idmax
-	////	for(icnt = StartAddress; icnt< StartAddress + 400 ; icnt++)	// To avoid intermittence failure for RDSON reading. HQL 07/08/14	
-	////	{
-	////		if(Gage_chan_a_voltage[icnt] > gIdmax[pulse_cnt] && Gage_chan_a_voltage[icnt]>50e-3)
-	////		{
-	////			gIdmax[pulse_cnt] = Gage_chan_a_voltage[icnt];
-	////			gIdmax_addr[pulse_cnt] = icnt;
-	////		}
-	////		if((gIdmax[pulse_cnt] - Gage_chan_a_voltage[icnt]) > 10*NoiseLevel && gIdmax[pulse_cnt] > 50e-3)
-	////		{
-	////			break;
-	////		}
-	////	}
-	////
-	////	// Look at samples just before part turn-on to find GND. //
-	////	GND_addr = 	TurnOnAddress - QtyNext - 2;
-	////	Data_sum = 0;
-	////	for (i=0; i<GND_count; i++)
-	////	{
-	////		DataValue = Gage_chan_a_voltage[GND_addr-i];
-	////		Data_sum += DataValue;
-	////	}
-	////	ACgnd_Ave[pulse_cnt] = Data_sum / GND_count;
-	////	
-	////	// Find 0.5us location from Idmax
-	////	pulse_width[pulse_cnt] = gIdmax_addr[pulse_cnt] - TurnOnAddress;
-	////	if (pulse_width[pulse_cnt]> 25)		// Pulse > 0.5us
-	////		Id05us_Addr[pulse_cnt] = gIdmax_addr[pulse_cnt]- 25;	// 0.5us away from Idmax
-	////	else 
-	////		Id05us_Addr[pulse_cnt] = gIdmax_addr[pulse_cnt] - int(pulse_width[pulse_cnt]/2);
+			//break out of loop if Gage_chan_a_voltage starts dropping by 20mA (and greater than 50mV)
+			if( ((Gage_chan_a_voltage[icnt] - Gage_chan_a_voltage[icnt-1]) < -20e-3)	&& 
+				 (Gage_chan_a_voltage[icnt] > 50e-3)					)
+			{
+				break;
+			}
+		}
 
-	////	Id05us_Ave[pulse_cnt] = (Gage_chan_a_voltage[Id05us_Addr[pulse_cnt]+2]+	
-	////							 Gage_chan_a_voltage[Id05us_Addr[pulse_cnt]+1]+
-	////							 Gage_chan_a_voltage[Id05us_Addr[pulse_cnt]  ]+
-	////							 Gage_chan_a_voltage[Id05us_Addr[pulse_cnt]-1]+
-	////							 Gage_chan_a_voltage[Id05us_Addr[pulse_cnt]-2])/5.0;
+		//if(DEBUG==1)
+		//	printf("\ngIDmax[%i] = %.1fmA, gIdmax_addr[%i] = %i, ", pulse_cnt, g_Idmax[pulse_cnt]*1000, pulse_cnt, g_Idmax_addr[pulse_cnt]);
 
-	////
-	////	// Individual Peak result
-	////	Id05us_Ave[pulse_cnt] -= ACgnd_Ave[pulse_cnt];
-	////	Id05us_Ave[pulse_cnt]/= gIlim_gain;
+		//if(MOSFET_SIZE==2)			Vped_threshold = 0.025;
+		//else if(MOSFET_SIZE==5)		Vped_threshold = 0.005;	//Hiep 1/25/2017
+		//else						Vped_threshold = 0.05;
+		Vped_threshold = 0.005;		//Size 3 with 50mV fail.  Since size5 released to PROD and no complain, make it the same as PROD
+		// Find AC Ground level before turn on, count backward from pulse peak until sample less than threshold
+		ACgnd[pulse_cnt] = 1000;
+		for(icnt = g_Idmax_addr[pulse_cnt]; (icnt> 0) && (Gage_chan_a_voltage[icnt]>=Vped_threshold); icnt--)	//Primary in control
+		{
+			 ACgnd[pulse_cnt] = Gage_chan_a_voltage[icnt-1];
+			 ACgnd_addr[pulse_cnt] = icnt;
+		}
+		
 
-	////	gIdmax[pulse_cnt] -= ACgnd_Ave[pulse_cnt];
-	////	gIdmax[pulse_cnt] /= gIlim_gain;
+		gnd_addr_offset = 100;
 
-	////	// A/us
-	////	DiDt[pulse_cnt]	= (gIdmax[pulse_cnt] - Id05us_Ave[pulse_cnt])/((gIdmax_addr[pulse_cnt] - Id05us_Addr[pulse_cnt])*SAMPLE_RATE_s*1e6);
+		ACgnd_Ave[pulse_cnt] = (Gage_chan_a_voltage[ACgnd_addr[pulse_cnt]-(15+gnd_addr_offset)]+	// 15 samples away from First data point
+								Gage_chan_a_voltage[ACgnd_addr[pulse_cnt]-(16+gnd_addr_offset)]+
+								Gage_chan_a_voltage[ACgnd_addr[pulse_cnt]-(17+gnd_addr_offset)]+
+								Gage_chan_a_voltage[ACgnd_addr[pulse_cnt]-(18+gnd_addr_offset)]+
+								Gage_chan_a_voltage[ACgnd_addr[pulse_cnt]-(19+gnd_addr_offset)])/5.0;
 
-	////	// Ton
-	////	Ton[pulse_cnt]	= pulse_width[pulse_cnt] * SAMPLE_RATE_s;
+		// Find 0.5us location from Idmax, pulse width is time from peak back to sample threshold
+		pulse_width[pulse_cnt] = g_Idmax_addr[pulse_cnt] - ACgnd_addr[pulse_cnt];
 
-	////	// Toff		
-	////	if(pulse_cnt > 3)	//Primary in control (Discount pulses 0,1,2,3)
-	////	{
-	////		Toff[pulse_cnt-1]	= (TurnOnAddress - gIdmax_addr[pulse_cnt-1])* SAMPLE_RATE_s;
+		if (pulse_width[pulse_cnt]> 25)		// Pulse > 0.5us
+			Id05us_Addr[pulse_cnt] = g_Idmax_addr[pulse_cnt]- 25;	// 0.5us away from Idmax
+		else 
+			Id05us_Addr[pulse_cnt] = g_Idmax_addr[pulse_cnt] - int(pulse_width[pulse_cnt]/2);
 
-	////		//Store RTM_Slope information
-	////		if(WAVE_NAME == "ILIM_NORM")
-	////		{
-	////			Off_Time = Toff[pulse_cnt-1];
-	////			if( Off_Time > 30e-6 && Off_Time < 50e-6 )	//Expect 40us RTM_Slope drop time or Off_Time
-	////			{
-	////				gRTM_Slope  = 0;	//Should only come into this if condition once
-	////				RTM_High_Id = gIdmax[pulse_cnt-1];
-	////				RTM_Low_Id	= gIdmax[pulse_cnt];
-	////				gRTM_Slope  = (RTM_Low_Id - RTM_High_Id)/RTM_High_Id*100/(Off_Time*1e6);
-	////			}
-	////		}
-	////	}
+		Id05us_Ave[pulse_cnt] = (Gage_chan_a_voltage[Id05us_Addr[pulse_cnt]+2]+	
+								 Gage_chan_a_voltage[Id05us_Addr[pulse_cnt]+1]+
+								 Gage_chan_a_voltage[Id05us_Addr[pulse_cnt]  ]+
+								 Gage_chan_a_voltage[Id05us_Addr[pulse_cnt]-1]+
+								 Gage_chan_a_voltage[Id05us_Addr[pulse_cnt]-2])/5.0;
 
-	////	// Locate Id_spec, Vd_spec location and calculate Rdson_spec
-	////	if(FIND_RDSON_Spec_FLAG && DiDt[pulse_cnt] !=0.0 && pulse_cnt > 3)
-	////	{
-	////		if(gMOSFET_SIZE_Trimops==2)	Ilim_spec = 0.32 * gILIM_TARGET_S_Trimops;	// Inno2's 550mA IM gives ~100mA pedestal.  30% -> Need more room away from noise
-	////		else				Ilim_spec = 0.25 * gILIM_TARGET_S_Trimops;	// !!! Use 25-30% Per Alex
+	
+		// Individual Peak result
+		Id05us_Ave[pulse_cnt] -= ACgnd_Ave[pulse_cnt];
+		Id05us_Ave[pulse_cnt]/= g_Ilim_gain;
 
-	////		Id_spec_addr[pulse_cnt] = int(gIdmax_addr[pulse_cnt] - (gIdmax[pulse_cnt]- Ilim_spec)/(DiDt[pulse_cnt] *SAMPLE_RATE_s *1e6));
-	////		Id_temp = Gage_chan_a_voltage[Id_spec_addr[pulse_cnt]]/gIlim_gain;	//Id_temp must be > 0 since it's 25-30% of ILIM_target
-	////		Id_one_data_pts = DiDt[pulse_cnt] * SAMPLE_RATE_s *1e6; // Amps
-	////		while ((Ilim_spec - Id_temp)> Id_one_data_pts && lcnt < 100)
-	////		{
-	////			Id_spec_addr[pulse_cnt]++;
-	////			Id_temp= Gage_chan_a_voltage[Id_spec_addr[pulse_cnt]]/gIlim_gain;
-	////		}
-	////			Id_spec_addr[pulse_cnt]+=2;	// Move away from ringing
+		g_Idmax[pulse_cnt] -= ACgnd_Ave[pulse_cnt];
+		g_Idmax[pulse_cnt] /= g_Ilim_gain;
 
-	////		if ((gIdmax_addr[pulse_cnt]-Id_spec_addr[pulse_cnt])< pulse_width[pulse_cnt])
-	////		{
-	////			Vdson_spec[pulse_cnt] = Gage_chan_b_voltage[Id_spec_addr[pulse_cnt]]*g_BUFgain;
-	////			Idson_spec[pulse_cnt] = Gage_chan_a_voltage[Id_spec_addr[pulse_cnt]]/gIlim_gain;
-	////			if (Idson_spec[pulse_cnt] !=0.0)
-	////				Rdson_spec[pulse_cnt]=Vdson_spec[pulse_cnt]/(Idson_spec[pulse_cnt]);
-	////			else
-	////				Rdson_spec[pulse_cnt] = 0.0;
-	////		}
-	////		else 
-	////			Rdson_spec[pulse_cnt] = 0.0;
-	////	}
+		// A/us
+		DiDt[pulse_cnt]	= (g_Idmax[pulse_cnt] - Id05us_Ave[pulse_cnt])/((g_Idmax_addr[pulse_cnt] - Id05us_Addr[pulse_cnt])*SAMPLE_RATE_s*1e6);
 
-	////	//Reset gIdmax
-	////	if(gIdmax[pulse_cnt] < -100)
-	////		gIdmax[pulse_cnt] = -500;
+		// Ton
+			Ton[pulse_cnt]	= pulse_width[pulse_cnt] * SAMPLE_RATE_s;
+		// Toff		
+		if(pulse_cnt > 3)	//Primary in control (Discount pulses 0,1,2,3)
+		{
+			Toff[pulse_cnt-1]	= (ACgnd_addr[pulse_cnt] - g_Idmax_addr[pulse_cnt-1])* SAMPLE_RATE_s;
 
-	////	// Look for next part turn on. //
-	////	//StartAddress = gIdmax_addr[pulse_cnt] + 150;	// Fast forward 150 samples (3us) //
-	////	//NoTurnOn = 1;
-	////	//for(i=StartAddress; i < (SAMPLE_SIZE - Sample_per_cycle - 125); i++)
-	////	//{
-	////	//	DataValue = Gage_chan_a_voltage[i];
-	////	//	DataNext = Gage_chan_a_voltage[i + QtyNext];
-	////	//	Data_range = DataNext - DataValue;
-	////	//	if (Data_range > MultFactor*NoiseLevel) // Turn-on found //
-	////	//	{
-	////	//		NoTurnOn = 0; // Turn-on found // 
-	////	//		TurnOnAddress = i + QtyNext;
-	////	//		break; // Out of for loop. //
-	////	//	}
-	////	//}
-	////	//StartAddress = TurnOnAddress + 25; // Jump ahead 500nsec to avoid leading edge spike. //
+			//Store RTM_Slope information
+			if(g_WAVE_NAME == "ILIM_NORM")
+			{
+				Off_Time = Toff[pulse_cnt-1];
+				if( Off_Time > 30e-6 && Off_Time < 50e-6 )	//Expect 40us RTM_Slope drop time or Off_Time
+				{
+					gRTM_Slope  = 0;	//Should only come into this if condition once
+					RTM_High_Id = g_Idmax[pulse_cnt-1];
+					RTM_Low_Id	= g_Idmax[pulse_cnt];
+					gRTM_Slope  = (RTM_Low_Id - RTM_High_Id)/RTM_High_Id*100/(Off_Time*1e6);
+				}
+			}
+		}
 
-	////	// Look for next part turn on. //
-	////	//TurnOnAddress = 1;
-	////	StartAddress = gIdmax_addr[pulse_cnt] + 150;	// Fast forward 150 samples (3us) //
-	////	NoTurnOn = 1;
-	////	for(i=StartAddress; i < (SAMPLE_SIZE - Sample_per_cycle - 125); i++)
-	////	{
-	////		DataValue = Gage_chan_a_voltage[i];
-	////		DataNext = Gage_chan_a_voltage[i + QtyNext];
-	////		Data_range = DataNext - DataValue;
-	////		if (Data_range > MultFactor*NoiseLevel) // Turn-on found //
-	////		{
-	////			// Look at 10 samples after turn-on edge to make sure part is really on and not just a noise spike //
-	////			OnCount = 0;
-	////			for (k=1; k < (Look_Ahead_Qty+1); k++)
-	////			{
-	////				DataValue = Gage_chan_a_voltage[i];
-	////				DataNext = Gage_chan_a_voltage[i + QtyNext+k];
-	////				Data_range = DataNext - DataValue;
-	////				if (Data_range > MultFactor*NoiseLevel)
-	////					OnCount++;
-	////			}
+		// Locate Id_spec, Vd_spec location and calculate Rdson_spec
+		if(g_FIND_RDSON_Spec_FLAG && DiDt[pulse_cnt] !=0.0 && pulse_cnt > 3)
+		{
+			Ilim_spec = 0.25 * g_ILIM_TARGET_P;	
 
-	////			// Look at ten samples prior to turn-on to make sure part is really on and not a noise spike.  
-	////			// The samples just prior to the turn-on edge should all be near the same level. //
-	////			OnCount2 = 0;
-	////			for (k=1; k < (Look_Back_Qty+1); k++)
-	////			{
-	////				DataValue = Gage_chan_a_voltage[i];
-	////				DataNext = Gage_chan_a_voltage[i - k];
-	////				Data_range = DataNext - DataValue;
-	////				if (Data_range<0) // Remove negative //
-	////					Data_range *= -1;
-	////				if (Data_range < MultFactor*NoiseLevel/2)
-	////					OnCount2++;
-	////			}
-	////			if (OnCount > (Look_Ahead_Qty-1) && OnCount2 > (Look_Back_Qty-1)) // Real turn-on found //
-	////			{
-	////				NoTurnOn = 0; // Turn-on found // 
-	////				TurnOnAddress = i + QtyNext;
-	////				break; // Out of for loop. //
-	////			}
-	////		}
-	////	}
-	////	StartAddress = TurnOnAddress + 25; // Jump ahead 500nsec to avoid leading edge spike. //
+			Id_spec_addr[pulse_cnt] = int(g_Idmax_addr[pulse_cnt] - (g_Idmax[pulse_cnt]- Ilim_spec)/(DiDt[pulse_cnt] *SAMPLE_RATE_s *1e6));
+			Id_temp = Gage_chan_a_voltage[Id_spec_addr[pulse_cnt]]/g_Ilim_gain;	//Id_temp must be > 0 since it's 25-30% of ILIM_target
+			Id_one_data_pts = DiDt[pulse_cnt] * SAMPLE_RATE_s *1e6; // Amps
+			while ((Ilim_spec - Id_temp)> Id_one_data_pts && lcnt < 100)
+			{
+				Id_spec_addr[pulse_cnt]++;
+				Id_temp= Gage_chan_a_voltage[Id_spec_addr[pulse_cnt]]/g_Ilim_gain;
+			}
+				Id_spec_addr[pulse_cnt]+=2;	// Move away from ringing
 
-	////	// Check if turn-on found //
-	////	if (NoTurnOn)
-	////	{
-	////		StartAddress = SAMPLE_SIZE + 999; // Force out of while loop //
-	////	}
-	////	else
-	////	{
-	////		PULSE_NUM_PROCESSED ++;
-	////		pulse_cnt ++;
-	////	}
-	////}
+			if ((g_Idmax_addr[pulse_cnt]-Id_spec_addr[pulse_cnt])< pulse_width[pulse_cnt])
+			{
+				Vdson_spec[pulse_cnt] = Gage_chan_b_voltage[Id_spec_addr[pulse_cnt]]*g_BUFgain;
+				Idson_spec[pulse_cnt] = Gage_chan_a_voltage[Id_spec_addr[pulse_cnt]]/g_Ilim_gain;
+				if (Idson_spec[pulse_cnt] !=0.0)
+					Rdson_spec[pulse_cnt]=Vdson_spec[pulse_cnt]/(Idson_spec[pulse_cnt]);
+				else
+					Rdson_spec[pulse_cnt] = 0.0;
+			}
+			else 
+				Rdson_spec[pulse_cnt] = 0.0;
+		}
 
-	////// Average Peak result
-	////if(( PULSE_NUM_PROCESSED>= 16)) //Sometimes the first pulse miss-trigger.  Expect 25 if no missing trigger
-	////{
-	////	// Number of pulses used for ILIM_ave, Ton_ave, Didt_ave, Vdson_peak_ave, Rdson_spec_ave
-	////	ave_start_pulse	= 6;	//good for both size x8 and x5
-	////	ave_pulses		= 10;
-	////	ave_end_pulse	= ave_start_pulse + ave_pulses;
-	////	// Taking average Needed pulses peak values (Must skip the first 3 pulses since they are not at ILIM)
-	////	for (pulse_cnt =ave_start_pulse; pulse_cnt< ave_end_pulse; pulse_cnt++)
-	////	{
-	////		*Idmax_ave+=gIdmax[pulse_cnt];
-	////		*Ton_ave  +=Ton[pulse_cnt];
-	////		*DiDt_ave +=DiDt[pulse_cnt];
-	////		if(FIND_RDSON_Peak_FLAG)
-	////			Vdson_peak_ave+=Gage_chan_b_voltage[gIdmax_addr[pulse_cnt]]*g_BUFgain;
-	////		if(FIND_RDSON_Spec_FLAG)
-	////			*Rdson_spec_ave+=Rdson_spec[pulse_cnt];
-	////	}
+		//Reset gIdmax
+		if(g_Idmax[pulse_cnt] < -100)
+			g_Idmax[pulse_cnt] = -100;
 
-	////	if(FIND_RDSON_Peak_FLAG && *Idmax_ave !=0.0)
-	////	{
-	////		*Rdson_peak_ave =Vdson_peak_ave/(*Idmax_ave);
-	////	}
-	////	else
-	////		*Rdson_peak_ave =999.0;
+		// Reset start address after find a peak.
+		if(g_Idmax[pulse_cnt] > 0)	//only do additional count if it's a true Idmax
+		{
+			start_addr = g_Idmax_addr[pulse_cnt] + 100;	//Fast forward 100 samples (2us) for the next loop to start 
+			PULSE_NUM_PROCESSED ++;
+			pulse_cnt ++;
+		}
 
-	////	if(FIND_RDSON_Spec_FLAG)
-	////		*Rdson_spec_ave /=(ave_pulses+1e-23);
-	////	else
-	////		*Rdson_spec_ave =999.0;
+		while (Gage_chan_a_voltage[start_addr]< 35e-3 && start_addr < g_SAMPLE_SIZE)	
+			start_addr+=1;					// Fast forward by 200ns/step
+//			start_addr+=25;					// Fast forward by 0.5us/step
+		start_addr+=9;	// Fast forward 9 samples of 20ns
 
-	////	*Idmax_ave /=ave_pulses;
-	////	*Ton_ave   /=ave_pulses;
-	////	*DiDt_ave  /=ave_pulses;
+		if ((icnt< start_addr + Sample_per_cycle + 125) > g_SAMPLE_SIZE ) 	// Searching window = Period + 2.5us(from next pulse). 
+			break;
+	}
 
-	////	if(WAVE_NAME == "ILIM_NORM")
-	////	{
-	////		//Reset 1st, 2nd, 3rd ILIM_Ramp variables
-	////		gTon_1stP		=0.0;
-	////		gTon_2ndP		=0.0;
-	////		gTon_3rdP		=0.0;
-	////		gToff_1stP		=0.0;
-	////		gToff_2ndP		=0.0;
-	////		gToff_3rdP		=0.0;
-	////		gILIM_pct_1stP	=0.0;
-	////		gILIM_pct_2ndP	=0.0;
-	////		gILIM_pct_3rdP	=0.0;
-	////		gRTM_Slope		=0.0;
-	////		
-	////		gILIM_pct_1stP	= gIdmax[PULSE_NUM_PROCESSED-4] / *Idmax_ave * 100.0;
-	////		gILIM_pct_2ndP	= gIdmax[PULSE_NUM_PROCESSED-3] / *Idmax_ave * 100.0;
-	////		gILIM_pct_3rdP	= gIdmax[PULSE_NUM_PROCESSED-2] / *Idmax_ave * 100.0;
+	// Average Peak results
+	if(( PULSE_NUM_PROCESSED>= 16)) //Sometimes the first pulse miss-trigger.  Expect 22 if no missing trigger
+	{
+		// Number of pulses used for ILIM_ave, Ton_ave, Didt_ave, Vdson_peak_ave, Rdson_spec_ave
+		//ave_start_pulse	= 4;	//good for size x8 but not size x5
+		ave_start_pulse	= 6;	//good for both size x8 and x5
+		ave_pulses		= 10;
+		ave_end_pulse	= ave_start_pulse + ave_pulses;
+		// Taking average Needed pulses peak values (Must skip the first 3 pulses since they are not at ILIM)
+		for (pulse_cnt =ave_start_pulse; pulse_cnt< ave_end_pulse; pulse_cnt++)
+		{
+			*Idmax_ave+=g_Idmax[pulse_cnt];
+			*Ton_ave  +=Ton[pulse_cnt];
+			*DiDt_ave +=DiDt[pulse_cnt];
 
-	////		gTon_1stP		= Ton[PULSE_NUM_PROCESSED-4];
-	////		gTon_2ndP		= Ton[PULSE_NUM_PROCESSED-3];
-	////		gTon_3rdP		= Ton[PULSE_NUM_PROCESSED-2];
-	////		gToff_1stP		= Toff[PULSE_NUM_PROCESSED-4]; //(ACgnd_addr[1] - gIdmax_addr[0])* SAMPLE_RATE_s;
-	////		gToff_2ndP		= Toff[PULSE_NUM_PROCESSED-3]; //(ACgnd_addr[2] - gIdmax_addr[1])* SAMPLE_RATE_s;
-	////		gToff_3rdP		= Toff[PULSE_NUM_PROCESSED-2]; //(ACgnd_addr[3] - gIdmax_addr[2])* SAMPLE_RATE_s;
+			//PEAK Rdson
+			if(g_FIND_RDSON_Peak_FLAG)
+				Vdson_peak_ave+=Gage_chan_b_voltage[g_Idmax_addr[pulse_cnt]]*g_BUFgain;
 
-	////		// RTM (Ramp Time Modulation) Slope
-	////		// Expect the final ILIM_peak to be the first pulse of ILIM ramp.  It should be in the range of 200mA to 300mA
-	////		
-	////		if(gIdmax[PULSE_NUM_PROCESSED-3] > 50e-3)
-	////		{
-	////			gtDelta_RTM_Slope	= Ton[PULSE_NUM_PROCESSED-9] + Toff[PULSE_NUM_PROCESSED-10];
-	////			gi_pct_drop_RTM		= ((gIdmax[PULSE_NUM_PROCESSED-9] / gIdmax[PULSE_NUM_PROCESSED-10]) - 1.0) * 100.0;
-	////			gRTM_Slope = gi_pct_drop_RTM / gtDelta_RTM_Slope * 1e-6;
-	////			gRTM_Slope = ( (gIdmax[PULSE_NUM_PROCESSED-9] - gIdmax[PULSE_NUM_PROCESSED-10]) / gIdmax[PULSE_NUM_PROCESSED-10] * 100) / 
-	////						 ( gtDelta_RTM_Slope - 10e-6 ) * 1e-6;
+			//SPEC Rdson
+			if(g_FIND_RDSON_Spec_FLAG)
+				*Rdson_spec_ave+=Rdson_spec[pulse_cnt];
+		}
 
-	////			gtDelta_RTM_Slope_200us = Ton[PULSE_NUM_PROCESSED-4] + Toff[PULSE_NUM_PROCESSED-5];
-	////			gILIM_200us_S = gIdmax[PULSE_NUM_PROCESSED-4];
-	////			gILIM_200us_pct_S = ((gIdmax[PULSE_NUM_PROCESSED-4] / gIdmax[PULSE_NUM_PROCESSED-5]) - 1.0) * 100.0;
-	////		}
+		//PEAK Rdson
+		if(g_FIND_RDSON_Peak_FLAG && *Idmax_ave !=0.0)	*Rdson_peak_ave =Vdson_peak_ave/(*Idmax_ave);
+		else											*Rdson_peak_ave =999.0;
 
-	////	}
-	////}
-	////else 
-	////{
-	////		*Idmax_ave =999.0;
-	////		*Ton_ave   =999.0;
-	////		*DiDt_ave  =999.0;
-	////}
+		//SPEC Rdson
+		if(g_FIND_RDSON_Spec_FLAG)	*Rdson_spec_ave /=(ave_pulses+1e-23);
+		else						*Rdson_spec_ave =999.0;
 
-	////// Reset Flags
-	////FIND_RDSON_Peak_FLAG	=0;
-	////FIND_RDSON_Spec_FLAG	=0;
-	////gFind_ILIM_Jitter		=0;
+		*Idmax_ave /=ave_pulses;
+		*Ton_ave   /=ave_pulses;
+		*DiDt_ave  /=ave_pulses;
+	}
+	//return Idmax=999, Ton=999, didt=999
+	else	
+	{
+			*Idmax_ave =999.0;
+			*Ton_ave   =999.0;
+			*DiDt_ave  =999.0;
+			if(DEBUG==1)
+				MessageBox(NULL, "Error: PULSE_NUM_PROCESSED is less than PULSE_NUM_NEED",g_Func_name, MB_OK);
+
+	}
+
+
+	//DEBUG text File
+	if(DEBUG==1 && g_Debug)
+	{
+		int i=0;
+		strcpy (debug_file_name, "e:\\DL4\\"); 
+		strcat (debug_file_name, g_DevName); 
+		strcat (debug_file_name, "_");
+		strcat (debug_file_name, g_WAVE_NAME);
+		strcat (debug_file_name, "_debug.txt");
+
+		//open file
+		FILE * fpr = fopen(debug_file_name, "w");
+		if (! fpr)
+			return;
+
+		//print to file
+		fprintf(fpr,"WAVE_NAME= %s \n\n",g_WAVE_NAME);
+
+		//measured values
+		fprintf(fpr,"ILIM(Idmax_ave) = %.3f A,  *DiDt_ave = %.2f A/us,  *Ton_ave= %.2f us\n",*Idmax_ave,  *DiDt_ave,  *Ton_ave*1e6);
+
+		//RDSon
+		if(g_FIND_RDSON_Peak_FLAG)
+			fprintf(fpr,"Rdson_peak_ave = %.3f ohms (Vdson_peak_ave=%.3f V , Idmax_ave=%.3f A)\n",
+				*Rdson_peak_ave,Vdson_peak_ave/ave_pulses,	*Idmax_ave);
+
+		//pulses
+		fprintf(fpr,"\n  PULSE_NUM_PROCESSED=%i\n",PULSE_NUM_PROCESSED);
+		if(g_WAVE_NAME == "ILIM_NORM")
+		{
+			fprintf(fpr,"  ILIM, Ton, didt averaged from pulse %i to pulse %i\n\n", ave_start_pulse,ave_end_pulse);
+			fprintf(fpr,"  ILIM_Lo taken from pulse %i\n", PULSE_NUM_PROCESSED-3);
+			fprintf(fpr,"  ILIM_Med taken from pulse %i\n", PULSE_NUM_PROCESSED-2);
+			fprintf(fpr,"  ILIM_Hi taken from pulse %i\n", PULSE_NUM_PROCESSED-1);
+		}
+
+		fprintf(fpr,"\nPeak Data: \n",g_WAVE_NAME);
+		//Peak data
+		for(i=0; i<PULSE_NUM_PROCESSED; i++)
+		{
+			if(g_Idmax[i] > 0)
+			fprintf(fpr,"ILIM_Pulse %i = %.1fmA, Ton_Pulse = %.1fus, Toff_Pulse = %.1fus, Freq = %.1fkHz, Ton_addr=%i, pk_addr=%i\n", 
+				i, g_Idmax[i]*1000, Ton[i]*1e6, Toff[i]*1e6, 1/(Ton[i]+Toff[i])/1000,ACgnd_addr[i],g_Idmax_addr[i]);
+
+			if(g_FIND_RDSON_Peak_FLAG)
+			{
+				fprintf(fpr,"  Vdson_peak %i = %.3f V \n",i,Gage_chan_b_voltage[g_Idmax_addr[i]]*g_BUFgain);
+				fprintf(fpr,"  Rdson_peak %i = %.3f ohm \n",i,(Gage_chan_b_voltage[g_Idmax_addr[i]]*g_BUFgain)/g_Idmax[i]);
+			}
+		}
+		fprintf (fpr, "End of Peaks\n");
+		fclose(fpr);
+
+	}
+
+
+	//DEBUG AWAV Files
+	if(DEBUG==1 && g_Debug)
+	//if(DEBUG==1)
+	{
+		strcpy (wave_name_Id, g_WAVE_NAME);
+		strcat (wave_name_Id, "_Id"); 
+		Create_Awav_xp(wave_name_Id, Gage_chan_a_voltage, g_SAMPLE_SIZE-1, SAMPLE_RATE_s);
+
+		if(g_FIND_RDSON_Peak_FLAG || g_FIND_RDSON_Spec_FLAG)
+		{
+			strcpy (wave_name_Vd, g_WAVE_NAME);
+			strcat (wave_name_Vd, "_Vd"); 
+			Create_Awav_xp(wave_name_Vd, Gage_chan_b_voltage, g_SAMPLE_SIZE-1, SAMPLE_RATE_s);
+		}
+		g_WAVE_NAME = "NoWaveName";
+	}
+
+
+	// Reset Flags
+	g_FIND_RDSON_Peak_FLAG	=0;
+	g_FIND_RDSON_Spec_FLAG	=0;
+	g_Find_ILIM_Jitter		=0;
 }
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
@@ -8320,17 +8288,17 @@ void Gage_Find_Ilim_SSS(float *Idmax_ave, float *tsoft, float *tHandshake, float
 	////Gage_Transfer_Data (GAGE_CHAN_A); //transfer data to Gage_chan_a_voltage array
 
 	////// Save captured data as .awav file. //
-	////if (g_SaveAwav)
+	////if (g_Save_Awav_TextDebug_ALL)
 	////{
 	////	//double *capture_data = (double *)malloc((GAGE_WAVEFORM_BUFFER_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
-	////	double *capture_data = (double *)malloc((SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
+	////	double *capture_data = (double *)malloc((g_SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
 	////	//for( i = 0; i < (GAGE_WAVEFORM_BUFFER_SIZE-10); i++)
-	////	for( i = 0; i < (SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD - 10); i++)
+	////	for( i = 0; i < (g_SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD - 10); i++)
 	////	{	
 	////		capture_data[i] = (double)(Gage_chan_a_voltage[i]); // XP //	
 	////	}
 	////	CreateAwav(	capture_data, // Data array //
-	////				SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD - 10, // Size of array //
+	////				g_SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD - 10, // Size of array //
 	////				20.0e-9, // Sampling period //				 
 	////				"e:\\dl4\\ILIM_tSoftRamp.awav"); // Output file and path //
 	////	free (capture_data);
@@ -8338,8 +8306,8 @@ void Gage_Find_Ilim_SSS(float *Idmax_ave, float *tsoft, float *tHandshake, float
 
 	////for (icnt=0; icnt<4000; icnt++)
 	////{
-	////	gIdmax[icnt] = -100;
-	////	gIdmax_addr[icnt]  = 0;
+	////	g_Idmax[icnt] = -100;
+	////	g_Idmax_addr[icnt]  = 0;
 	////}
 
 	////pulse_cnt =0;
@@ -8405,32 +8373,32 @@ void Gage_Find_Ilim_SSS(float *Idmax_ave, float *tsoft, float *tHandshake, float
 	////start_addr = TurnOnAddress + 25; // Jump ahead 500nsec to avoid leading edge spike. //
 
 	////// Error check
-	////if ((start_addr + Sample_per_cycle + 125) > SAMPLE_SIZE ) 	// Searching window = Period + 2.5us(from next pulse).  
+	////if ((start_addr + Sample_per_cycle + 125) > g_SAMPLE_SIZE ) 	// Searching window = Period + 2.5us(from next pulse).  
 	////{
 	////	*Idmax_ave  = 999.0;
 	////	return;
 	////}
 	////// Search for the peaks //
-	////while (start_addr < SAMPLE_SIZE-10)
+	////while (start_addr < g_SAMPLE_SIZE-10)
 	////{
 	////	// Find Idmax
 	////	for(icnt = start_addr; icnt< start_addr + 400 ; icnt++)
 	////	{
-	////		if(Gage_chan_a_voltage[icnt] > gIdmax[pulse_cnt] /*&& Gage_chan_a_voltage[icnt]>50e-3*/)
+	////		if(Gage_chan_a_voltage[icnt] > g_Idmax[pulse_cnt] /*&& Gage_chan_a_voltage[icnt]>50e-3*/)
 	////		{
-	////			gIdmax[pulse_cnt] = Gage_chan_a_voltage[icnt];
-	////			gIdmax_addr[pulse_cnt] = icnt;
+	////			g_Idmax[pulse_cnt] = Gage_chan_a_voltage[icnt];
+	////			g_Idmax_addr[pulse_cnt] = icnt;
 	////		}
-	////		if((gIdmax[pulse_cnt] - Gage_chan_a_voltage[icnt]) > 35*NoiseLevel /*&& gIdmax[pulse_cnt] > 50e-3*/)
+	////		if((g_Idmax[pulse_cnt] - Gage_chan_a_voltage[icnt]) > 35*NoiseLevel /*&& g_Idmax[pulse_cnt] > 50e-3*/)
 	////		{
 	////			break;
 	////		}
 	////	}
 
 	////	// Look for next part turn on. //
-	////	start_addr = gIdmax_addr[pulse_cnt] + 125;	// Fast forward 125 samples (2.5us) //
+	////	start_addr = g_Idmax_addr[pulse_cnt] + 125;	// Fast forward 125 samples (2.5us) //
 	////	NoTurnOn = 1;
-	////	for(i=start_addr; i < (SAMPLE_SIZE - Sample_per_cycle - 125); i++)
+	////	for(i=start_addr; i < (g_SAMPLE_SIZE - Sample_per_cycle - 125); i++)
 	////	{
 	////		DataValue = Gage_chan_a_voltage[i];
 	////		DataNext = Gage_chan_a_voltage[i + QtyNext];
@@ -8474,7 +8442,7 @@ void Gage_Find_Ilim_SSS(float *Idmax_ave, float *tsoft, float *tHandshake, float
 	////	// Check if turn-on found //
 	////	if (NoTurnOn)
 	////	{
-	////		start_addr = SAMPLE_SIZE + 999; // Force out of while loop //
+	////		start_addr = g_SAMPLE_SIZE + 999; // Force out of while loop //
 	////	}
 	////	else
 	////	{
@@ -8482,7 +8450,7 @@ void Gage_Find_Ilim_SSS(float *Idmax_ave, float *tsoft, float *tHandshake, float
 	////		pulse_cnt ++;
 	////	}
 	////	TurnOnAddr[pulse_cnt] = TurnOnAddress;
-	////	if ( (icnt> (SAMPLE_SIZE-400)) || PULSE_NUM_PROCESSED > 3000) 	
+	////	if ( (icnt> (g_SAMPLE_SIZE-400)) || PULSE_NUM_PROCESSED > 3000) 	
 	////		break;
 	////}
 	////
@@ -8541,14 +8509,14 @@ void Gage_Find_Ilim_SSS(float *Idmax_ave, float *tsoft, float *tHandshake, float
 	////		if (GND_delta_min == 3)
 	////			GND_value = ACgnd_Ave[pulse_cnt]; // No change //
 	////	}
-	////	//gIdmax[pulse_cnt] -= ACgnd_Ave[pulse_cnt];
-	////	gIdmax[pulse_cnt] -= GND_value;
+	////	//g_Idmax[pulse_cnt] -= ACgnd_Ave[pulse_cnt];
+	////	g_Idmax[pulse_cnt] -= GND_value;
 	////}
 
 	////// Get frequency and period of every pulse //
 	////for(pulse_cnt = 1; pulse_cnt < PULSE_NUM_PROCESSED; pulse_cnt++)
 	////{	
-	////	pulse_period[pulse_cnt] = (gIdmax_addr[pulse_cnt] - gIdmax_addr[pulse_cnt-1])*SAMPLE_RATE_s;
+	////	pulse_period[pulse_cnt] = (g_Idmax_addr[pulse_cnt] - gIdmax_addr[pulse_cnt-1])*SAMPLE_RATE_s;
 	////	freq[pulse_cnt] = 1/pulse_period[pulse_cnt];
 	////}
 	////*Fosc_Sss_P = freq[1];
@@ -8602,11 +8570,11 @@ void Gage_Find_Ilim_SSS(float *Idmax_ave, float *tsoft, float *tHandshake, float
 
 	////// Average ILIM 70pct from first two pulses //
 	//////*Idmax_ave = (gIdmax[0] + gIdmax[1]) / 2;
-	//////*Idmax_ave /= gIlim_gain;
+	//////*Idmax_ave /= g_ILIM_gain;
 
 	////// Average ILIM 70pct from first two pulses after secondary has control //
 	////*Idmax_ave = (gIdmax[2] + gIdmax[3]) / 2;
-	////*Idmax_ave /= gIlim_gain;
+	////*Idmax_ave /= g_ILIM_gain;
 
 
 	////// Find ILIM Jitter at 132kHz //
@@ -8626,8 +8594,8 @@ void Gage_Find_Ilim_SSS(float *Idmax_ave, float *tsoft, float *tHandshake, float
 	////		ILIM_max_address = gIdmax_addr[cnt];
 	////	}
 	////}
-	////*ilim_min /= gIlim_gain;
-	////*ilim_max /= gIlim_gain;
+	////*ilim_min /= g_ILIM_gain;
+	////*ilim_max /= g_ILIM_gain;
 
 	///////////////////////////////////
 	//////F_Modulation
@@ -8757,7 +8725,7 @@ void Gage_Find_Ilim_18kHz(float *ILIM_Jit18K_S, float *ILIMhi_Jit18K_S, float *I
 	Gage_Transfer_Data (GAGE_CHAN_A); // XP //
 
 	// Save captured data as .awav file. //
-	if (g_SaveAwav)
+	if (g_Save_Awav_TextDebug_ALL)
 	{
 		double *capture_data = (double *)malloc((GAGE_WAVEFORM_BUFFER_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
 		for( i = 0; i < (GAGE_WAVEFORM_BUFFER_SIZE-10); i++)
@@ -9200,15 +9168,15 @@ void Gage_Find_SOA(float *SOA, float *TW_50)
 	Gage_Transfer_Data (GAGE_CHAN_A);	//transfer data to Gage_chan_a_voltage array
 
 	// Save captured data as .awav file. //
-	if (g_SaveAwav)
+	if (g_Save_Awav_TextDebug_ALL)
 	{
-		double *capture_data = (double *)malloc((SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
-		for( i = 0; i < (SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD - 10); i++)
+		double *capture_data = (double *)malloc((g_SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
+		for( i = 0; i < (g_SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD - 10); i++)
 		{	
 			capture_data[i] = (double)(Gage_chan_a_voltage[i]); // XP //	
 		}
 		CreateAwav(	capture_data, // Data array //
-					SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD - 10, // Size of array //
+					g_SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD - 10, // Size of array //
 					20.0e-9, // Sampling period //				 
 					"e:\\dl4\\SOA_P_TW50_P.awav"); // Output file and path //
 		free (capture_data);
@@ -9261,20 +9229,20 @@ void Gage_Find_SOA(float *SOA, float *TW_50)
 	}
 	
 	// Error check
-	if (TurnOnAddress > (SAMPLE_SIZE - 15001) || Turn_On_Found < 1  ) // 300us to cover two pulses //
+	if (TurnOnAddress > (g_SAMPLE_SIZE - 15001) || Turn_On_Found < 1  ) // 300us to cover two pulses //
 	{
 		*SOA  = 999.0;
 		*TW_50 =999.0;
 		return;
 	}
 
-	while (TurnOnAddress < (SAMPLE_SIZE - 15000) && pulse_cnt < 10 && Turn_On_Found > 0 ) // Process captured data //
+	while (TurnOnAddress < (g_SAMPLE_SIZE - 15000) && pulse_cnt < 10 && Turn_On_Found > 0 ) // Process captured data //
 	{
 		// Find OFF address //
 		Turn_Off_Address = 0;
 		start_addr = TurnOnAddress + 2; // Jump ahead a couple samples to avoid any noise. //
 		i = start_addr;
-		while (i < (SAMPLE_SIZE-15000) && (i-start_addr) < 100) // Stop searching after 2us //
+		while (i < (g_SAMPLE_SIZE-15000) && (i-start_addr) < 100) // Stop searching after 2us //
 		{
 			Data0 = Gage_chan_a_voltage[i];
 			Data1 = Gage_chan_a_voltage[i+1];
@@ -9311,7 +9279,7 @@ void Gage_Find_SOA(float *SOA, float *TW_50)
 		start_addr = i + 150;	// fast forward by 3us after finding Off_addr
 		TurnOnAddress = 1;
 		Turn_On_Found = 0;
-		for(i=start_addr; i < (SAMPLE_SIZE-15000); i++)
+		for(i=start_addr; i < (g_SAMPLE_SIZE-15000); i++)
 		{
 			DataValue = Gage_chan_a_voltage[i];
 			DataNext = Gage_chan_a_voltage[i + QtyNext];
@@ -9388,7 +9356,7 @@ void Gage_Find_SOA(float *SOA, float *TW_50)
 		// Look for next part turn on. //
 		//start_addr += 150;	//fast forward by 3us after finding Off_addr
 		//TurnOnAddress = 1;
-		//for(i=start_addr; i < (SAMPLE_SIZE-10); i++)
+		//for(i=start_addr; i < (g_SAMPLE_SIZE-10); i++)
 		//{
 		//	DataValue = Gage_chan_a_voltage[i];
 		//	DataNext = Gage_chan_a_voltage[i + QtyNext];
@@ -9455,15 +9423,15 @@ void Gage_Find_SDS(float *SDS, float *SDS_TW_50, float *SDS_P_nsw)
 	Gage_Transfer_Data (GAGE_CHAN_A);	//transfer data to Gage_chan_a_voltage array
 
 	// Save captured data as .awav file. //
-	if (g_SaveAwav)
+	if (g_Save_Awav_TextDebug_ALL)
 	{
-		double *capture_data = (double *)malloc((SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
-		for( i = 0; i < (SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD - 10); i++)
+		double *capture_data = (double *)malloc((g_SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
+		for( i = 0; i < (g_SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD - 10); i++)
 		{	
 			capture_data[i] = (double)(Gage_chan_a_voltage[i]); // XP //	
 		}
 		CreateAwav(	capture_data, // Data array //
-					SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD - 10, // Size of array //
+					g_SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD - 10, // Size of array //
 					20.0e-9, // Sampling period //				 
 					"e:\\dl4\\SDS_P_TW50_SDS_P.awav"); // Output file and path //
 		free (capture_data);
@@ -9515,20 +9483,20 @@ void Gage_Find_SDS(float *SDS, float *SDS_TW_50, float *SDS_P_nsw)
 	}
 
 	// Error check //
-	if ( TurnOnAddress > (SAMPLE_SIZE-501) || Turn_On_Found < 1 )
+	if ( TurnOnAddress > (g_SAMPLE_SIZE-501) || Turn_On_Found < 1 )
 	{
 		*SDS  = 999.0;
 		*SDS_TW_50 = 999.0;
 		return;
 	}
 
-	while (TurnOnAddress < (SAMPLE_SIZE-500) && Turn_On_Found > 0) // Process captured data //
+	while (TurnOnAddress < (g_SAMPLE_SIZE-500) && Turn_On_Found > 0) // Process captured data //
 	{
 		// Find OFF address //
 		Turn_Off_Address = 0;
 		start_addr = TurnOnAddress + 2; // Jump ahead a couple samples to avoid any noise. //
 		i = start_addr;
-		while (i < (SAMPLE_SIZE-500) && (i-start_addr) < 100) // Stop searching after 2us //
+		while (i < (g_SAMPLE_SIZE-500) && (i-start_addr) < 100) // Stop searching after 2us //
 		{
 			Data0 = Gage_chan_a_voltage[i];
 			Data1 = Gage_chan_a_voltage[i+1];
@@ -9563,7 +9531,7 @@ void Gage_Find_SDS(float *SDS, float *SDS_TW_50, float *SDS_P_nsw)
 		start_addr = i + 150;	// fast forward by 3us after finding Off_addr
 		TurnOnAddress = 1;
 		Turn_On_Found = 0;
-		for(i=start_addr; i < (SAMPLE_SIZE-500); i++)
+		for(i=start_addr; i < (g_SAMPLE_SIZE-500); i++)
 		{
 			DataValue = Gage_chan_a_voltage[i];
 			DataNext = Gage_chan_a_voltage[i + QtyNext];
@@ -9601,13 +9569,13 @@ void Gage_Find_SDS(float *SDS, float *SDS_TW_50, float *SDS_P_nsw)
 
 	// Functional Check to make sure device is in ARST off after 2 SDS pulses. //
 	// Look at the last SDS pulse and make sure there were no more pulses aftwards //
-	if (Off_addr[pulse_cnt] == SDS_Off_addr[SDS_cnt-1] && Off_addr[pulse_cnt] < (SAMPLE_SIZE-10000) )
+	if (Off_addr[pulse_cnt] == SDS_Off_addr[SDS_cnt-1] && Off_addr[pulse_cnt] < (g_SAMPLE_SIZE-10000) )
 		*SDS_P_nsw = 0;
 	else
 		*SDS_P_nsw = 99;
 	
 
-	//if (start_addr==(SAMPLE_SIZE-10) && pulse_cnt==2)
+	//if (start_addr==(g_SAMPLE_SIZE-10) && pulse_cnt==2)
 	//	*SDS_P_nsw = 0;
 	//else
 	//	*SDS_P_nsw = 99;
@@ -9641,8 +9609,8 @@ void Gage_Count_Cycles_CHB(float *Cycle_Count)
 	Gage_Transfer_Data (GAGE_CHAN_B);	//transfer data to Gage_chan_b_voltage array
 
 	// Save captured data as .awav file. //
-	//if(WAVE_NAME == "ILIM_P1")
-	if (g_SaveAwav)
+	//if(g_WAVE_NAME == "ILIM_P1")
+	if (g_Save_Awav_TextDebug_ALL)
 	{
 			double *capture_data_B = (double *)malloc((GAGE_WAVEFORM_BUFFER_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
 			for( i = 0; i < (GAGE_WAVEFORM_BUFFER_SIZE-10); i++)
@@ -9659,7 +9627,7 @@ void Gage_Count_Cycles_CHB(float *Cycle_Count)
 	start_addr = 100;		
 	//pulse_cnt = 0;
 	pulse_cnt = -1;
-	for ( icnt = start_addr; icnt < (SAMPLE_SIZE-20);  icnt++ )
+	for ( icnt = start_addr; icnt < (g_SAMPLE_SIZE-20);  icnt++ )
 	{
 		// Look for drain turn off. //
 		Vdata = Gage_chan_b_voltage[icnt];
@@ -9671,7 +9639,7 @@ void Gage_Count_Cycles_CHB(float *Cycle_Count)
 			icnt = icnt + 250;
 			while (Vdata > 1.0)
 			{
-				if (icnt >(SAMPLE_SIZE-20))
+				if (icnt >(g_SAMPLE_SIZE-20))
 					break;
 				icnt++;
 				Vdata = Gage_chan_b_voltage[icnt];
@@ -9681,7 +9649,7 @@ void Gage_Count_Cycles_CHB(float *Cycle_Count)
 			// Jump ahead 100nsec to be sure past turn on edge. //
 			icnt = icnt + 5;
 		}
-		if (icnt >(SAMPLE_SIZE-20))
+		if (icnt >(g_SAMPLE_SIZE-20))
 			break;
 	}
 	*Cycle_Count = pulse_cnt;
@@ -9716,7 +9684,7 @@ void DChUp_Gage_Find(float *DChUp_Result)
 	Gage_Transfer_Data (GAGE_CHAN_B);	//transfer data to Gage_chan_b_voltage array
 
 	// Save captured data as .awav file. //
-	if (g_SaveAwav)
+	if (g_Save_Awav_TextDebug_ALL)
 	{
 			double *capture_data_B = (double *)malloc((GAGE_WAVEFORM_BUFFER_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
 			for( i = 0; i < (GAGE_WAVEFORM_BUFFER_SIZE-10); i++)
@@ -9807,7 +9775,7 @@ void Gage_Find_tOVL(float *tOVL)
 	Gage_Transfer_Data (GAGE_CHAN_B);	//transfer data to Gage_chan_b_voltage array
 
 	// Save captured data as .awav file. //
-	if (g_SaveAwav)
+	if (g_Save_Awav_TextDebug_ALL)
 	{
 			double *capture_data_B = (double *)malloc((GAGE_WAVEFORM_BUFFER_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
 			for( i = 0; i < (GAGE_WAVEFORM_BUFFER_SIZE-10); i++)
@@ -9850,7 +9818,7 @@ void Gage_Find_tOVL(float *tOVL)
 
 	// Look for falling edge //
 	start_addr = 10;		
-	for ( icnt = start_addr; icnt < SAMPLE_SIZE - 100;  icnt++ )
+	for ( icnt = start_addr; icnt < g_SAMPLE_SIZE - 100;  icnt++ )
 	{
 		DataValue = Gage_chan_b_voltage[icnt];
 		DeltaV = StartVoltage - DataValue;
@@ -9864,7 +9832,7 @@ void Gage_Find_tOVL(float *tOVL)
 	// Look for rising edge //
 	start_addr = start_trig_addr + 200; // Jump ahead 4us //
 	DataValueMin = 99999;
-	for ( icnt = start_addr; icnt < SAMPLE_SIZE - 100;  icnt++ )
+	for ( icnt = start_addr; icnt < g_SAMPLE_SIZE - 100;  icnt++ )
 	{
 		DataValue = Gage_chan_b_voltage[icnt];
 		if (DataValue < DataValueMin)
@@ -9917,17 +9885,17 @@ void Gage_Find_tDableOn(float *tDableON, float *FWPK_tVOxDble, float *FWPK_Timer
 	// Transfer Gage data //
 	Gage_Transfer_Data (GAGE_CHAN_B); // Transfer data to Gage_chan_b_voltage array
 
-	if (g_SaveAwav)
+	if (g_Save_Awav_TextDebug_ALL)
 	{
 		//double *capture_data_B = (double *)malloc((GAGE_WAVEFORM_BUFFER_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
-		double *capture_data_B = (double *)malloc((SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
+		double *capture_data_B = (double *)malloc((g_SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
 		//for( i = 0; i < (GAGE_WAVEFORM_BUFFER_SIZE-10); i++)
-		for( i = 0; i < (SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD - 10); i++)
+		for( i = 0; i < (g_SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD - 10); i++)
 		{	
 			capture_data_B[i] = (double)(Gage_chan_b_voltage[i]); // XP //	
 		}
 		CreateAwav(	capture_data_B, // Data array //
-						SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD - 10, // Size of array //
+						g_SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD - 10, // Size of array //
 						20.0e-9, // Sampling period //				 
 						"e:\\dl4\\tDableOn.awav"); // Output file and path //
 		free (capture_data_B);
@@ -9939,7 +9907,7 @@ void Gage_Find_tDableOn(float *tDableON, float *FWPK_tVOxDble, float *FWPK_Timer
 	NegEdge_Found_cnt =0;
 	PosEdge_Found_cnt =0;
 	start_addr =0;	
-	for(icnt =start_addr; icnt< SAMPLE_SIZE-10 ; icnt++)	
+	for(icnt =start_addr; icnt< g_SAMPLE_SIZE-10 ; icnt++)	
 	{
 		// Find Negative edge //
 		if(Gage_chan_b_voltage[icnt] < 0.9 && Find_Negative_Edge ==true)
@@ -9988,186 +9956,24 @@ void Gage_Find_tDableOn(float *tDableON, float *FWPK_tVOxDble, float *FWPK_Timer
 	*FWPK_Timer = (PosEdge_addr[2] - NegEdge_addr[0]) * SAMPLE_RATE_s;
 }
 
-/*
+
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
-void Gage_Find_tReqInhibit(float *TREQ_Inhibit, float *Ton_ave, float *Toff_ave, float *Num_Cycles, int *Unwanted_pulses)
+void Gage_Find_Dtemp_code(int *Dtemp_code_Decimal, float *tLong_Dtemp, int *Dtemp_HighByte, float *tShort_Dtemp, int *Dtemp_LowByte)
 {
-	*TREQ_Inhibit	=0.0;
-	*Ton_ave		=0.0;
-	*Toff_ave		=0.0;
-	*Num_Cycles		=0.0;
-
-	int i = 0;
-	for (i=0; i<GAGE_WAVEFORM_BUFFER_SIZE; i++)
-		Gage_chan_b_voltage[i] = 0;	// Initialize array before data transfer
-
-	if (!trig_ok || !data_ok)
-	{
-		//Bad acquisition
-		*TREQ_Inhibit	=999;
-		*Ton_ave		=999;
-		*Toff_ave		=999;
-		*Num_Cycles		=999;
-		return;
-	}
-
-	//	We will see 4 negative pulses of 17us and 3 positive pulses of 12us.  The last positive pulse can not be used because it
-	//  will stay high like the drain default condition.
-
-	int	PULSE_NUM_NEED  =9;		// 4 negative edges and 4 positive edges
-	int	PULSE_NUM_PROCESSED =0; // Actual num pulses Processed. Exclude first pulse in ave calculation 
-	int start_addr=0;
-	int pulse_cnt =0;
-	int icnt =0, Sample_per_cycle=0; 
-	float Vdson_peak_ave =0.0;
-	bool Find_Negative_Edge_Flag, Find_Positive_Edge_Flag, Ton_Found, Toff_Found;
-	int Ton_Found_cnt, Toff_Found_cnt;
-
-	// Variables for TREQ_Inhibit
-	float	Vdon_tReqInhibit[10]	= {0.0};
-	float	Ton[10]					= {0.0};
-	float	Toff[10]				= {0.0};
-	float	Vdon[10]				= {0.0};
-	float	Vdoff[10]				= {0.0};
-	int		Vdon_addr[10]			= {0};
-	int		Vdoff_addr[10]			= {0};
-
-	char wave_name_Vd[150] ="/0"; 
-
-	// Every cycle takes ~30us.  To be on the safe side set it to be ~35us so we will not miss the search  (35us/20ns = 1750 samples)
-	Sample_per_cycle = 2250;
-
-	for (icnt=0; icnt<PULSE_NUM_NEED; icnt++)
-	{
-		Vdon_tReqInhibit[icnt]	= -100;
-		Vdon[icnt]				= 0;
-		Vdoff[icnt]				= 0;
-		Vdon_addr[icnt]			= 0;
-		Vdoff_addr[icnt]		= 0;
-	}
-
-	Gage_Transfer_Data (GAGE_CHAN_B);	//transfer data to Gage_chan_b_voltage array
-	
-	if (g_SaveAwav)
-	{
-		//double *capture_data_B = (double *)malloc((GAGE_WAVEFORM_BUFFER_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
-		double *capture_data_B = (double *)malloc((SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
-		//for( i = 0; i < (GAGE_WAVEFORM_BUFFER_SIZE-10); i++)
-		for( i = 0; i < (SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD - 10); i++)
-		{	
-			capture_data_B[i] = (double)(Gage_chan_b_voltage[i]); // XP //	
-		}
-		CreateAwav(	capture_data_B, // Data array //
-						SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD - 10, // Size of array //
-						20.0e-9, // Sampling period //				 
-						"e:\\dl4\\TREQ_INH.awav"); // Output file and path //
-		free (capture_data_B);
-	}
-
-	start_addr = 50;						
-	while (Gage_chan_b_voltage[start_addr]> 0.5 && start_addr < SAMPLE_SIZE)
-		start_addr+=50;					// Fast forward by 1us with sample rate of 20ns
-
-	//start_addr -= 100;	//Step back 1us to start
-
-	Find_Negative_Edge_Flag	= true;
-	Find_Positive_Edge_Flag	= false;
-	Ton_Found				= false;
-	Toff_Found				= false;
-	pulse_cnt				=0;
-	Ton_Found_cnt			=0;
-	Toff_Found_cnt			=0;
-
-	// Search for the negative and positive edges
-	while ((pulse_cnt< PULSE_NUM_NEED)&& (start_addr < SAMPLE_SIZE))
-	{
-		// Find Positive edge
-
-		for(icnt = start_addr; icnt< start_addr + Sample_per_cycle ; icnt++)	
-		{
-			// Find Negative edge
-			if(Gage_chan_b_voltage[icnt] < 0.5 && Find_Negative_Edge_Flag==true)
-			{
-				Vdon[pulse_cnt]			= Gage_chan_b_voltage[icnt];
-				Vdon_addr[pulse_cnt]	= icnt;
-				Find_Positive_Edge_Flag		= true;
-				Find_Negative_Edge_Flag		= false;
-				if(pulse_cnt > 0)
-				{
-					Ton_Found			= false;
-					Toff_Found			= true;
-					Toff_Found_cnt		+= 1;
-				}
-				break;
-			}
-			// Find Positive edge
-			else
-			if(Gage_chan_b_voltage[icnt] > 0.5 && Find_Positive_Edge_Flag==true)
-			{
-				Vdoff[pulse_cnt]		= Gage_chan_b_voltage[icnt];
-				Vdoff_addr[pulse_cnt]	= icnt;
-				Find_Positive_Edge_Flag		= false;
-				Find_Negative_Edge_Flag		= true;
-				Ton_Found					= true;
-				Ton_Found_cnt				+= 1;
-				Toff_Found					= false;
-				break;
-			}
-			
-		}
-
-		// Ton 
-		if(Ton_Found == true)
-			Ton[pulse_cnt]	= (Vdoff_addr[pulse_cnt] - Vdon_addr[pulse_cnt-1])* SAMPLE_RATE_s;
-		if(pulse_cnt > 1 && Toff_Found == true)
-			Toff[pulse_cnt]	= (Vdon_addr[pulse_cnt] - Vdoff_addr[pulse_cnt-1])* SAMPLE_RATE_s;
-
-
-		// Reset start address after find a Negative or Positive edge.
-		PULSE_NUM_PROCESSED ++;
-		if(Find_Positive_Edge_Flag == true)
-			start_addr = Vdon_addr[pulse_cnt]+750;	// Move forward 15us
-		else
-			start_addr = Vdoff_addr[pulse_cnt]+500;	// Move forward 10us
-		pulse_cnt ++;
-	}
-
-
-	//Average results
-	if( Ton_Found_cnt == 4 && Toff_Found_cnt == 4 ) 
-	{	// Skip first edges
-		for(i=5; i<=8; i++)	// First Ton falling edge often low as it triggers in a sighly different palce each time
-		{
-			*Ton_ave	+= Ton[i];
-			*Toff_ave	+= Toff[i];
-		}
-
-		*Ton_ave   /=Ton_Found_cnt-2;	// average last 2 readings
-		*Toff_ave  /=Toff_Found_cnt-2;
-		*TREQ_Inhibit = *Ton_ave + *Toff_ave;
-		*Num_Cycles = (Ton_Found_cnt + (Toff_Found_cnt + 1)) / 2;	//Toff_Found_cnt + 1 because Drain stays off afterward
-		*Unwanted_pulses = pulse_cnt-1;
-	}
-	else 
-	{
-			*TREQ_Inhibit	=999.0;
-			*Ton_ave		=999.0;
-			*Toff_ave		=999.0;
-			*Num_Cycles		=999.0;
-	}
-}
-*/
-// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
-void Gage_Find_tReqInhibit(float *TREQ_Inhibit, int *INH_Cycles_S)
-{
-	*TREQ_Inhibit =0.0;
-	*INH_Cycles_S =0.0;
+	*Dtemp_code_Decimal	=0;
+	*tLong_Dtemp			=0;
+	*Dtemp_HighByte		=0;
+	*tShort_Dtemp			=0;
+	*Dtemp_LowByte		=0;
 
 	if (!trig_ok || !data_ok)
 	{
 		// Bad acquisition //
-		*TREQ_Inhibit =-999;
-		*INH_Cycles_S =-999;
+		*Dtemp_code_Decimal	= -999;
+		*tLong_Dtemp			= -999;
+		*Dtemp_HighByte		= -999;
+		*tShort_Dtemp			= -999;
+		*Dtemp_LowByte		= -999;
 		return;
 	}
 
@@ -10175,32 +9981,75 @@ void Gage_Find_tReqInhibit(float *TREQ_Inhibit, int *INH_Cycles_S)
 	int start_addr=0;
 	int pulse_cnt =0;
 	int icnt =0; 
-	int i=0;
+	int i=0, j=0;
 	bool Find_Negative_Edge = false;
 	bool Find_Positive_Edge = false;
 	int NegEdge_Found_cnt = 0; 
 	int PosEdge_Found_cnt = 0;
 	float NegEdge_value[150] = {0.0};
 	float PosEdge_value[150] = {0.0};
-	int NegEdge_addr[150] = {0};
-	int PosEdge_addr[150] = {0};
+	int	  NegEdge_addr[150]	 = {0};
+	int   PosEdge_addr[150]  = {0};
+	float tHigh[150]		 = {0.0};
+	float tLow[150]			 = {0.0};
+
+	float	tLong_Pulse		= 0,
+			tShort_Pulse	= 0,
+			tBit_xx[150]	= {0};
+
+	int		tLong_Pulse_start  = 0,
+			tShort_Pulse_start = 0;
+
+	int		Dtemp_code[150]	= {0};
+			//Dtemp_code_Decimal= 0;
+	
+	char debug_file_name[150] ="/0"; 
+
+
+	//Initialize array variables
+	//for(i=0; i<16; i++)
+	//{
+	//	tBit_xx[i]  = 0;
+	//	Dtemp_code[i] = 0;
+	//}
+
+	for(i=0; i<150; i++)
+	{
+		NegEdge_value[i]	= 0;
+		PosEdge_value[i]	= 0;
+		NegEdge_addr[i]		= 0;
+		PosEdge_addr[i]		= 0;
+		tHigh[i]			= 0;
+		tLow[i]				= 0;
+		tBit_xx[i]  = 0;
+		Dtemp_code[i] = 0;
+	}
 
 	// Transfer Gage data //
 	Gage_Transfer_Data (GAGE_CHAN_B); // Transfer data to Gage_chan_b_voltage array
 
-	if (g_SaveAwav)
+	if (g_Save_Awav_TextDebug_ALL || g_Save_Awav_TextDebug_Dtemp)
 	{
+		char awav_file_name[150] ="/0"; 
+
+		strcpy (awav_file_name, "e:\\DL4\\"); 
+		strcat (awav_file_name, g_DevName); 
+		strcat (awav_file_name, "_");
+		strcat (awav_file_name, g_WAVE_NAME);
+		strcat (awav_file_name, ".awav");
+
 		//double *capture_data_B = (double *)malloc((GAGE_WAVEFORM_BUFFER_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
-		double *capture_data_B = (double *)malloc((SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
+		double *capture_data_B = (double *)malloc((g_SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
 		//for( i = 0; i < (GAGE_WAVEFORM_BUFFER_SIZE-10); i++)
-		for( i = 0; i < (SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD - 10); i++)
+		for( i = 0; i < (g_SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD - 10); i++)
 		{	
 			capture_data_B[i] = (double)(Gage_chan_b_voltage[i]); // XP //	
 		}
 		CreateAwav(	capture_data_B, // Data array //
-						SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD - 10, // Size of array //
-						20.0e-9, // Sampling period //				 
-						"e:\\dl4\\TREQ_INH.awav"); // Output file and path //
+						g_SAMPLE_SIZE + GAGE_WAVEFORM_BUFFER_PAD - 10, // Size of array //
+						20.0e-9, // Sampling period //		
+						awav_file_name);
+						//"e:\\dl4\\TREQ_INH.awav"); // Output file and path //
 		free (capture_data_B);
 	}
 
@@ -10210,10 +10059,10 @@ void Gage_Find_tReqInhibit(float *TREQ_Inhibit, int *INH_Cycles_S)
 	NegEdge_Found_cnt =0;
 	PosEdge_Found_cnt =0;
 	start_addr =0;	
-	for(icnt =start_addr; icnt< SAMPLE_SIZE-150 ; icnt++)	
+	for(icnt =start_addr; icnt< g_SAMPLE_SIZE-150 ; icnt++)	
 	{
 		// Find Negative edge //
-		if(Gage_chan_b_voltage[icnt] < 0.4 && Find_Negative_Edge ==true)
+		if(Gage_chan_b_voltage[icnt] < 0.2 && Find_Negative_Edge ==true)
 		{
 			NegEdge_value[pulse_cnt] = Gage_chan_b_voltage[icnt];
 			NegEdge_addr[pulse_cnt] = icnt;
@@ -10222,11 +10071,11 @@ void Gage_Find_tReqInhibit(float *TREQ_Inhibit, int *INH_Cycles_S)
 			NegEdge_Found_cnt += 1;
 			pulse_cnt++;
 
-			// Skip ahead 2.5us if negative edge found to avoid ringing //
-			icnt += 125; // 2.5usec //
+			////// Skip ahead 2.5us if negative edge found to avoid ringing //
+			////icnt += 125; // 2.5usec //
 		}
 		// Find Positive edge //
-		else if(Gage_chan_b_voltage[icnt] > 0.4 && Find_Positive_Edge ==true)
+		else if(Gage_chan_b_voltage[icnt] > 0.25 && Find_Positive_Edge ==true)
 		{
 			PosEdge_value[pulse_cnt] = Gage_chan_b_voltage[icnt];
 			PosEdge_addr[pulse_cnt] = icnt;
@@ -10234,14 +10083,109 @@ void Gage_Find_tReqInhibit(float *TREQ_Inhibit, int *INH_Cycles_S)
 			Find_Negative_Edge = true;
 			PosEdge_Found_cnt += 1;
 		}
+		//Break out of for loop
+		if(pulse_cnt > 70) 
+			icnt=g_SAMPLE_SIZE;	//Break out of for loop 
 	}
 	pulse_cnt = pulse_cnt - 1; // To get total number of pulses //
 
-	// Should be 8 pulses //
-	*INH_Cycles_S = pulse_cnt;
+	//Sort out all of the pulse width
+	tLong_Pulse_start  = 0;
+	tShort_Pulse_start = 0;
+	for(i=1; i<=70; i++)	//Search within the 70 pulses
+	{
+		//ignore first pulse since you don't know if you will start from Positive or Negative edge of the waveform
+		tHigh[i]	= NegEdge_addr[i]	- PosEdge_addr[i];
+		tLow[i]		= PosEdge_addr[i+1] - NegEdge_addr[i];
 
-	// Pulse width of inhibit cycle //
-	*TREQ_Inhibit = ( NegEdge_addr[2] - NegEdge_addr[1] ) * SAMPLE_RATE_s;
+		if(tHigh[i] > 400 && tLong_Pulse_start==0)		
+		{
+			tLong_Pulse			= tHigh[i];
+			tLong_Pulse_start	= i;
+		}
+		if(tLong_Pulse_start > 0 && tShort_Pulse_start==0)	//found tLong_Pulse.  Now find tShort_Pulse
+		{
+			if(tHigh[i] > 160 && tHigh[i] < 400)	
+			{
+				tShort_Pulse		= tHigh[i];
+				tShort_Pulse_start	= i;
+			}
+		}		
+		//Break out of for loop if both Long/Short pulses and the 8 bits after Short Pulses are found
+		if(tLong_Pulse_start != 0 && tShort_Pulse_start != 0 && i>(tShort_Pulse_start+8) )
+			i = 71;
+	}
+
+	//Find Long Pulse and Short pulse
+	j=15;
+	i=tLong_Pulse_start;
+	while( i <= (tShort_Pulse_start+8) && j>=0)
+	//for(i=tLong_Pulse_start; i<=(tShort_Pulse_start+8); i++)
+	{
+		tBit_xx[j] = tLow[i];					//MSB --> LSB
+		if(tBit_xx[j] > 75)		Dtemp_code[j] = 1;
+		else					Dtemp_code[j] = 0;
+		j--;
+		i++;
+	}
+
+	*Dtemp_code_Decimal = 0;
+	*Dtemp_LowByte	  = 0;
+	*Dtemp_HighByte	  = 0;
+	//Convert low 9 bits tBit_xx[0_to_8] to Decimal for Dtemp code
+	for(j=0; j<=15; j++)
+	{
+		if(j<=8)
+			*Dtemp_code_Decimal	+= Dtemp_code[j] * pow(2.0,j);
+		if(j<=7)
+			*Dtemp_LowByte		+= Dtemp_code[j] * pow(2.0,j);		//bits 7:0
+		if(j>=8)
+			*Dtemp_HighByte		+= Dtemp_code[j] * pow(2.0,(j-8));	//bits 15:8
+	}
+
+	*tLong_Dtemp  = tLong_Pulse;
+	*tShort_Dtemp = tShort_Pulse;
+	if(tShort_Pulse < 1e-6)	
+		*Dtemp_code_Decimal = -999;
+
+	//DEBUG text File
+	if(g_Save_Awav_TextDebug_Dtemp || g_Save_Awav_TextDebug_ALL)
+	{
+		int i=0;
+		strcpy (debug_file_name, "e:\\DL4\\"); 
+		strcat (debug_file_name, g_DevName); 
+		strcat (debug_file_name, "_");
+		strcat (debug_file_name, g_WAVE_NAME);
+		strcat (debug_file_name, "_debug.txt");
+
+		//open file
+		FILE * fpr = fopen(debug_file_name, "w");
+		if (! fpr)
+			return;
+
+		//print to file
+		fprintf(fpr,"WAVE_NAME= %s \n\n",g_WAVE_NAME);
+
+		//measured values
+		fprintf(fpr,"Dtemp_code_Decimal \t= %i  \t\tDtemp_LowByte = %i ,  \tDtemp_HighByte = %i \n",*Dtemp_code_Decimal,  *Dtemp_LowByte,  *Dtemp_HighByte);
+		fprintf(fpr,"tLong_Dtemp \t\t= %.1f us  \ttShort_Dtemp = %.1f us \n",*tLong_Dtemp*20e-9*1e6,  *tShort_Dtemp*20e-9*1e6);
+		fprintf(fpr,"tLong_Pulse_start \t= %i   \t\ttShort_Pulse_start = %i \n",tLong_Pulse_start,  tShort_Pulse_start);
+
+
+		fprintf(fpr,"\nData: \n\n",g_WAVE_NAME);
+		//Peak data
+		fprintf(fpr,"Pulse \tNegEdge_addr \tNegEdge_val(V) \tPosEdge_addr \tPosEdge_val(V) \ttHigh(us), \ttLow(us) \n"); 
+		fprintf(fpr,"-----------------------------------------------------------------------------------------------------\n"); 
+		for(i=0; i<=70; i++)
+		{
+			fprintf(fpr,"%i \t%i \t\t%.2f \t\t%i \t\t%.2f \t\t%.2f \t\t%.2f \n", 
+						  i, NegEdge_addr[i], NegEdge_value[i], PosEdge_addr[i], PosEdge_value[i], tHigh[i], tLow[i] );
+
+		}
+		fprintf (fpr, "End of Data\n");
+		fclose(fpr);
+
+	}
 }
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
@@ -10257,7 +10201,7 @@ void Create_Awav_xp (	char	*wave_name,
 		strcat (Wav_outfile_name, Part_ID_LimitSet); 
 		//strcat (Wav_outfile_name, "_#"); strcat (Wav_outfile_name, Dut_serial_number); 
 		strcat (Wav_outfile_name, "_"); 
-		strcat (Wav_outfile_name, wave_name);
+		strcat (Wav_outfile_name, g_WAVE_NAME);
 		//strcat (Wav_outfile_name, "_"); strcat (Wav_outfile_name, Hdwr_id); 
 		strcat (Wav_outfile_name, ".awav"); 
 
@@ -10370,14 +10314,14 @@ void Gage_init() {
 }
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
-void Gage_Setup_Acquisition_xp ( int sample_rate_in_Hz, int sample_size )
+void Gage_Setup_Acquisition_xp ( int sample_rate_in_Hz, int g_SAMPLE_SIZE )
 {
 	//Setup gage acquisition using XP driver
 	//must be followed by ACTION_COMMIT to send settings to Hardware.
 	CsAcqCfg.u32Size             = sizeof(CSACQUISITIONCONFIG);
 	CsAcqCfg.u32Mode             = CS_MODE_DUAL;     //Dual Mode.
 	CsAcqCfg.i64SampleRate       = sample_rate_in_Hz ;    //example:50000000
-	CsAcqCfg.i64Depth            = sample_size-CsAcqCfg.i64TriggerHoldoff; 
+	CsAcqCfg.i64Depth            = g_SAMPLE_SIZE-CsAcqCfg.i64TriggerHoldoff; 
 	CsAcqCfg.i64SegmentSize		 = CsAcqCfg.i64Depth+CsAcqCfg.i64TriggerHoldoff;
 	CsAcqCfg.u32SegmentCount	 = 1;
 	CsAcqCfg.i64TriggerTimeout   = 100; //Definition: 100ns units.
@@ -12150,6 +12094,7 @@ void PV3_Connect_Drain_and_DriveON(float Vdrive)
 
 	pv3_4->set_meas_mode(PV3_MEASURE_VOLTAGE);		
 	pv3_4->set_current(10.0, RANGE_10_A);			// Time=1e3*7e-3*(Vcap-(userV+5V))/userI; max C*U/I = 369mS
+	//pv3_4->set_current(0.3, RANGE_10_A);			// Time=1e3*7e-3*(Vcap-(userV+5V))/userI; max C*U/I = 369mS
 	
 	pv3_4->set_voltage(Vdrive, RANGE_100_V);
 	wait.delay_10_us(20);
@@ -15755,6 +15700,54 @@ void Program_Trim_Register(int *Trim_Register)
 
 }
 
+void Program_All_TrimRegister()
+{
+	// This function uses I2C to load the TrimRegister[] array (either g_Pri_TrimRegister[] or 
+	// g_Sec_TrimRegister[] array to the DUTs shadow register. // 
+	int i = 0;
+	int g_EEP_W_Array[] = {g_EEP_W_E0, g_EEP_W_E2, g_EEP_W_E4, g_EEP_W_E6, g_EEP_W_E8};
+
+	for(i=0;i<5;i++)
+	{
+		DSM_I2C_Write('w', g_EEP_W_Array[i], EEpr_Bank_P[i]);
+		DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
+	}
+}
+
+void Program_Single_TrimRegister(int TrimLocation)
+{
+	////g_EEP_W_E0     = 0xE0;       //WR_Word
+	////g_EEP_W_E2     = 0xE2;       //WR_Word
+	////g_EEP_W_E4     = 0xE4;       //WR_Word
+	////g_EEP_W_E6     = 0xE6;       //WR_Word
+	////g_EEP_W_E8     = 0xE8;       //WR_Word
+	if(TrimLocation == 0xE0)
+	{
+		DSM_I2C_Write('w', g_EEP_W_E0, EEpr_Bank_P[0]);
+		DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
+	}
+	if(TrimLocation == 0xE2)
+	{
+		DSM_I2C_Write('w', g_EEP_W_E2, EEpr_Bank_P[1]);
+		DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
+	}
+	if(TrimLocation == 0xE4)
+	{
+		DSM_I2C_Write('w', g_EEP_W_E4, EEpr_Bank_P[2]);
+		DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
+	}
+	if(TrimLocation == 0xE6)
+	{
+		DSM_I2C_Write('w', g_EEP_W_E6, EEpr_Bank_P[3]);
+		DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
+	}
+	if(TrimLocation == 0xE8)
+	{
+		DSM_I2C_Write('w', g_EEP_W_E8, EEpr_Bank_P[4]);
+		DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
+	}
+}
+
 //------------------------------------------------------------------
 //HL added to read EEprom register for either primary or secondary.
 //------------------------------------------------------------------
@@ -16799,6 +16792,8 @@ uint16_t Convert_BIN_2_Dec(int *WordArray)
 
 void TrimCode_To_TrimBit(short TrimCode, char TrimParam[30], char p_or_s)
 {
+	//This function updates the trimcode to the correct global register bits and store it for use through out entire program.
+
 	int k;
 	short TrimCode_Binary;
 	int   TrimRange;
@@ -17907,12 +17902,12 @@ void Search_iOVp_P(float *iOVp_th_P)
 			iSet,
 			iOVp_target,
 			iStart,
-			iRamp[500]={0},
-			vMeas[500]={0},
+			iRamp[1000]={0},
+			vMeas[1000]={0},
 			vSet,
 			vStep,
 			vStart,
-			vRamp[500]={0},
+			vRamp[1000]={0},
 			vR_600K=0;
 
 	int		i=0,
@@ -18068,12 +18063,12 @@ void Search_iOVm_P(float *iOVm_th_P)
 			iSet,
 			iOVm_target,
 			iStart,
-			iRamp[500]={0},
-			vMeas[500]={0},
+			iRamp[1000]={0},
+			vMeas[1000]={0},
 			vSet,
 			vStep,
 			vStart,
-			vRamp[500]={0},
+			vRamp[1000]={0},
 			vR_600K=0;
 
 	int		i=0,
@@ -18516,5 +18511,89 @@ void Search_iUVm_P(float *iUVm_th_P)
 		}
 		fprintf(fpr,"\n");
 		fclose(fpr);
+	}
+}
+
+void BPP_zigzag(float vBPP1, float vBPP2, float vBPP3)
+{
+	//vBPP1 = 5.5;
+	//vBPP2 = 4.3;
+	//vBPP3 = 5.4;
+
+	//BPP zig zag (5V to 5.5V to 4.3V to 5.4V below OV threshold)
+	BPP_dvi->set_voltage(BPP_ch, vBPP1, VOLT_10_RANGE); // DVI_11_1
+	delay(1);
+	BPP_dvi->set_voltage(BPP_ch, vBPP2, VOLT_10_RANGE); // DVI_11_1
+	delay(1);
+	BPP_dvi->set_voltage(BPP_ch, vBPP3, VOLT_10_RANGE); // DVI_11_1
+	delay(1);
+}
+
+void Regain_I2C_P(int regain_I2C_mode)
+{
+	if(regain_I2C_mode == g_Vpin_Low_to_High)
+	{
+		UV_dvi->set_current(UV_ch,		30e-3,	RANGE_300_MA);	//set really low current for Vmeas
+		UV_dvi->set_voltage(UV_ch,		0.0,	VOLT_10_RANGE); // DVI_21_1
+		wait.delay_10_us(10);
+		UV_dvi->set_voltage(UV_ch,		3.3,	VOLT_10_RANGE); // DVI_21_1
+		wait.delay_10_us(10);
+		TS_ovi3->set_voltage(TSovi3_ch, 3.3,	VOLT_10_RANGE); // OVI_3_0
+		wait.delay_10_us(10);
+	}
+	else if(regain_I2C_mode == g_TSpin_Low_to_High)
+	{
+		TS_ovi3->set_voltage(TSovi3_ch, 0.0,	VOLT_10_RANGE); // OVI_3_0
+		wait.delay_10_us(10);
+		TS_ovi3->set_voltage(TSovi3_ch, 3.3,	VOLT_10_RANGE); // OVI_3_0
+		wait.delay_10_us(10);
+		UV_dvi->set_voltage(UV_ch,		3.3,	VOLT_10_RANGE); // DVI_21_1
+		wait.delay_10_us(10);
+	}
+	//Connect relays for I2C use
+		Close_relay(K1_TS_RB);	//Connect Pullup R to TS pin.
+		Close_relay(K1_UV_RB);	//Connect Pullup R to UV pin.
+		//Connect DSM from Primary after releasing VPIN or TS pins
+		Close_relay(K1_DSM_TB);	
+		Close_relay(K3_DSM_TB);	
+}
+
+void Disable_n_Disconnect_DSMI2C_via(int release_pin)
+{
+	if(release_pin == g_release_TSpin)
+	{
+		//Disable DSM I2C (Any I2C write command will bring back I2C)
+		DSM_set_I2C_timeout(0, 1);
+		DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
+
+		//Disconnect DSM from Primary after releasing VPIN or TS pins
+		Open_relay(K1_DSM_TB);	
+		Open_relay(K3_DSM_TB);	
+		delay(1);
+
+		Open_relay(K1_TS_RB);	//disConnect Pullup R to TS pin.
+		Open_relay(K1_UV_RB);	//disConnect Pullup R to UV pin.
+
+		////Setup TSpin to directly connect to ovi-3-0 instead of pullup for vForce
+		//Open_relay(K1_TS_RB);
+		delay(1);
+	}
+	else if(release_pin == g_release_Vpin)
+	{
+		//Disable DSM I2C (Any I2C write command will bring back I2C)
+		DSM_set_I2C_timeout(0, 1);
+		DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
+
+		//Disconnect DSM from Primary after releasing VPIN or TS pins
+		Open_relay(K1_DSM_TB);	
+		Open_relay(K3_DSM_TB);	
+		delay(1);
+
+		Open_relay(K1_TS_RB);	//disConnect Pullup R to TS pin.
+		Open_relay(K1_UV_RB);	//disConnect Pullup R to UV pin.
+
+		//////Setup TSpin to directly connect to ovi-3-0 instead of pullup for vForce
+		////Open_relay(K1_TS_RB);
+		delay(1);
 	}
 }

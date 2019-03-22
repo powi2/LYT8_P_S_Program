@@ -114,10 +114,19 @@ void First(test_function& func)
 	//Global Variables
 	//---------------------------------------------------
 
+	g_Require_PartID = false;
+
 	//Global Characterization variables
 	g_Char_iOVp_XYplot = 0;
 	g_Char_iOVm_XYplot = 0;
 	g_USE_VR_600K = false;
+
+	//Global digitizer Awav and Text variables
+	g_Save_Awav_TextDebug_ALL		= 0;
+	g_Save_Awav_TextDebug_Dtemp		= 1;
+
+	
+
 
 
 	hvs_15->init();
@@ -181,15 +190,13 @@ void First(test_function& func)
 	gCC_pt_S =0.0;
 	gCC_exp_S =0.0;
     gCB_exp_S =0.0;
-    gILIM_pt_S  =0.0;
-    gILIM_exp_S =0.0;
-	gILIM_I2f_pt_S =0.0;
+    g_ILIM_pt_S  =0.0;
+    g_ILIM_exp_S =0.0;
+	g_ILIM_I2f_pt_S =0.0;
 	gISvth =0.0;
     gVshunt_Init_Pr =0.0;
     gVshunt_Init_Se =0.0;
 	MEAS_Isvth_FLAG =0;
-	BPP_4p7uF = false;
-	BPP_p47uF = false;
 	gDly_Wait_and_Listen_Test_Mode = 260; //Test Mode delay for "Wait and Listen" 2.5ms (250 x 10us)
 	gDly_Wait_and_Listen_Normal_Mode = 90; //Normal Mode delay for "Wait and Listen" 90 ms
 	g_readTime_p = 10; //x*10us => 100us 
@@ -238,7 +245,6 @@ void First(test_function& func)
 	g_VBPP_P_s_final = 0;
 	g_ISVTH = 0;
 	g_CCoff_final = 0;
-	gRTM_Slope = 0;
 	g_IsCal_final = 0;
 	g_I2C_Pullup = 3.3;
 	g_VBPP_P_S_FailFlag = 0;
@@ -288,7 +294,7 @@ void First(test_function& func)
 	UV_dvi      = dvi_21;  //DVI_21_1
 
 	HSG_ovi     = ovi_1;  //OVI_1_0
-	BCLMP_ovi   = ovi_1;  //OVI_1_1
+	BUFCLMP_ovi   = ovi_1;  //OVI_1_1
 	IS_ovi      = ovi_1;  //OVI_1_2,OVI_1_4
 	NC_ovi      = ovi_1;  //OVI_1_3
 	TS_ovi      = ovi_1;  //OVI_1_5
@@ -483,11 +489,9 @@ void First(test_function& func)
 		}
 
 		// Find RDSON buffer gain //
-		SAMPLE_SIZE = GAGE_POST_4K;
+		g_SAMPLE_SIZE = GAGE_POST_4K;
 		BUFRes_Div_ratio = 1.0;
-		g_SaveAwav = 0;
 		g_BUFgain = Rdson_Buffer_Cal(BUFRes_Div_ratio);
-		g_SaveAwav = 0;
 
 		// Get Framework Version for datalogging. The PiGetFrameworkVersion() function returns the framework 
 		// version as a string.  Need to convert to a number for datalogging.  //

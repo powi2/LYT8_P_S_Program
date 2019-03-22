@@ -182,7 +182,7 @@ Pulse pulse;
 	//-------------------------------------------------------------------------------------------
 	//  TS pin leakages 
 	//------------------------------------------------------------------------------------------
-	TS_ovi3->set_meas_mode(TSovi3_ch, DVI_MEASURE_CURRENT);
+	TS_ovi3->set_meas_mode(TSovi3_ch, OVI_MEASURE_CURRENT);
 	TS_ovi3->set_voltage(TSovi3_ch, 5.0, RANGE_10_V);
 	TS_ovi3->set_current(TSovi3_ch, 300e-6, RANGE_300_UA);	
 	wait.delay_10_us(200);

@@ -60,62 +60,69 @@ void IOV_Pre_P(test_function& func)
 	float iOVp_pt_P     =0;
 	float iOVm_pt_P     =0;
 	float iOVp_prg_P    =0;
-	float iOVp_Target_P = 5.25; 
 	int iOVp_TrCode_P   = 0;
 	int iOVp_BitCode_P  = 0;
 	int EEtr27_ZTML0_P  = 0;
 	int EEtr28_ZTML1_P  = 0;
 	
-	float iOVp_Sim_P = 0;
+	float iOVp_Sim_P	 = 0;
 	float iOVp_Sim_Chg_P = 0;
-	float iOVp_ExpChg   = 0;
-	float iOVp_PrgChg   = 0;
-	float iOVp_pst_P =0;
-	float iOVp_Pre_TT =0;
+	float iOVp_ExpChg    = 0;
+	float iOVp_ExpA_P	 = 0;
+	float iOVp_PrgChg    = 0;
+	float iOVp_pst_P	 = 0;
+	float iOVp_Pre_TT	 = 0;
 
 
 	//Trimcode & bit weights.
-	float	iOVp_TrimWt[32]   = {0.0};
-	float	iOVp_code[32]     = {0.0};
+	float	iOVp_TrimWt[32]    = {0.0};
+	float	iOVp_code[32]      = {0.0};
+	float	iOVp_SignCode[32]  = {0.0};
 	float   smallest_diff_val  = 999999.9;
 	float   temp_1             = 0;
 	int     smallest_diff_idx  = 0;
 	int		WordArray[16]	   = {0};
 	int		i;
+	int		TrCode_shift_n_bits	=0;
 
-	i = 0;
-	iOVp_code[i] =  0	;	 iOVp_TrimWt[i] 	=	0.000	;	    i++	;
-	iOVp_code[i] =  1	;	 iOVp_TrimWt[i] 	=	-0.990	;	    i++	;
-	iOVp_code[i] =  2	;	 iOVp_TrimWt[i] 	=	-1.961	;	    i++	;
-	iOVp_code[i] =  3	;	 iOVp_TrimWt[i] 	=	-2.913	;	    i++	;
-	iOVp_code[i] =  4	;	 iOVp_TrimWt[i] 	=	-3.846	;	    i++	;
-	iOVp_code[i] =  5	;	 iOVp_TrimWt[i] 	=	-4.762	;	    i++	;
-	iOVp_code[i] =  6	;	 iOVp_TrimWt[i] 	=	-5.660	;	    i++	;
-	iOVp_code[i] =  7	;	 iOVp_TrimWt[i] 	=	-6.542	;	    i++	;
-	iOVp_code[i] =  8	;	 iOVp_TrimWt[i] 	=	-7.407	;	    i++	;
-	iOVp_code[i] =  9	;	 iOVp_TrimWt[i] 	=	-8.257	;	    i++	;
-	iOVp_code[i] = 10	;	 iOVp_TrimWt[i] 	=	-9.091	;	    i++	;
-	iOVp_code[i] = 11	;	 iOVp_TrimWt[i] 	=	-9.910	;	    i++	;
-	iOVp_code[i] = 12	;	 iOVp_TrimWt[i] 	=	-10.714	;	    i++	;
-	iOVp_code[i] = 13	;	 iOVp_TrimWt[i] 	=	-11.504	;	    i++	;
-	iOVp_code[i] = 14	;	 iOVp_TrimWt[i] 	=	-12.281	;	    i++	;
-	iOVp_code[i] = 15	;	 iOVp_TrimWt[i] 	=	-13.043	;	    i++	;
-	iOVp_code[i] =  16	;	 iOVp_TrimWt[i] 	=	1.010	;	    i++	;
-	iOVp_code[i] =  17	;	 iOVp_TrimWt[i] 	=	2.041	;	    i++	;
-	iOVp_code[i] =  18	;	 iOVp_TrimWt[i] 	=	3.093	;	    i++	;
-	iOVp_code[i] =  19	;	 iOVp_TrimWt[i] 	=	4.167	;	    i++	;
-	iOVp_code[i] =  20	;	 iOVp_TrimWt[i] 	=	5.263	;	    i++	;
-	iOVp_code[i] =  21	;	 iOVp_TrimWt[i] 	=	6.383	;	    i++	;
-	iOVp_code[i] =  22	;	 iOVp_TrimWt[i] 	=	7.527	;	    i++	;
-	iOVp_code[i] =  23	;	 iOVp_TrimWt[i] 	=	8.696	;	    i++	;
-	iOVp_code[i] =  24	;	 iOVp_TrimWt[i] 	=	9.890	;	    i++	;
-	iOVp_code[i] =  25	;	 iOVp_TrimWt[i] 	=	11.111	;	    i++	;
-	iOVp_code[i] =  26	;	 iOVp_TrimWt[i] 	=	12.360	;	    i++	;
-	iOVp_code[i] =  27	;	 iOVp_TrimWt[i] 	=	13.636	;	    i++	;
-	iOVp_code[i] =  28	;	 iOVp_TrimWt[i] 	=	14.943	;	    i++	;
-	iOVp_code[i] =  29	;	 iOVp_TrimWt[i] 	=	16.279	;	    i++	;
-	iOVp_code[i] =  30	;	 iOVp_TrimWt[i] 	=	17.647	;	    i++	;
-	iOVp_code[i] =  31	;	 iOVp_TrimWt[i] 	=	19.048	;	    i++	;
+	uint16_t converted_dec1 = 0;
+	uint16_t converted_dec2 = 0;
+
+
+	i = 0;																
+	iOVp_code[i] 	=	0	;		iOVp_SignCode[i] 	=	0	;		 iOVp_TrimWt[i] 	=	0		;		    i++	;
+	iOVp_code[i] 	=	1	;		iOVp_SignCode[i] 	=	1	;		 iOVp_TrimWt[i] 	=	-0.99	;		    i++	;
+	iOVp_code[i] 	=	2	;		iOVp_SignCode[i] 	=	2	;		 iOVp_TrimWt[i] 	=	-1.961	;		    i++	;
+	iOVp_code[i] 	=	3	;		iOVp_SignCode[i] 	=	3	;		 iOVp_TrimWt[i] 	=	-2.913	;		    i++	;
+	iOVp_code[i] 	=	4	;		iOVp_SignCode[i] 	=	4	;		 iOVp_TrimWt[i] 	=	-3.846	;		    i++	;
+	iOVp_code[i] 	=	5	;		iOVp_SignCode[i] 	=	5	;		 iOVp_TrimWt[i] 	=	-4.762	;		    i++	;
+	iOVp_code[i] 	=	6	;		iOVp_SignCode[i] 	=	6	;		 iOVp_TrimWt[i] 	=	-5.66	;		    i++	;
+	iOVp_code[i] 	=	7	;		iOVp_SignCode[i] 	=	7	;		 iOVp_TrimWt[i] 	=	-6.542	;		    i++	;
+	iOVp_code[i] 	=	8	;		iOVp_SignCode[i] 	=	8	;		 iOVp_TrimWt[i] 	=	-7.407	;		    i++	;
+	iOVp_code[i] 	=	9	;		iOVp_SignCode[i] 	=	9	;		 iOVp_TrimWt[i] 	=	-8.257	;		    i++	;
+	iOVp_code[i] 	=	10	;		iOVp_SignCode[i] 	=	10	;		 iOVp_TrimWt[i] 	=	-9.091	;		    i++	;
+	iOVp_code[i] 	=	11	;		iOVp_SignCode[i] 	=	11	;		 iOVp_TrimWt[i] 	=	-9.91	;		    i++	;
+	iOVp_code[i] 	=	12	;		iOVp_SignCode[i] 	=	12	;		 iOVp_TrimWt[i] 	=	-10.714	;		    i++	;
+	iOVp_code[i] 	=	13	;		iOVp_SignCode[i] 	=	13	;		 iOVp_TrimWt[i] 	=	-11.504	;		    i++	;
+	iOVp_code[i] 	=	14	;		iOVp_SignCode[i] 	=	14	;		 iOVp_TrimWt[i] 	=	-12.281	;		    i++	;
+	iOVp_code[i] 	=	15	;		iOVp_SignCode[i] 	=	15	;		 iOVp_TrimWt[i] 	=	-13.043	;		    i++	;
+	iOVp_code[i] 	=	16	;		iOVp_SignCode[i] 	=	-1	;		 iOVp_TrimWt[i] 	=	1.01	;		    i++	;
+	iOVp_code[i] 	=	17	;		iOVp_SignCode[i] 	=	-2	;		 iOVp_TrimWt[i] 	=	2.041	;		    i++	;
+	iOVp_code[i] 	=	18	;		iOVp_SignCode[i] 	=	-3	;		 iOVp_TrimWt[i] 	=	3.093	;		    i++	;
+	iOVp_code[i] 	=	19	;		iOVp_SignCode[i] 	=	-4	;		 iOVp_TrimWt[i] 	=	4.167	;		    i++	;
+	iOVp_code[i] 	=	20	;		iOVp_SignCode[i] 	=	-5	;		 iOVp_TrimWt[i] 	=	5.263	;		    i++	;
+	iOVp_code[i] 	=	21	;		iOVp_SignCode[i] 	=	-6	;		 iOVp_TrimWt[i] 	=	6.383	;		    i++	;
+	iOVp_code[i] 	=	22	;		iOVp_SignCode[i] 	=	-7	;		 iOVp_TrimWt[i] 	=	7.527	;		    i++	;
+	iOVp_code[i] 	=	23	;		iOVp_SignCode[i] 	=	-8	;		 iOVp_TrimWt[i] 	=	8.696	;		    i++	;
+	iOVp_code[i] 	=	24	;		iOVp_SignCode[i] 	=	-9	;		 iOVp_TrimWt[i] 	=	9.89	;		    i++	;
+	iOVp_code[i] 	=	25	;		iOVp_SignCode[i] 	=	-10	;		 iOVp_TrimWt[i] 	=	11.111	;		    i++	;
+	iOVp_code[i] 	=	26	;		iOVp_SignCode[i] 	=	-11	;		 iOVp_TrimWt[i] 	=	12.36	;		    i++	;
+	iOVp_code[i] 	=	27	;		iOVp_SignCode[i] 	=	-12	;		 iOVp_TrimWt[i] 	=	13.636	;		    i++	;
+	iOVp_code[i] 	=	28	;		iOVp_SignCode[i] 	=	-13	;		 iOVp_TrimWt[i] 	=	14.943	;		    i++	;
+	iOVp_code[i] 	=	29	;		iOVp_SignCode[i] 	=	-14	;		 iOVp_TrimWt[i] 	=	16.279	;		    i++	;
+	iOVp_code[i] 	=	30	;		iOVp_SignCode[i] 	=	-15	;		 iOVp_TrimWt[i] 	=	17.647	;		    i++	;
+	iOVp_code[i] 	=	31	;		iOVp_SignCode[i] 	=	-16	;		 iOVp_TrimWt[i] 	=	19.048	;		    i++	;
+
 
 
 
@@ -198,11 +205,177 @@ void IOV_Pre_P(test_function& func)
 			//7. inject current into VPIN starting low to find the IOV+ threshold by looking when drain flips.	
 			//8. Once drain flipped, now search down to find IOV-		
 			Search_iOVp_P(&iOVp_pt_P);
-			PiDatalog(func, 	A_iOVp_pt_P,      iOVp_pt_P,              26, POWER_MICRO);
+				PiDatalog(func, 	A_iOVp_pt_P,      iOVp_pt_P,				26, POWER_MICRO);
+				PiDatalog(func, 	A_iOVp_target_P,  g_iOVp_TARGET_Trimops_P,  26, POWER_MICRO);
+
 
 			g_iOVp_pt_P = iOVp_pt_P;
+			if(iOVp_pt_P > 90) g_iOVp_pt_P = 99e-6;
 
 			Search_iOVm_P(&iOVm_pt_P);  //only for TEST to observe iOV- is working here.  No need to datalog.
+
+		//	Open_relay(K1_UV_RB);	//UV to RB_10kohm
+		//	Open_relay(K2_UV_RB);	//UV to RB_600k to K2_UV to DVI-21-1
+		//	Open_relay(K2_D_RB);	//D  to RB_82uH_50ohm to K2_D to DVI-11-0
+		//	delay(1);
+
+		//Power_Down_I2C_P();
+	}
+	//vForce control iVpin version
+	if(g_USE_VR_600K==true)
+	{
+		Setup_Resources_for_I2C_P();
+		PowerUp_I2C_P();
+
+		DSM_I2C_Write('b', g_TM_CTRL, 0x06);	//0x40, 0x06 (enable analog mode + core_en)
+
+		//3. write CFG<18:17>=10 on RegAddr 'ANA_CTRL_1' to stay in I2C after powerup.
+		DSM_I2C_Write('w', g_ANA_CTRL_1, 0x0024);	//0x46, 0x0024 (I2C password + observe drain "Line OV" signal
+
+		//Release Vpin and expect Vpin drop to ~2.3V after command issued.
+		DSM_I2C_Write('b', g_PINSDA_CTRL, 0x01);	//0x4E, 0x01 (release Vpin)
+		DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);	//Disable DSM I2C
+
+		////Force lines could not be connected  (will cause Vpin to go low if connected)
+		//dvi_9->set_meas_mode(DVI_CHANNEL_0, DVI_MEASURE_DIFF);
+		//dvi_9->set_diff_range(RANGE_100_V);
+		//dvi_9->open_relay(CONN_FORCE0);
+		//dvi_9->open_relay(CONN_FORCE1);
+		//delay(1);
+		//Close_relay(K2AB_VR_SPI_RB); //dvi-9-0 S "VR_600K_1" & dvi-9-1 S "VR_600K_2"
+		//delay(4);
+
+		//Disconnect DSM from Primary after releasing VPIN or TS pins
+		Open_relay(K1_DSM_TB);	
+		Open_relay(K3_DSM_TB);	
+		delay(1);
+
+		Close_relay(K1_UV_RB);	//UV to RB_10kohm
+		Close_relay(K2_UV_RB);	//UV to RB_600k to K2_UV to DVI-21-1
+		Close_relay(K2_D_RB);	//D  to RB_82uH_50ohm to K2_D to DVI-11-0
+			delay(4);
+
+		//Drain setup to connect to Ridder board with RL load and set Drain to 5V and ready for vMeas mode
+			D_dvi->set_current(D_ch, 5e-3, RANGE_300_MA); // Does not need 100mA for this test.
+			D_dvi->set_voltage(D_ch, 5.0, VOLT_20_RANGE); // DVI_11_0
+			//D_dvi->set_meas_mode(D_ch, DVI_MEASURE_CURRENT);
+			D_dvi->set_meas_mode(D_ch, DVI_MEASURE_VOLTAGE);
+			wait.delay_10_us(20);
+
+		UV_dvi->set_voltage(UV_ch, 30, VOLT_50_RANGE); 
+		wait.delay_10_us(20);
+		UV_dvi->set_current(UV_ch, 70e-6, RANGE_300_UA);	
+		UV_dvi->set_meas_mode(UV_ch, DVI_MEASURE_CURRENT);
+		wait.delay_10_us(20);
+
+		//7. inject current into VPIN starting low to find the IOV+ threshold by looking when drain flips.	
+			//8. Once drain flipped, now search down to find IOV-		
+			Search_iOVp_P(&iOVp_pt_P);
+			PiDatalog(func, 	A_iOVp_pt_P,      iOVp_pt_P,              26, POWER_MICRO);
+
+			Open_relay(K1_UV_RB);	//UV to RB_10kohm
+			Open_relay(K2_UV_RB);	//UV to RB_600k to K2_UV to DVI-21-1
+			Open_relay(K2_D_RB);	//D  to RB_82uH_50ohm to K2_D to DVI-11-0
+			delay(1);
+
+		Power_Down_I2C_P();
+	}
+
+
+
+	//Simulation
+	//if(g_Trim_Enable_P)
+	//{
+		// IOV_Code //
+		// Find which trim code will make iOVp_pt_P closest to target //
+		smallest_diff_val = 999999.9;
+		smallest_diff_idx = 0;
+		for (i=0; i<=31; i++)
+		{
+			temp_1 = (iOVp_pt_P * (1 + (iOVp_TrimWt[i]/100)) -  g_iOVp_TARGET_Trimops_P);
+			if (fabs(temp_1) < fabs(smallest_diff_val))
+			{
+				smallest_diff_val = temp_1;
+				smallest_diff_idx = i;
+			}
+		}
+
+		//Debug only start for Manual forcing
+			//smallest_diff_idx	= 31;	//expect sim result to be the same if 0.  
+			EEpr_Bank_P[E8]		= 0;	//
+		//Debug only stop for Manual forcing
+
+		iOVp_TrCode_P   = smallest_diff_idx;
+		iOVp_TrCode_P   = iOVp_code[smallest_diff_idx];
+		iOVp_BitCode_P  = iOVp_SignCode[smallest_diff_idx];
+		iOVp_ExpChg     = iOVp_TrimWt[smallest_diff_idx];
+		iOVp_ExpA_P		= (iOVp_TrimWt[smallest_diff_idx]/100 +1)*iOVp_pt_P - iOVp_pt_P;
+
+			PiDatalog(func, 	A_iOVp_TrCode_P,   iOVp_TrCode_P,				26, POWER_UNIT);
+			PiDatalog(func, 	A_iOVp_BitCode_P,  iOVp_BitCode_P,				26, POWER_UNIT);
+			PiDatalog(func, 	A_iOVp_ExpChg_P,   iOVp_ExpChg,					26, POWER_UNIT);
+			PiDatalog(func, 	A_iOVp_ExpA_P,	   iOVp_ExpA_P,					26, POWER_MICRO);
+			PiDatalog(func, 	A_EeTr72_iOV0_P,   (iOVp_TrCode_P & 0x01)/1,	26, POWER_UNIT);
+			PiDatalog(func, 	A_EeTr73_iOV1_P,   (iOVp_TrCode_P & 0x02)/2,	26, POWER_UNIT);
+			PiDatalog(func, 	A_EeTr74_iOV2_P,   (iOVp_TrCode_P & 0x04)/4,	26, POWER_UNIT);
+			PiDatalog(func, 	A_EeTr75_iOV3_P,   (iOVp_TrCode_P & 0x08)/8,	26, POWER_UNIT);
+			PiDatalog(func, 	A_EeTr76_iOV4_P,   (iOVp_TrCode_P & 0x10)/16,	26, POWER_UNIT);
+
+		TrimCode_To_TrimBit(iOVp_TrCode_P, "IOV_P", 'p');	//convert trimcode to register bits and store to register temp array
+
+		TrCode_shift_n_bits = gP_Reg_Start_Bit_IOV - g_E8_start_bit;
+		EEpr_Bank_P[E8] = EEpr_Bank_P[E8] | ( iOVp_TrCode_P << TrCode_shift_n_bits );
+
+		Regain_I2C_P(g_TSpin_Low_to_High);
+		EEPROM_Write_Enable_P();
+		Program_Single_TrimRegister(g_EEP_W_E8);
+	//}
+
+
+	//post Simulation measurement
+	if(g_USE_VR_600K==false)
+	{
+		//Setup_Resources_for_I2C_P();
+		//PowerUp_I2C_P();
+
+		DSM_I2C_Write('b', g_TM_CTRL, 0x06);	//0x40, 0x06 (enable analog mode + core_en)
+
+		//3. write CFG<18:17>=10 on RegAddr 'ANA_CTRL_1' to stay in I2C after powerup.
+		DSM_I2C_Write('w', g_ANA_CTRL_1, 0x0024);	//0x46, 0x0024 (I2C password + observe drain "Line OV" signal
+
+		//Release Vpin and expect Vpin drop to ~2.3V after command issued.
+		DSM_I2C_Write('b', g_PINSDA_CTRL, 0x01);	//0x4E, 0x01 (release Vpin)
+		//DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);	//Disable DSM I2C
+
+		//Disconnect DSM from Primary after releasing VPIN or TS pins
+		Open_relay(K1_DSM_TB);	
+		Open_relay(K3_DSM_TB);	
+		delay(1);
+
+		//6. release VPIN (SDA) for VPIN operation.  		
+			UV_dvi->set_current(UV_ch, 1e-9, RANGE_300_UA);	//set really low current for Vmeas
+			UV_dvi->set_voltage(UV_ch, 45, VOLT_50_RANGE); 
+			delay(1);
+
+		//Drain setup to connect to Ridder board with RL load and set Drain to 5V and ready for vMeas mode
+			D_dvi->set_current(D_ch, 5e-3, RANGE_300_MA); // Does not need 100mA for this test.
+			D_dvi->set_voltage(D_ch, 5.0, VOLT_20_RANGE); // DVI_11_0
+			//D_dvi->set_meas_mode(D_ch, DVI_MEASURE_CURRENT);
+			D_dvi->set_meas_mode(D_ch, DVI_MEASURE_VOLTAGE);
+			wait.delay_10_us(20);
+			
+			//7. inject current into VPIN starting low to find the IOV+ threshold by looking when drain flips.	
+			//8. Once drain flipped, now search down to find IOV-		
+			Search_iOVp_P(&iOVp_Sim_P);
+
+			iOVp_Sim_Chg_P = ((iOVp_Sim_P/iOVp_pt_P)-1)*100.0;
+
+				PiDatalog(func, 	A_iOVp_Sim_P,      iOVp_Sim_P,              26, POWER_MICRO);
+				PiDatalog(func, 	A_iOVp_Sim_Chg_P,  iOVp_Sim_Chg_P,          26, POWER_UNIT);
+
+			//g_iOVp_pt_P = iOVp_Sim_P;
+
+			//Search_iOVm_P(&iOVm_pt_P);  //only for TEST to observe iOV- is working here.  No need to datalog.
 
 			Open_relay(K1_UV_RB);	//UV to RB_10kohm
 			Open_relay(K2_UV_RB);	//UV to RB_600k to K2_UV to DVI-21-1
@@ -235,14 +408,10 @@ void IOV_Pre_P(test_function& func)
 		//Close_relay(K2AB_VR_SPI_RB); //dvi-9-0 S "VR_600K_1" & dvi-9-1 S "VR_600K_2"
 		//delay(4);
 
-
 		//Disconnect DSM from Primary after releasing VPIN or TS pins
 		Open_relay(K1_DSM_TB);	
 		Open_relay(K3_DSM_TB);	
 		delay(1);
-
-
-
 
 		Close_relay(K1_UV_RB);	//UV to RB_10kohm
 		Close_relay(K2_UV_RB);	//UV to RB_600k to K2_UV to DVI-21-1
@@ -274,4 +443,7 @@ void IOV_Pre_P(test_function& func)
 
 		Power_Down_I2C_P();
 	}
+
+
+
 }

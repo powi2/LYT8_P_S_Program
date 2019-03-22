@@ -69,7 +69,7 @@ void SR_Delay_tREQinh(test_function& func)
 //////	float iBPS=0.0;
 //////	float vset=0.0;
 //////	float TREQ_INH=0.0;
-//////	int INH_Cycles_S = 0;
+//////	int NTC_HighByte = 0;
 //////	float TON_P=0.0;
 //////	float TOFF_P=0.0;
 //////	float tHS=0.0;
@@ -648,10 +648,10 @@ void SR_Delay_tREQinh(test_function& func)
 //////	//               then it goes to auto-restart.
 //////	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
 //////	// Gage sample setup //
-//////	SAMPLE_SIZE = GAGE_POST_32K;
+//////	g_SAMPLE_SIZE = GAGE_POST_32K;
 //////
 //////	// Channel B setup //
-//////	Gage_Setup_Acquisition_xp(SAMPLE_RATE_Hz,SAMPLE_SIZE); 
+//////	Gage_Setup_Acquisition_xp(SAMPLE_RATE_Hz,g_SAMPLE_SIZE); 
 //////
 //////	gage_input_control_xp (GAGE_CHAN_B, // channel
 //////			GAGE_INPUT_ENABLE, // enable / disable
@@ -663,7 +663,7 @@ void SR_Delay_tREQinh(test_function& func)
 //////			GAGE_PM_5_V, // range for CHA trigger
 //////			GAGE_POSITIVE, // slope
 //////			0.15, // 1.0V trigger level 
-//////	   		SAMPLE_SIZE); // 20ns * GAGE_WAVEFORM_BUFFER_SIZE
+//////	   		g_SAMPLE_SIZE); // 20ns * GAGE_WAVEFORM_BUFFER_SIZE
 //////
 //////	// Set up Buffer Clamp //
 //////	BC_ovi->set_current(BC_ch, 30e-3, RANGE_30_MA);
@@ -876,9 +876,9 @@ void SR_Delay_tREQinh(test_function& func)
 //////
 //////	Gage_Wait_For_Capture_Complete();
 //////
-//////	g_SaveAwav = 0;
-//////	Gage_Find_tReqInhibit(&TREQ_INH, &INH_Cycles_S);
-//////	g_SaveAwav = 0;
+//////	g_Save_Awav_TextDebug_ALL = 0;
+//////	Gage_Find_NTCcode(&TREQ_INH, &NTC_HighByte);
+//////	g_Save_Awav_TextDebug_ALL = 0;
 //////
 //////	// Powerdown //
 //////	SR_dvi2k->set_current(SR_ch, 20e-3, RANGE_20_MA); // DVI_13_1, dvi2k //
@@ -2103,8 +2103,8 @@ void SR_Delay_tREQinh(test_function& func)
 //////	PiDatalog(func, A_SR_threshold, SR_threshold, 18, POWER_MILLI);
 //////	PiDatalog(func, A_SR_chk_Open, SRCkOpen, 18, POWER_UNIT);
 //////	PiDatalog(func, A_SR_chk_5nF, SRCkCap, 18, POWER_UNIT);
-//////	PiDatalog(func, A_tREQ_Inhibit, TREQ_INH, 28, POWER_MICRO);
-//////	PiDatalog(func, A_nCycles_Inhibit, INH_Cycles_S, 28, POWER_UNIT);
+//////	PiDatalog(func, A_tLong_NTC, TREQ_INH, 28, POWER_MICRO);
+//////	PiDatalog(func, A_nCycles_Inhibit, NTC_HighByte, 28, POWER_UNIT);
 //////	PiDatalog(func, A_Unwanted_pulses, Unwanted_pulses, 28, POWER_UNIT);
 //////	PiDatalog(func, A_Pulse_dly_HS, Pulse_dly_HS, 28, POWER_MICRO);
 //////	PiDatalog(func, A_Pulse_dly_0V, Pulse_dly_0V, 28, POWER_MICRO);

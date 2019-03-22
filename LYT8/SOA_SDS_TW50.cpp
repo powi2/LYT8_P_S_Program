@@ -120,7 +120,7 @@ void SOA_SDS_TW50(test_function& func)
 //////	// Initialize Instruments //
 ////////	Initialize_Instruments();
 //////	
-//////	if (gMOSFET_SIZE_Trimops == 5)
+//////	if (g_FET_Size_Trimops == 5)
 //////	{
 //////		if (!strnicmp(Part_ID_LimitSet, "INN3365", 7))
 //////		{
@@ -131,7 +131,7 @@ void SOA_SDS_TW50(test_function& func)
 //////			vSOA = 13.6; // 7/22/17 //
 //////		}
 //////	}
-//////	if (gMOSFET_SIZE_Trimops == 6)
+//////	if (g_FET_Size_Trimops == 6)
 //////	{
 //////		if (!strnicmp(Part_ID_LimitSet, "INN3366", 7))
 //////		{
@@ -142,7 +142,7 @@ void SOA_SDS_TW50(test_function& func)
 //////			vSOA = 17.2; // 7/22/17 //
 //////		}
 //////	}
-//////	if (gMOSFET_SIZE_Trimops == 7)
+//////	if (g_FET_Size_Trimops == 7)
 //////	{
 //////		if (!strnicmp(Part_ID_LimitSet, "INN3367", 7))
 //////		{
@@ -157,7 +157,7 @@ void SOA_SDS_TW50(test_function& func)
 //////			vSOA = 19.067; // 5/21/18 //
 //////		}
 //////	}
-//////	if (gMOSFET_SIZE_Trimops == 8)
+//////	if (g_FET_Size_Trimops == 8)
 //////	{
 //////		if (!strnicmp(Part_ID_LimitSet, "INN3368", 7))
 //////		{
@@ -172,8 +172,8 @@ void SOA_SDS_TW50(test_function& func)
 //////	// Gage Setup //
 //////	//Gage_pretrig_samples=256;
 //////	//Gage_init();
-//////	SAMPLE_SIZE = GAGE_POST_64K;
-//////	INNO_Gage_ChanAB_setup(0.15);	// Only do it when SAMPLE_SIZE is diff from previous. 
+//////	g_SAMPLE_SIZE = GAGE_POST_64K;
+//////	BINNO_Gage_ChanAB_setup(0.15);	// Only do it when g_SAMPLE_SIZE is diff from previous. 
 //////
 //////	// PVI setup //
 //////	PV3_CHARGE_ON(RANGE_100_V); // Prepare PV3 before power-up
@@ -301,7 +301,7 @@ void SOA_SDS_TW50(test_function& func)
 //////	}
 //////
 //////	vSOA = vfrc;
-//////	if (gMOSFET_SIZE_Trimops == 5)
+//////	if (g_FET_Size_Trimops == 5)
 //////	{
 //////		vSDS = vSOA+10;
 //////	}
@@ -333,9 +333,9 @@ void SOA_SDS_TW50(test_function& func)
 //////	wait.delay_10_us(50);
 //////
 //////	// Process capture
-//////	g_SaveAwav = 0;
+//////	g_Save_Awav_TextDebug_ALL = 0;
 //////	Gage_Find_SOA(&SOA_P, &TW50_P);
-//////	g_SaveAwav = 0;
+//////	g_Save_Awav_TextDebug_ALL = 0;
 //////
 //////	// Set voltage for SDS test
 //////	pv3_4->charge_off();
@@ -363,9 +363,9 @@ void SOA_SDS_TW50(test_function& func)
 //////	wait.delay_10_us(500);
 //////
 //////	// Process capture
-//////	g_SaveAwav = 0;
+//////	g_Save_Awav_TextDebug_ALL = 0;
 //////	Gage_Find_SDS(&SDS_P, &TW50_SDS_P, &SDS_P_nsw);
-//////	g_SaveAwav = 0;
+//////	g_Save_Awav_TextDebug_ALL = 0;
 //////
 //////	if (gTrim_SDSoff_P_Trimops)
 //////	{
@@ -603,24 +603,24 @@ void SOA_SDS_TW50(test_function& func)
 //////
 //////	if(g_OPCODE==4300 || g_OPCODE==4500) 
 //////	{
-//////		if(gMOSFET_SIZE_Trimops == 5) //HL Inv requires 3.75V at hot.  
+//////		if(g_FET_Size_Trimops == 5) //HL Inv requires 3.75V at hot.  
 //////			vsync_set = 3.0;
-//////		if(gMOSFET_SIZE_Trimops == 6)
+//////		if(g_FET_Size_Trimops == 6)
 //////			vsync_set = 5.5;
-//////		if(gMOSFET_SIZE_Trimops == 7)
+//////		if(g_FET_Size_Trimops == 7)
 //////			vsync_set = 6.5;
-//////		if(gMOSFET_SIZE_Trimops == 8)
+//////		if(g_FET_Size_Trimops == 8)
 //////			vsync_set = 6.5;
 //////	}
 //////	else 
 //////	{
-//////		if(gMOSFET_SIZE_Trimops == 5) //HL Inv requires 3.75V at hot.  
+//////		if(g_FET_Size_Trimops == 5) //HL Inv requires 3.75V at hot.  
 //////			vsync_set = 3.0;
-//////		if(gMOSFET_SIZE_Trimops == 6)
+//////		if(g_FET_Size_Trimops == 6)
 //////			vsync_set = 6.0;
-//////		if(gMOSFET_SIZE_Trimops == 7)
+//////		if(g_FET_Size_Trimops == 7)
 //////			vsync_set = 6.5;
-//////		if(gMOSFET_SIZE_Trimops == 8)
+//////		if(g_FET_Size_Trimops == 8)
 //////			vsync_set = 6.5;
 //////	}
 //////	InvSyn_REF_ovi->set_voltage(InvSyn_ch, vsync_set, VOLT_20_RANGE); // OVI_1_4
@@ -690,9 +690,9 @@ void SOA_SDS_TW50(test_function& func)
 //////	Gage_Wait_For_Capture_Complete();	//capture wait loop after capture has been started, Gage_trig_ok status is set
 //////
 //////	// Process capture
-//////	g_SaveAwav = 0;
+//////	g_Save_Awav_TextDebug_ALL = 0;
 //////	Gage_Find_SDS(&SDS_S, &TW50_SDS_S, &SDS_S_nsw);
-//////	g_SaveAwav = 0;
+//////	g_Save_Awav_TextDebug_ALL = 0;
 //////
 //////	if (gTrim_SDSoff_P_Trimops)
 //////	{

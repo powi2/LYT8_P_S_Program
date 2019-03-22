@@ -896,12 +896,12 @@ wait.delay_10_us(70);
 	// Setup Digitizer //
 	//Gage_pretrig_samples=1024; // Set up the Pre_Trigger sample to be 1024 for better trigger point.
 	//Gage_init();
-	SAMPLE_SIZE = GAGE_POST_4K;
+	g_SAMPLE_SIZE = GAGE_POST_4K;
 	vrng_b = GAGE_PM_10_V;
 	ChB_vrng = 5.6;
 
 	// Channel B setup //
-	Gage_Setup_Acquisition_xp(SAMPLE_RATE_Hz,SAMPLE_SIZE); 
+	Gage_Setup_Acquisition_xp(SAMPLE_RATE_Hz,g_SAMPLE_SIZE); 
 	gage_input_control_xp (GAGE_CHAN_B, // channel
 						   GAGE_INPUT_ENABLE, // enable / disable
 						   GAGE_DC, // coupling
@@ -911,7 +911,7 @@ wait.delay_10_us(70);
 							 vrng_b, // range for CHA trigger
 							 GAGE_NEGATIVE, // slope
 							 4.5, // 1.0V trigger level 
-	   						 SAMPLE_SIZE); // 20ns * GAGE_WAVEFORM_BUFFER_SIZE
+	   						 g_SAMPLE_SIZE); // 20ns * GAGE_WAVEFORM_BUFFER_SIZE
 
 	// tOVL or fOVL (Fosc_Overload) //
 	Close_relay(K3);
@@ -1206,9 +1206,9 @@ InvSyn_REF_ovi->set_voltage(InvSyn_ch, 3, VOLT_20_RANGE); // OVI_1_4
 	wait.delay_10_us(200); // Wait for relays //
 
 	// Search result //
-	g_SaveAwav = 0;
+	g_Save_Awav_TextDebug_ALL = 0;
 	Gage_Find_tOVL(&tOVL_S);
-	g_SaveAwav = 0;
+	g_Save_Awav_TextDebug_ALL = 0;
 	fOVL = 1/tOVL_S;
 	//tOVL_Err_S = ( (tOVL_S/g_tOVL_TARGET_Trimops) - 1 ) * 100.0;
 

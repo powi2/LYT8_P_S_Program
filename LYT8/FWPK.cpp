@@ -91,14 +91,14 @@ void FWPK(test_function& func)
 		// ++++++++++++++++++++++++++++
 		// 300kHz Half Ring Test
 		// ++++++++++++++++++++++++++++
-		SAMPLE_SIZE = GAGE_POST_8K;
+		g_SAMPLE_SIZE = GAGE_POST_8K;
 	
 		// Setup Digitizer //
 		vrng_b = GAGE_PM_5_V;
 		ChB_vrng = 5.0;
 
 		// Channel B setup //
-		Gage_Setup_Acquisition_xp(SAMPLE_RATE_Hz,SAMPLE_SIZE); 
+		Gage_Setup_Acquisition_xp(SAMPLE_RATE_Hz,g_SAMPLE_SIZE); 
 		gage_input_control_xp(GAGE_CHAN_B, // channel
 							  GAGE_INPUT_ENABLE, // enable / disable
 							  GAGE_DC, // coupling
@@ -108,7 +108,7 @@ void FWPK(test_function& func)
 								vrng_b, // range for CHA trigger
 								GAGE_NEGATIVE, // slope
 								1.0, // 1.0V trigger level 
-	   							SAMPLE_SIZE); // 20ns * GAGE_WAVEFORM_BUFFER_SIZE
+	   							g_SAMPLE_SIZE); // 20ns * GAGE_WAVEFORM_BUFFER_SIZE
 
 
 		// The FWPK tests are tricky since they are effectively done asynchronously without using the 
@@ -402,9 +402,9 @@ void FWPK(test_function& func)
 			// Gage_End_Capture //
 			Gage_Wait_For_Capture_Complete();
 
-			g_SaveAwav = 0;
+			g_Save_Awav_TextDebug_ALL = 0;
 			Gage_Find_tDableOn(&tDableOn_300kHz, &FWPK_tVOxDble, &FWPK_Timer, 0);
-			g_SaveAwav = 0;
+			g_Save_Awav_TextDebug_ALL = 0;
 
 			// Validate FW pin pattern //
 			ValidResults = 1; // Initialize //
@@ -784,9 +784,9 @@ void FWPK(test_function& func)
 			// Gage_End_Capture //
 			Gage_Wait_For_Capture_Complete();
 
-			g_SaveAwav = 1;
+			g_Save_Awav_TextDebug_ALL = 1;
 			Gage_Find_tDableOn(&tDableOn_1MHz, &Dummy, &Dummy2, 1);
-			g_SaveAwav = 0;
+			g_Save_Awav_TextDebug_ALL = 0;
 
 			// Validate FW pin pattern //
 			ValidResults = 1; // Initialize //

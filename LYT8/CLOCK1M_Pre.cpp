@@ -306,7 +306,7 @@ Pulse pulse;
 	//0x00 0x42 write 0x0F 0x00
 	//DSM_I2C_Write('w', 0x42, 0x0018);
 DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
-pulse.do_pulse();
+//pulse.do_pulse();
 
 	//Monitor 1Mhz switching on Boost pin.	
 	tmu_6->start_holdoff(15,TRUE);

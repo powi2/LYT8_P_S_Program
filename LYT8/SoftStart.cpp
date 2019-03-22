@@ -99,11 +99,11 @@ void SoftStart(test_function& func)
 ////		PV3_Check_Charge(RANGE_100_V);
 ////		pv3_4->charge_off();
 ////
-////		SAMPLE_SIZE = GAGE_POST_1M;
+////		g_SAMPLE_SIZE = GAGE_POST_1M;
 ////
 ////		vrng_b = 0;
 ////		ChB_vrng = 0;
-////		INNO_Gage_ChanAB_setup(0.1);	// Only do it if SAMPLE_SIZE is diff from previous. (Each input/trig control function takes 4ms)
+////		BINNO_Gage_ChanAB_setup(0.1);	// Only do it if g_SAMPLE_SIZE is diff from previous. (Each input/trig control function takes 4ms)
 ////
 ////		// Negative cycle BPP pin //
 ////		VBPP_Negative_Cycle();
@@ -325,10 +325,10 @@ void SoftStart(test_function& func)
 ////		// Process SoftStart data:  Find all parameters //
 ////		UpperLimit = (func.dlog->tests[A_Fosc_min_SSS].f_max_limit_val[0]); // Get upper limit //
 ////		LowerLimit = (func.dlog->tests[A_Fosc_min_SSS].f_min_limit_val[0]); // Get lower limit //
-////		g_SaveAwav = 0;
+////		g_Save_Awav_TextDebug_ALL = 0;
 ////		//Gage_Find_Ilim_SSS(&ILIM_70pct_mA_P, &tsoft_SSS, &tHandshake_SSS, &Fosc_min_SSS, &Fosc_max_SSS, &gIdmin_Jitter_132kHz, &gIdmax_Jitter_132kHz, &fModulation_P, &Fosc_Sss_P);
 ////		Gage_Find_Ilim_SSS(&ILIM_70pct_mA_P, &tsoft_SSS, &tHandshake_SSS, &Fosc_min_SSS, &Fosc_max_SSS, &gIdmin_Jitter_132kHz, &gIdmax_Jitter_132kHz, &fModulation_P, &Fosc_Sss_P, UpperLimit, LowerLimit);
-////		g_SaveAwav = 0;
+////		g_Save_Awav_TextDebug_ALL = 0;
 ////		ILIM_Reduce_w_Jitter_132kHz = (1 - gIdmin_Jitter_132kHz / gIdmax_Jitter_132kHz) * 100;
 ////		ILIM_70pct_P = (ILIM_70pct_mA_P / g_ILIM_S)*100.0;
 ////		g_tHandshake_SSS = int(tHandshake_SSS*1e6/10);
@@ -593,9 +593,9 @@ void SoftStart(test_function& func)
 ////	pv3_4->drive_off();	
 ////
 ////	// Process data
-////	g_SaveAwav = 0;
+////	g_Save_Awav_TextDebug_ALL = 0;
 ////	Gage_Find_Ilim_18kHz(&ILIM_Jit18K_S, &ILIMhi_Jit18K_S, &ILIMLo_Jit18K_S, &Fosc_Mod_18K_S);
-////	g_SaveAwav = 0;
+////	g_Save_Awav_TextDebug_ALL = 0;
 ////
 ////	// Powerdown //
 ////	SR_dvi2k->set_current(SR_ch, 200e-3, RANGE_200_MA); // DVI_13_1, dvi2k //
@@ -667,12 +667,12 @@ void SoftStart(test_function& func)
 ////	Initialize_Instruments();
 ////
 ////	// Setup Digitizer //
-////	SAMPLE_SIZE = GAGE_POST_32K;
+////	g_SAMPLE_SIZE = GAGE_POST_32K;
 ////	vrng_b = GAGE_PM_5_V;
 ////	ChB_vrng = 5.0;
 ////
 ////	// Channel B setup //
-////	Gage_Setup_Acquisition_xp(SAMPLE_RATE_Hz,SAMPLE_SIZE); 
+////	Gage_Setup_Acquisition_xp(SAMPLE_RATE_Hz,g_SAMPLE_SIZE); 
 ////	gage_input_control_xp(GAGE_CHAN_B, // channel
 ////						  GAGE_INPUT_ENABLE, // enable / disable
 ////						  GAGE_DC, // coupling
@@ -682,7 +682,7 @@ void SoftStart(test_function& func)
 ////							vrng_b, // range for CHA trigger
 ////							GAGE_POSITIVE, // slope
 ////							3.25, // 1.0V trigger level 
-////	   						SAMPLE_SIZE); // 20ns * GAGE_WAVEFORM_BUFFER_SIZE
+////	   						g_SAMPLE_SIZE); // 20ns * GAGE_WAVEFORM_BUFFER_SIZE
 ////
 ////	// Set up Buffer Clamp
 ////	BC_ovi->set_current(BC_ch, 30e-3, RANGE_30_MA);
@@ -774,9 +774,9 @@ void SoftStart(test_function& func)
 ////	Gage_Wait_For_Capture_Complete();
 ////
 ////	// Search result //
-////	g_SaveAwav = 0;
+////	g_Save_Awav_TextDebug_ALL = 0;
 ////	DChUp_Gage_Find(&tChUp_RTM_P);
-////	g_SaveAwav = 0;
+////	g_Save_Awav_TextDebug_ALL = 0;
 ////
 ////	// Power down //
 ////	ddd_7->ddd_run_pattern(Low_pat_start,Low_pat_stop);

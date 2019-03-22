@@ -188,14 +188,15 @@ void TonMin_Slope_P(test_function& func)
 		delay(1);
 		D_dvi->set_voltage(D_ch, 5.0, VOLT_20_RANGE); // DVI_11_0
 		delay(1);
-
-	//BPP zig zag (5V to 5.5V to 4.3V to 5.4V below OV threshold)
-	BPP_dvi->set_voltage(BPP_ch, 5.5, VOLT_10_RANGE); // DVI_11_1
-	delay(1);
-	BPP_dvi->set_voltage(BPP_ch, 4.3, VOLT_10_RANGE); // DVI_11_1
-	delay(1);
-	BPP_dvi->set_voltage(BPP_ch, 5.4, VOLT_10_RANGE); // DVI_11_1
-	delay(1);
+	
+	BPP_zigzag(5.5, 4.3, 5.4);
+		////BPP zig zag (5V to 5.5V to 4.3V to 5.4V below OV threshold)
+		//BPP_dvi->set_voltage(BPP_ch, 5.5, VOLT_10_RANGE); // DVI_11_1
+		//delay(1);
+		//BPP_dvi->set_voltage(BPP_ch, 4.3, VOLT_10_RANGE); // DVI_11_1
+		//delay(1);
+		//BPP_dvi->set_voltage(BPP_ch, 5.4, VOLT_10_RANGE); // DVI_11_1
+		//delay(1);
 
 
 

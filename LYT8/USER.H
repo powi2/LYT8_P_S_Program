@@ -87,6 +87,27 @@ extern Dvi * dvi_21;
 
 #endif
 
+enum release_pin_mode
+{
+	g_release_Vpin  = 1,
+	g_release_TSpin = 2,
+};
+
+enum I2C_regain_mode
+{
+	g_Vpin_Low_to_High  = 1,
+	g_TSpin_Low_to_High = 2,
+};
+
+enum Reg_Bank
+{
+		E0 = 0,
+		E2 = 1,
+		E4 = 2,
+		E6 = 3,
+		E8 = 4,
+};
+
 enum relay{
 
 	//---------------------------------------------------------------------------------------------------------------------------------------------------
@@ -234,7 +255,7 @@ extern  Dvi *BPS_dvi;      //DVI_21_0
 extern  Dvi *UV_dvi;       //DVI_21_1
 
 extern  Ovi *HSG_ovi;      //OVI_1_0
-extern  Ovi *BCLMP_ovi;    //OVI_1_1
+extern  Ovi *BUFCLMP_ovi;    //OVI_1_1
 extern  Ovi	*IS_ovi;       //OVI_1_2,OVI_1_4
 extern  Ovi *NC_ovi;       //OVI_1_3
 extern  Ovi	*TS_ovi;	   //OVI_1_5
@@ -281,6 +302,9 @@ extern int	SDA_ch;        //OVI_3_5
 extern int	SCL_ch;        //OVI_3_6
 extern int	FB_ch;         //OVI_3_7
 
+extern uint16_t EEpr_Bank_P[5];
+extern uint16_t EEpr_Array_S[5];
+
 // Program Name
 //extern STRING ProgramName;
 
@@ -300,15 +324,15 @@ extern int g_CB_rev_needed;
 
 
 /* ======================  Die Parameters  =========================================*/
-extern int gDevFamily_Trimops;
-extern int gMOSFET_SIZE_Trimops;
+extern int g_DevFamily_Trimops;
 extern int g_DevNum_Trimops;
-extern int gDLM_BV_Trimops;
-extern int gDLM_Size_Trimops;
+extern int g_BV_Trimops;
+extern int g_FET_Size_Trimops;
 
 
 /* ======================  Test Flow Control Parameter  ============================*/
 //extern int  g_First_Time_Run;
+extern bool g_Require_PartID;
 extern int	AbortTest; 
 extern int	g_Trim_Enable_P;
 extern int  g_Trim_Enable_S;
@@ -340,8 +364,8 @@ extern int g_LowerByte;
 //extern bool DSM_halt_exec_on_error;
 
 /* ======================  Debug Parameters ============================*/
-extern bool   BPP_4p7uF;
-extern bool   BPP_p47uF;
+extern char *g_Func_name;
+extern char *g_WAVE_NAME; 
 
 enum SiliconRev_S{ revA_S, revB_S, revB2_S};
 enum Capture_Mode {ILIM_NORM, ILIM_INCR};
@@ -422,7 +446,7 @@ extern CMicroTimer mytimer;
 extern LONGLONG starttime;
 extern LONGLONG stoptime;
 extern int DEBUG;
-extern char *WAVE_NAME; 
+//extern char *WAVE_NAME; 
 
 /*=======================   Golden Unit Variables    ===============================*/
 extern bool GoldenUnit;
@@ -454,6 +478,12 @@ extern float g_vDrain_Burn_th_P;
 //-----------------------------------------------------------------------------------
 extern float g_HBP_Pre_S;
 extern int   g_TrimBank[5];
+extern int	 g_E0_start_bit;
+extern int	 g_E2_start_bit;
+extern int	 g_E4_start_bit;
+extern int	 g_E6_start_bit;
+extern int	 g_E8_start_bit;
+
 extern float g_DDDhiLevel;
 extern float g_DDDLoLevel;
 extern float g_DDD_Period;
@@ -598,36 +628,64 @@ extern int   g_tHandshake_SSS;
 /*============================    FB Global Variables   ===============================*/
 /*============================    Anti-Fuse Variables   ===============================*/
 //Primary
-extern int  gP_AF_Start_Addr_Primary,
-			gP_AF_Start_Addr_Primary,
-			gP_AF_Start_Addr_IOV	,
-			gP_AF_Start_Addr_ILIM	,
-			gP_AF_Start_Addr_TonMax	,
-			gP_AF_Start_Addr_tOVL	,
-			gP_AF_Start_Addr_Freq	,
-			gP_AF_Start_Addr_IuvIov_Disable	,
-			gP_AF_Start_Addr_Iuv_10uA		,
-			gP_AF_Start_Addr_UV_400ms_dly	,
-			gP_AF_Start_Addr_LatchOFF_aft_AR,
-			gP_AF_Start_Addr_Disable_AR		,
-			gP_AF_Start_Addr_didt_comp		,
-			gP_AF_Start_Addr_OT_Hys_30C		,
-			gP_AF_Start_Addr_LatchOFF_w_OT	,
-			gP_AF_Start_Addr_Disable_ILIM_Select,
-			gP_AF_Start_Addr_Select_ILIM_Incr	,
-			gP_AF_Start_Addr_minus_20pct_ILIM	,
-			gP_AF_Start_Addr_plus_20pct_ILIM	,
-			gP_AF_Start_Addr_Samsung_Mode		,
-			gP_AF_Start_Addr_OTP				,
-			gP_AF_Start_Addr_SDS_OFF			,
-			gP_AF_Start_Addr_Rcv				,
-			gP_AF_Start_Addr_Driver_Size		,
-			gP_AF_Start_Addr_Rsense_up			,
-			gP_AF_Start_Addr_Vx_adjust			,
-			gP_AF_Start_Addr_ILIM_Ratio			,
-			gP_AF_Start_Addr_ILIM_TC			,
-			gP_AF_Start_Addr_AR_Request			,
-			gP_AF_Start_Addr_ZF					;
+extern int  gP_Reg_Start_Bit_SiID		,
+			gP_Reg_Start_Bit_fOSC		,
+			gP_Reg_Start_Bit_yInter		,
+			gP_Reg_Start_Bit_ILIM		,
+			gP_Reg_Start_Bit_ArSkip		,
+			gP_Reg_Start_Bit_ArOnT		,
+			gP_Reg_Start_Bit_ArOffT		,
+			gP_Reg_Start_Bit_StrFREQ	,	
+			gP_Reg_Start_Bit_OnTSL		,
+			gP_Reg_Start_Bit_ShuntEn	,	
+			gP_Reg_Start_Bit_RcvTH		,
+			gP_Reg_Start_Bit_GanMode	,	
+			gP_Reg_Start_Bit_VxTrim		,
+			gP_Reg_Start_Bit_DrSize		,
+			gP_Reg_Start_Bit_AROn512	,	
+			gP_Reg_Start_Bit_GanDLy1	,	
+			gP_Reg_Start_Bit_IlimTc		,
+			gP_Reg_Start_Bit_SDTemp		,
+			gP_Reg_Start_Bit_DOPL		,
+			gP_Reg_Start_Bit_DisIlimCap	,	
+			gP_Reg_Start_Bit_ILIMP		,
+			gP_Reg_Start_Bit_uVADC		,
+			gP_Reg_Start_Bit_StrTTFB	,	
+			gP_Reg_Start_Bit_EndTTFB	,	
+			gP_Reg_Start_Bit_TsADC		,
+			gP_Reg_Start_Bit_UV10pct	,	
+			gP_Reg_Start_Bit_IOV		,
+			gP_Reg_Start_Bit_TonM		;
+
+extern int  gP_Total_Bits_SiID		,
+			gP_Total_Bits_fOSC		,
+			gP_Total_Bits_yInter		,
+			gP_Total_Bits_ILIM		,
+			gP_Total_Bits_ArSkip		,
+			gP_Total_Bits_ArOnT		,
+			gP_Total_Bits_ArOffT		,
+			gP_Total_Bits_StrFREQ	,	
+			gP_Total_Bits_OnTSL		,
+			gP_Total_Bits_ShuntEn	,	
+			gP_Total_Bits_RcvTH		,
+			gP_Total_Bits_GanMode	,	
+			gP_Total_Bits_VxTrim		,
+			gP_Total_Bits_DrSize		,
+			gP_Total_Bits_AROn512	,	
+			gP_Total_Bits_GanDLy1	,	
+			gP_Total_Bits_IlimTc		,
+			gP_Total_Bits_SDTemp		,
+			gP_Total_Bits_DOPL		,
+			gP_Total_Bits_DisIlimCap	,	
+			gP_Total_Bits_ILIMP		,
+			gP_Total_Bits_uVADC		,
+			gP_Total_Bits_StrTTFB	,	
+			gP_Total_Bits_EndTTFB	,	
+			gP_Total_Bits_TsADC		,
+			gP_Total_Bits_UV10pct	,	
+			gP_Total_Bits_IOV		,
+			gP_Total_Bits_TonM		;
+
 //Secondary
 extern int	gPK_AF_Addr_Start,							
 			gCV_AF_Addr_Start, 
@@ -876,54 +934,34 @@ extern float	gIFB_130mA_pt_S;
 extern float	gIFB_TH_pt_S;
 extern float	gIFB_exp_S;
 
+/*======================    Dtemp Variables    ====================================*/
+extern float	g_Dtemp_TARGET_P;
+
 /*======================    ILIM Variables    ====================================*/
 extern float	gVped_Ilim, gVped_Ilim_Incr;
 extern float	gVind_RM;
-extern float g_Vpedestal;
+extern float	g_Vpedestal;
 
-extern float	gILIM_TARGET_S_Trimops;
-extern float	gILIM_LO_TARGET;
-extern float	gILIM_LO_Med_TARGET;
-extern float	gILIM_UP_Med_TARGET;
-extern float	gI2F_S_TARGET;
-extern float g_DIDT_TARGET;
-extern float    gILIM_pt_S;
-extern float    gILIM_exp_S;
-extern float	gILIM_I2f_pt_S;
+extern float	g_ILIM_TARGET_Trimops_P;
+extern float	g_ILIM_TARGET_P;
+extern float	g_ILIM_LO_TARGET;
+extern float	g_ILIM_LO_Med_TARGET;
+extern float	g_ILIM_UP_Med_TARGET;
+extern float	g_I2F_S_TARGET;
+extern float	g_DIDT_TARGET;
+extern float    g_ILIM_pt_S;
+extern float    g_ILIM_exp_S;
+extern float	g_ILIM_I2f_pt_S;
 // For Capture and Find ILIM with digitizer
-extern float    gIlim_Incr_max;
-extern float	gIlim_gain, g_BUFgain;
-extern int		SAMPLE_SIZE;
+extern float    g_Ilim_Incr_max;
+extern float	g_Ilim_gain, g_BUFgain;
+extern int		g_SAMPLE_SIZE;
 
-extern int		FIND_RDSON_Peak_FLAG;
-extern int		FIND_RDSON_Spec_FLAG;
-extern int		gFind_ILIM_Jitter;
-extern float	gIdmax[4000];
-extern int		gIdmax_addr[4000];
-extern float	gIdmax_Jitter_132kHz;
-extern float	gIdmin_Jitter_132kHz;
-extern float	gIdmax_Jitter_18kHz;
-extern float	gIdmin_Jitter_18kHz;
-//extern float	Ton[10];
-//extern float	Toff[10];
-
-//extern bool		g_ILIM_INCR_secondary_control_active;
-
-extern float	gTon_1stP;
-extern float	gTon_2ndP;
-extern float	gTon_3rdP;
-extern float	gToff_1stP;
-extern float	gToff_2ndP;
-extern float	gToff_3rdP;
-extern float	gILIM_pct_1stP;
-extern float	gILIM_pct_2ndP;
-extern float	gILIM_pct_3rdP;
-extern float	gRTM_Slope;
-extern float	gtDelta_RTM_Slope;
-extern float	gtDelta_RTM_Slope_200us;
-extern float	gi_pct_drop_RTM;
-extern float	gILIM_200us_S;
-extern float	gILIM_200us_pct_S;
+extern int		g_FIND_RDSON_Peak_FLAG;
+extern int		g_FIND_RDSON_Spec_FLAG;
+extern int		g_Find_ILIM_Jitter;
+extern float	g_Idmax[4000];
+extern int		g_Idmax_addr[4000];
 
 /*=======================    CV_CC_CB_Vout Function Variables    ===============================*/
 extern float gISvth;
@@ -1057,6 +1095,8 @@ void Initialize_Instruments();
 //HL added ----------------------
 void Program_Trim_Register(int *Trim_Register);
 void Read_Trim_Register(int *TrimBank);
+void Program_All_TrimRegister();
+void Program_Single_TrimRegister(int TrimLocation);
 
 //-------------------------------
 void LoadShadowRegister();
@@ -1071,7 +1111,7 @@ void DDD_Run_Scan_Pattern(int Start_Address, int Stop_Address);
 void DDD_Compare_Pattern(int *g_Fail_Address,int Start_Address, int Stop_Address);
 
 //=================== INNOSW XP gage digitizer Headers ===================
-void INNO_Gage_ChanAB_setup(float);
+void BINNO_Gage_ChanAB_setup(float);
 void Gage_Find_Ilim(float *, float *, float *, float *, float *);
 void Gage_Find_Ilim_18kHz(float *, float *, float *, float *);
 //void Gage_Find_Ilim_SSS(float *, float *, float *, float *, float *, float *, float *, float *, float *);
@@ -1080,7 +1120,7 @@ void Gage_Find_SOA(float *, float *);
 void Gage_Find_SDS(float *, float *, float *);
 //void Gage_Find_tDableOn(float *tDableON, float *FWPK_tVOxDble, float *FWPK_Timer);
 void Gage_Find_tDableOn(float *tDableON, float *FWPK_tVOxDble, float *FWPK_Timer, int Freq1Mhz);
-void Gage_Find_tReqInhibit(float *TREQ_Inhibit, int *INH_Cycles_S);
+void Gage_Find_Dtemp_code(int *Dtemp_code_Decimal, float *tLong_Dtemp, int *Dtemp_HighByte, float *tShort_Dtemp, int *Dtemp_LowByte);
 void Gage_Count_Cycles_CHB(float *);
 void DChUp_Gage_Find(float *);
 void Gage_Find_tOVL(float *);
@@ -1113,7 +1153,7 @@ extern	CSHANDLE	hSystem;
 
 //=================== XP gage digitizer func Header STARTS here ===================
 void	Gage_init();
-void	Gage_Setup_Acquisition_xp ( int sample_rate_in_Hz, int sample_size );
+void	Gage_Setup_Acquisition_xp ( int sample_rate_in_Hz, int g_SAMPLE_SIZE );
 void	Gage_Capture_Data( );
 void	Gage_Setup_Chan_A ( int pk_pk_range_in_mV );
 void	Gage_Setup_Chan_B ( int pk_pk_range_in_mV );
@@ -1406,7 +1446,8 @@ extern bool g_DDD_Load_Finished;
 extern float g_IsDAC_Sim_S;
 extern CMicroTimer g_mytimer; // Class used for measuring time intervals //
 extern int g_PartFailed;
-extern int g_SaveAwav;
+extern int g_Save_Awav_TextDebug_ALL;
+extern int g_Save_Awav_TextDebug_Dtemp;
 extern int g_xChk_P[100];
 extern float g_ILIM_S;
 extern float g_DDD_High;
@@ -2342,3 +2383,6 @@ void Search_iOVp_P(float *iOVp_th_P);
 void Search_iOVm_P(float *iOVm_th_P);
 void Search_iUVp_P(float *iUVp_th_P);
 void Search_iUVm_P(float *iUVm_th_P);
+void BPP_zigzag(float vBPP1, float vBPP2, float vBPP3);
+void Regain_I2C_P(int regain_I2C_mode);
+void Disable_n_Disconnect_DSMI2C_via(int release_pin);

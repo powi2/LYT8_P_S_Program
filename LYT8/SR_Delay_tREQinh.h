@@ -37,7 +37,7 @@ enum SR_Delay{
 	A_SR_threshold,
 	A_SR_chk_Open,
 	A_SR_chk_5nF,
-	A_tREQ_Inhibit,
+	A_tLong_NTC,
 	A_nCycles_Inhibit,
 	A_Unwanted_pulses,
 	A_Pulse_dly_HS,

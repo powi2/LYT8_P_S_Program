@@ -60,6 +60,7 @@ void Continuity(test_function& func)
 	float VcontD_1mA=0; 
 	float VcontD_Rat=0;
 
+
 	float VcontBPP=0; 
 	float IcontBPP=0;
 	float VcontBPP_1mA=0; 
@@ -1054,9 +1055,9 @@ void Continuity(test_function& func)
 	wait.delay_10_us(50);
 
 	HSG_ovi->set_current(HSG_ch, 100e-6, RANGE_30_MA);
-	BCLMP_ovi->set_current(BUFCLMP_ch, 100e-6, RANGE_30_MA);
-	BCLMP_ovi->set_voltage(BUFCLMP_ch, 0.0, VOLT_2_RANGE); 
-	BCLMP_ovi->set_meas_mode(BUFCLMP_ch, OVI_MEASURE_CURRENT);
+	BUFCLMP_ovi->set_current(BUFCLMP_ch, 100e-6, RANGE_30_MA);
+	BUFCLMP_ovi->set_voltage(BUFCLMP_ch, 0.0, VOLT_2_RANGE); 
+	BUFCLMP_ovi->set_meas_mode(BUFCLMP_ch, OVI_MEASURE_CURRENT);
 	wait.delay_10_us(10);
 
 	//Short OVI_3_0 to OVI_3_1 thru K_OVI3_0.
@@ -1064,14 +1065,14 @@ void Continuity(test_function& func)
 	wait.delay_10_us(250);
 
 	//Start pulling current thru HSG pin.
-	BCLMP_ovi->set_current(BUFCLMP_ch, 20E-3, RANGE_30_MA);
+	BUFCLMP_ovi->set_current(BUFCLMP_ch, 20E-3, RANGE_30_MA);
 	HSG_ovi->set_current(HSG_ch, -6e-3, RANGE_30_MA);
 	HSG_ovi->set_voltage(HSG_ch, -1.5, VOLT_2_RANGE);
 	wait.delay_10_us(100);
 
-	IcontHSG = BCLMP_ovi->measure_average(5);
+	IcontHSG = BUFCLMP_ovi->measure_average(5);
 
-	BCLMP_ovi->set_current(BUFCLMP_ch, 0.1E-3, RANGE_30_MA);
+	BUFCLMP_ovi->set_current(BUFCLMP_ch, 0.1E-3, RANGE_30_MA);
 	HSG_ovi->set_current(HSG_ch, 0.1e-3, RANGE_30_MA);
 	HSG_ovi->set_voltage(HSG_ch, 0.0, VOLT_2_RANGE);
 	wait.delay_10_us(100);
