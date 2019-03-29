@@ -59,6 +59,7 @@
 03/19/19 CX v0.46cxH  - Done with NTC_Pre coding.  WIP for trimming
 03/20/19 CX v0.46cxI  - Update some simulation coding for NTC.  WIP
 03/21/19 CX v0.46cxJ  - Add simulation coding for iOV, NTC.  Need to work on other Primary trim simulations.
+03/28/19 CX v0.46cxK  - Add sim coding for all trim parameters and verified trimweight except iUVp
 
 History Revisions (Above)
 */
@@ -665,20 +666,24 @@ float   gSec_tr2_AFtrhd  = 0.0;
 int		gSiOption_s=-99;
 
 /*====================    Fosc Function Variables    ===============================*/
-float	g_FOSC_TARGET_P_Trimops=0.0, gFOSC_TARGET_S_Trimops =0.0;
+float	g_Fosc_P_TARGET_Trimops_P=0.0, gFOSC_TARGET_S_Trimops =0.0;
 float   g_Fosc_pt_P =0.0,   g_FOSC_pt_S =0.0;
 float   g_FOSC_S = 0;
 float   g_FOSC_exp_P =0.0,  g_FOSC_exp_S=0.0;
 
-/*======================    TonMax Variables    ====================================*/
-float   g_TonMax_TARGET=0.0;
-float	g_TonMax_Pt =0.0, g_TonMax_S=0.0;
-float   g_ToffMin_s = 0;
-float   g_TonMax_exp=0.0;
-float   g_tOVL_TARGET_Trimops=0.0;
-float	g_tOVL_Pt =0.0;
-float   g_tOVL_exp=0.0;
-int		g_HandShake_PASS =0;
+/*======================    TonMin Variables    ====================================*/
+float   g_TonMin_TARGET_Trimops_P		=0.0;
+
+/*======================    Ton Slope & Offset Variables    ====================================*/
+float   g_Slope_TARGET_Trimops_P	=0.0;
+float	g_Offset_TARGET_Trimops_P	=0.0;
+//float	g_TonMax_Pt =0.0, g_TonMax_S=0.0;
+//float   g_ToffMin_s = 0;
+//float   g_TonMax_exp=0.0;
+//float   g_tOVL_TARGET_Trimops=0.0;
+//float	g_tOVL_Pt =0.0;
+//float   g_tOVL_exp=0.0;
+//int		g_HandShake_PASS =0;
 
 /*======================    iOV+ Variables    ====================================*/
 float   g_iOVp_TARGET_Trimops_P=0.0;
@@ -697,7 +702,7 @@ float 	gCV_FB_Init_pt_S =0.0;
 //float	gCV_FB_pt_S =0;
 float	gCV_VO_pt_S =0;
 float   gCVtgt_15pct_Higher=0.0; //gCV_FB_Pre=0.0;
-float  gCV_Vout_TARGET_Trimops;
+float   gCV_Vout_TARGET_Trimops;
 float	gCV_S =0.0, gCV_post_S=0;
 float	gCV_FB_S=0, gCV_FB_post_S=0;
 float	gCV_VO_S=0,	gCV_VO_post_S=0;
@@ -2073,7 +2078,7 @@ void user_load(void)
 	theLimitSetName >> Part_ID_LimitSet  >> g_OperCode >> dummy >> dummy;
 
 	// Test Program Rev //
-	PrgRev = "0.46cxJ"; // This should be identical to PiSetProgramName() function call. //
+	PrgRev = "0.46cxK"; // This should be identical to PiSetProgramName() function call. //
 	FamilyName = "LYT8"; // This should be identical to PiSetProgramName() function call. //
 
 	// Modify AutoCorrReport file to share one golden unit for multiple devices of same family. //
@@ -2129,7 +2134,7 @@ void user_load(void)
 	PiEnableGoldenUnit();
 
 	// Test Program Rev //
-	PiSetProgramName("LYT8 0.46cxJ");
+	PiSetProgramName("LYT8 0.46cxK");
 
 	// Setup //
 	PiUserLoad( );
@@ -3621,13 +3626,17 @@ void mode_change(void)
 	int trimops_num =5;
 
 	//Charles temporary put targets here.  Retrieve targets from trimops table once it's available.
-	g_iOVp_TARGET_Trimops_P = 56.25e-6;
-	g_iOVm_TARGET_Trimops_P = 54.55e-6;
-	g_iUVp_TARGET_Trimops_P = 12.50e-6;
-	g_iUVm_TARGET_Trimops_P =  9.63e-6;
-	g_ILIM_TARGET_Trimops_P = 5.0;
-	g_ILIM_TARGET_P			= 5.0;
-	g_Dtemp_TARGET_P		= 256;
+	g_iOVp_TARGET_Trimops_P			= 56.25e-6;
+	g_iOVm_TARGET_Trimops_P			= 54.55e-6;
+	g_Fosc_P_TARGET_Trimops_P		= 1e6;
+	g_TonMin_TARGET_Trimops_P		= 0.7e-6;
+	g_Slope_TARGET_Trimops_P		= 0.0773e-6; //'us/kHz'
+	g_Offset_TARGET_Trimops_P		= 1.233e-6; 
+	g_iUVp_TARGET_Trimops_P			= 12.50e-6;
+	g_iUVm_TARGET_Trimops_P			=  9.63e-6;
+	g_ILIM_TARGET_Trimops_P			= 5.0;
+	g_ILIM_TARGET_P					= 5.0;
+	g_Dtemp_TARGET_P				= 256;
 	// Retreive Trim option values
 	// Set trim option values as Long and double
 	// HL disabled for Binno preliminary trimming.
@@ -17750,7 +17759,8 @@ void EEPROM_Write_Enable_P()
 void EEPROM_Read_Enable_P()
 {
 	Analog_TM_Enable_Primary();			//2.  Analog Test Mode Enable	-->	0x00 0x40 write 0x02 --> TM_CTRL, enable analog mode
-	DSM_I2C_Write('w', 0x44, 0x4000);	//3.  Set EE comparator voltage on CFG14
+	DSM_I2C_Write('w', 0x46, 0x2804);	//write I2C password.  After zigzag and stay in I2C
+	//DSM_I2C_Write('w', 0x44, 0x4000);	//3.  Set EE comparator voltage on CFG14	//per DE
 
 	DSM_I2C_SREG0_0x7070();	//Get ready for any data to move to read address 0x00
 }

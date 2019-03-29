@@ -30,7 +30,7 @@ enum IUV_pre_P
 	A_fnum_iUVp_Tr_P,
 	A_iUVp_pt_P,
 	A_iUVp_target_P,
-	A_iUVp_code_P,
+	A_iUVp_TrCode_P,
 	A_iUVp_BitCode_P,
 	A_iUVp_ExpChg_P,
 	A_iUVp_ExpA_P,

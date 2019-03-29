@@ -85,10 +85,6 @@ void IOV_Pre_P(test_function& func)
 	int		i;
 	int		TrCode_shift_n_bits	=0;
 
-	uint16_t converted_dec1 = 0;
-	uint16_t converted_dec2 = 0;
-
-
 	i = 0;																
 	iOVp_code[i] 	=	0	;		iOVp_SignCode[i] 	=	0	;		 iOVp_TrimWt[i] 	=	0		;		    i++	;
 	iOVp_code[i] 	=	1	;		iOVp_SignCode[i] 	=	1	;		 iOVp_TrimWt[i] 	=	-0.99	;		    i++	;
@@ -131,22 +127,22 @@ void IOV_Pre_P(test_function& func)
 	// E8 Trim register bank start from bit 64 and end at bit 79
 
 	//Pass Bank E8 trim registers data to the WordArray
-	WordArray[0]  = g_TrimRegister_P[64];
-	WordArray[1]  = g_TrimRegister_P[65];
-	WordArray[2]  = g_TrimRegister_P[66];
-	WordArray[3]  = g_TrimRegister_P[67];
-	WordArray[4]  = g_TrimRegister_P[68];
-	WordArray[5]  = g_TrimRegister_P[69];
-	WordArray[6]  = g_TrimRegister_P[70]; 
-	WordArray[7]  = g_TrimRegister_P[71]; 
-	WordArray[8]  = g_TrimRegister_P[72]; //IOV_0_P
-	WordArray[9]  = g_TrimRegister_P[73]; //IOV_1_P
-	WordArray[10] = g_TrimRegister_P[74]; //IOV_2_P
-	WordArray[11] = g_TrimRegister_P[75]; //IOV_3_P
-	WordArray[12] = g_TrimRegister_P[76]; //IOV_4_P
-	WordArray[13] = g_TrimRegister_P[77]; 
-	WordArray[14] = g_TrimRegister_P[78]; 
-	WordArray[15] = g_TrimRegister_P[79];
+	//WordArray[0]  = g_TrimRegister_P[64];
+	//WordArray[1]  = g_TrimRegister_P[65];
+	//WordArray[2]  = g_TrimRegister_P[66];
+	//WordArray[3]  = g_TrimRegister_P[67];
+	//WordArray[4]  = g_TrimRegister_P[68];
+	//WordArray[5]  = g_TrimRegister_P[69];
+	//WordArray[6]  = g_TrimRegister_P[70]; 
+	//WordArray[7]  = g_TrimRegister_P[71]; 
+	//WordArray[8]  = g_TrimRegister_P[72]; //IOV_0_P
+	//WordArray[9]  = g_TrimRegister_P[73]; //IOV_1_P
+	//WordArray[10] = g_TrimRegister_P[74]; //IOV_2_P
+	//WordArray[11] = g_TrimRegister_P[75]; //IOV_3_P
+	//WordArray[12] = g_TrimRegister_P[76]; //IOV_4_P
+	//WordArray[13] = g_TrimRegister_P[77]; 
+	//WordArray[14] = g_TrimRegister_P[78]; 
+	//WordArray[15] = g_TrimRegister_P[79];
 
 	
 	/*

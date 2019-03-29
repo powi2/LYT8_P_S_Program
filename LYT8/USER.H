@@ -845,19 +845,24 @@ extern int		gSiOption_s;
 /*====================    Fosc Function Variables    ===============================*/
 extern float	g_Fosc_pt_P,    g_FOSC_pt_S;
 extern float    g_FOSC_S;
-extern float	g_FOSC_TARGET_P_Trimops, gFOSC_TARGET_S_Trimops;
+extern float	g_Fosc_P_TARGET_Trimops_P, gFOSC_TARGET_S_Trimops;
 extern float    g_FOSC_exp_P,   g_FOSC_exp_S;
 //extern float    gFOSC_post_S;
 
 /*======================    TonMax Variables    ====================================*/
-extern float   g_TonMax_TARGET;
-extern float   g_TonMax_Pt, g_TonMax_S;
-extern float   g_ToffMin_s;
-extern float   g_TonMax_exp;
-extern float   g_tOVL_TARGET_Trimops;
-extern float   g_tOVL_Pt;
-extern float   g_tOVL_exp;
-extern int	   g_HandShake_PASS;
+extern float   g_TonMin_TARGET_Trimops_P;
+
+/*======================    Ton Slope & Offset Variables    ====================================*/
+extern float	g_Slope_TARGET_Trimops_P;
+extern float	g_Offset_TARGET_Trimops_P;
+
+//extern float   g_TonMax_Pt, g_TonMax_S;
+//extern float   g_ToffMin_s;
+//extern float   g_TonMax_exp;
+//extern float   g_tOVL_TARGET_Trimops;
+//extern float   g_tOVL_Pt;
+//extern float   g_tOVL_exp;
+//extern int	   g_HandShake_PASS;
 
 /*======================    iOV- Variables    ====================================*/
 extern float	g_iOVp_TARGET_Trimops_P;

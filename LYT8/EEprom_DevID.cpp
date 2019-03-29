@@ -206,7 +206,8 @@ AT9		| x	 |		|	 |	x	|	  | 	  |   x	  |	x		 |		 |	x	|		|0x18 0x08	0001 1000	0000 
 			DSM_I2C_Write('w', 0xE2, 0x0000);
 			DSM_I2C_Write('w', 0xE4, 0x0560); //(VX=10110 + DriverSize=0010)
 			DSM_I2C_Write('w', 0xE6, 0x0000);
-			DSM_I2C_Write('w', 0xE8, 0x6000); //(Timer bit 77,78)
+			//DSM_I2C_Write('w', 0xE8, 0x6000); //(Timer bit 77,78)
+			DSM_I2C_Write('w', 0xE8, 0x0000); 
 
 			EEPROM_BURN_P(&g_vDrain_Burn_th_P);
 		}

@@ -41,11 +41,7 @@ enum IOV_pre_P
 	A_EeTr76_iOV4_P,
 	A_iOVp_Sim_P,
 	A_iOVp_Sim_Chg_P,
-	A_iOVp_prg_P,
-	A_iOVp_prgchg_P,
-	A_cVPFOff_pst_P,
-	A_cvBOff_pst_P,
 	A_iOVp_Pst,
-	A_iOVp_Pre_TT
+	A_iOVp_Pre_TT,
 
 };

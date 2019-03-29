@@ -66,62 +66,53 @@ void IUV_Pre_P(test_function& func)
 	int EEtr28_ZTML1_P  = 0;
 	
 	float iUVp_Sim_P = 0;
-	float iUVp_Sim_Chg_P = 0;
-	float iUVp_ExpChg   = 0;
-	float iUVp_PrgChg   = 0;
+	float iUVp_Sim_Chg_P	 = 0;
+	float iUVp_ExpChg_P		= 0;
+	float iUVp_ExpA_P		= 0;
+	float iUVp_PrgChg		= 0;
 	float iUVp_pst_P =0;
 	float iUVp_Pre_TT =0;
 
 
 	//Trimcode & bit weights.
 	float	iUVp_TrimWt[32]   = {0.0};
-	float	iUVp_code[32]     = {0.0};
+	float	iUV_P_TrCode[32]     = {0.0};
+	float	iUVp_SignCode[32]  = {0.0};
+
 	float   smallest_diff_val  = 999999.9;
 	float   temp_1             = 0;
 	int     smallest_diff_idx  = 0;
-	int		WordArray[16]	   = {0};
 	int		i;
+	int		TrCode_shift_n_bits	=0;
 
-	i = 0;
-	iUVp_code[i] =  0	;	 iUVp_TrimWt[i] 	=	0.000	;	    i++	;
-	iUVp_code[i] =  1	;	 iUVp_TrimWt[i] 	=	-0.990	;	    i++	;
-	iUVp_code[i] =  2	;	 iUVp_TrimWt[i] 	=	-1.961	;	    i++	;
-	iUVp_code[i] =  3	;	 iUVp_TrimWt[i] 	=	-2.913	;	    i++	;
-	iUVp_code[i] =  4	;	 iUVp_TrimWt[i] 	=	-3.846	;	    i++	;
-	iUVp_code[i] =  5	;	 iUVp_TrimWt[i] 	=	-4.762	;	    i++	;
-	iUVp_code[i] =  6	;	 iUVp_TrimWt[i] 	=	-5.660	;	    i++	;
-	iUVp_code[i] =  7	;	 iUVp_TrimWt[i] 	=	-6.542	;	    i++	;
-	iUVp_code[i] =  8	;	 iUVp_TrimWt[i] 	=	-7.407	;	    i++	;
-	iUVp_code[i] =  9	;	 iUVp_TrimWt[i] 	=	-8.257	;	    i++	;
-	iUVp_code[i] = 10	;	 iUVp_TrimWt[i] 	=	-9.091	;	    i++	;
-	iUVp_code[i] = 11	;	 iUVp_TrimWt[i] 	=	-9.910	;	    i++	;
-	iUVp_code[i] = 12	;	 iUVp_TrimWt[i] 	=	-10.714	;	    i++	;
-	iUVp_code[i] = 13	;	 iUVp_TrimWt[i] 	=	-11.504	;	    i++	;
-	iUVp_code[i] = 14	;	 iUVp_TrimWt[i] 	=	-12.281	;	    i++	;
-	iUVp_code[i] = 15	;	 iUVp_TrimWt[i] 	=	-13.043	;	    i++	;
+	float	iUVp_char[32]			=   {0.0};
+
+	int		pE0_data[33] = {0};
+	int		pE2_data[33] = {0};
+	int		pE4_data[33] = {0};
+	int		pE6_data[33] = {0};
+	int		pE8_data[33] = {0};
 
 
-	// Load WordArray[] with contents of g_Sec_TrimRegister[] array!  This includes trim bit from other tests & trim options 
-    // This is important for proper trimming! //
-	// E6 Trim register bank start from bit 48 and end at bit 63
+	i = 0;																
+	iUV_P_TrCode[i] 	=	0	;		iUVp_SignCode[i] 	=	0	;		 iUVp_TrimWt[i] 	=	0.00	;		    i++	;
+	iUV_P_TrCode[i] 	=	1	;		iUVp_SignCode[i] 	=	1	;		 iUVp_TrimWt[i] 	=	-0.99	;		    i++	;
+	iUV_P_TrCode[i] 	=	2	;		iUVp_SignCode[i] 	=	2	;		 iUVp_TrimWt[i] 	=	-1.96	;		    i++	;
+	iUV_P_TrCode[i] 	=	3	;		iUVp_SignCode[i] 	=	3	;		 iUVp_TrimWt[i] 	=	-2.91	;		    i++	;
+	iUV_P_TrCode[i] 	=	4	;		iUVp_SignCode[i] 	=	4	;		 iUVp_TrimWt[i] 	=	-3.85	;		    i++	;
+	iUV_P_TrCode[i] 	=	5	;		iUVp_SignCode[i] 	=	5	;		 iUVp_TrimWt[i] 	=	-4.76	;		    i++	;
+	iUV_P_TrCode[i] 	=	6	;		iUVp_SignCode[i] 	=	6	;		 iUVp_TrimWt[i] 	=	-5.66	;		    i++	;
+	iUV_P_TrCode[i] 	=	7	;		iUVp_SignCode[i] 	=	7	;		 iUVp_TrimWt[i] 	=	-6.54	;		    i++	;
+	iUV_P_TrCode[i] 	=	8	;		iUVp_SignCode[i] 	=	-8	;		 iUVp_TrimWt[i] 	=	8.70	;		    i++	;
+	iUV_P_TrCode[i] 	=	9	;		iUVp_SignCode[i] 	=	-7	;		 iUVp_TrimWt[i] 	=	7.53	;		    i++	;
+	iUV_P_TrCode[i] 	=	10	;		iUVp_SignCode[i] 	=	-6	;		 iUVp_TrimWt[i] 	=	6.38	;		    i++	;
+	iUV_P_TrCode[i] 	=	11	;		iUVp_SignCode[i] 	=	-5	;		 iUVp_TrimWt[i] 	=	5.26	;		    i++	;
+	iUV_P_TrCode[i] 	=	12	;		iUVp_SignCode[i] 	=	-4	;		 iUVp_TrimWt[i] 	=	4.17	;		    i++	;
+	iUV_P_TrCode[i] 	=	13	;		iUVp_SignCode[i] 	=	-3	;		 iUVp_TrimWt[i] 	=	3.09	;		    i++	;
+	iUV_P_TrCode[i] 	=	14	;		iUVp_SignCode[i] 	=	-2	;		 iUVp_TrimWt[i] 	=	2.04	;		    i++	;
+	iUV_P_TrCode[i] 	=	15	;		iUVp_SignCode[i] 	=	-1	;		 iUVp_TrimWt[i] 	=	1.01	;		    i++	;
 
-	//Pass Bank E8 trim registers data to the WordArray
-	WordArray[0]  = g_TrimRegister_P[48];
-	WordArray[1]  = g_TrimRegister_P[49];
-	WordArray[2]  = g_TrimRegister_P[50];
-	WordArray[3]  = g_TrimRegister_P[51];
-	WordArray[4]  = g_TrimRegister_P[52];
-	WordArray[5]  = g_TrimRegister_P[53];
-	WordArray[6]  = g_TrimRegister_P[54]; 
-	WordArray[7]  = g_TrimRegister_P[55]; 
-	WordArray[8]  = g_TrimRegister_P[56]; 
-	WordArray[9]  = g_TrimRegister_P[57]; //uVADC_0_P
-	WordArray[10] = g_TrimRegister_P[58]; //uVADC_1_P
-	WordArray[11] = g_TrimRegister_P[59]; //uVADC_2_P
-	WordArray[12] = g_TrimRegister_P[60]; //uVADC_3_P
-	WordArray[13] = g_TrimRegister_P[61]; 
-	WordArray[14] = g_TrimRegister_P[62]; 
-	WordArray[15] = g_TrimRegister_P[63];
+
 
 	
 	/*
@@ -171,11 +162,14 @@ void IUV_Pre_P(test_function& func)
 
 		//Release Vpin and expect Vpin drop to ~2.3V after command issued.
 		DSM_I2C_Write('b', g_PINSDA_CTRL, 0x01);	//0x4E, 0x01 (release Vpin)
-		//DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);	//Disable DSM I2C
-		//Disconnect DSM from Primary after releasing VPIN or TS pins
-		Open_relay(K1_DSM_TB);	
-		Open_relay(K3_DSM_TB);	
-		delay(1);
+
+		Disable_n_Disconnect_DSMI2C_via(g_release_Vpin);
+
+		//////DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);	//Disable DSM I2C
+		//////Disconnect DSM from Primary after releasing VPIN or TS pins
+		////Open_relay(K1_DSM_TB);	
+		////Open_relay(K3_DSM_TB);	
+		////delay(1);
 
 		//6. release VPIN (SDA) for VPIN operation.  		
 			UV_dvi->set_current(UV_ch, 5e-6, RANGE_300_UA);	//set really low current to start
@@ -189,23 +183,131 @@ void IUV_Pre_P(test_function& func)
 			//D_dvi->set_meas_mode(D_ch, DVI_MEASURE_CURRENT);
 			D_dvi->set_meas_mode(D_ch, DVI_MEASURE_VOLTAGE);
 			wait.delay_10_us(20);
-	//BPP zig zag (5V to 5.5V to 4.3V to 5.4V below OV threshold)
-	BPP_dvi->set_voltage(BPP_ch, 5.5, VOLT_10_RANGE); // DVI_11_1
-	delay(1);
-	BPP_dvi->set_voltage(BPP_ch, 4.3, VOLT_10_RANGE); // DVI_11_1
-	delay(1);
-	BPP_dvi->set_voltage(BPP_ch, 5.4, VOLT_10_RANGE); // DVI_11_1
-	delay(1);
 
-
+	BPP_zigzag(5.5, 4.3, 5.4);
 
 		//7. Ramp up iUV with Voltage source through Resistor for better accuracy until D switch from 0 to 1
 			Search_iUVp_P(&iUVp_pt_P);
-			PiDatalog(func, 	A_iUVp_pt_P,      iUVp_pt_P,              26, POWER_MICRO);
+			PiDatalog(func, 	A_iUVp_pt_P,      iUVp_pt_P,					26, POWER_MICRO);
+			PiDatalog(func, 	A_iUVp_target_P,  g_iUVp_TARGET_Trimops_P,      26, POWER_MICRO);
 
 			g_iUVp_pt_P = iUVp_pt_P;
 
-			Search_iUVm_P(&iUVm_pt_P);  //only for TEST to observe iOV- is working here.  No need to datalog.
+			//Search_iUVm_P(&iUVm_pt_P);  //only for TEST to observe iOV- is working here.  No need to datalog.
+
+
+
+	//*********************************************************************************************
+	//*** Simulation IUV_Sim Start ****************************************************************
+	//*********************************************************************************************
+	if(0)
+	{
+		// Find which trim code will make iUVp_pt_P closest to target //
+		smallest_diff_val = 999999.9;
+		smallest_diff_idx = 0;
+		for (i=0; i<=31; i++)
+		{
+			temp_1 = (iUVp_pt_P * (1 + (iUVp_TrimWt[i]/100)) -  g_iUVp_TARGET_Trimops_P);
+			if (fabs(temp_1) < fabs(smallest_diff_val))
+			{
+				smallest_diff_val = temp_1;
+				smallest_diff_idx = i;
+			}
+		}
+
+		//Debug only start for Manual forcing
+			//smallest_diff_idx	= 31;	//expect sim result to be the same if 0.  
+			EEpr_Bank_P[E6]		= 0;	//
+		//Debug only stop for Manual forcing
+
+		iUVp_TrCode_P   = smallest_diff_idx;
+		iUVp_TrCode_P   = iUV_P_TrCode[smallest_diff_idx];
+		iUVp_BitCode_P  = iUVp_SignCode[smallest_diff_idx];
+		iUVp_ExpChg_P   = iUVp_TrimWt[smallest_diff_idx];
+		iUVp_ExpA_P		= (iUVp_TrimWt[smallest_diff_idx]/100 +1)*iUVp_pt_P - iUVp_pt_P;
+
+			PiDatalog(func, 	A_iUVp_TrCode_P,   iUVp_TrCode_P,				26, POWER_UNIT);
+			PiDatalog(func, 	A_iUVp_BitCode_P,  iUVp_BitCode_P,				26, POWER_UNIT);
+			PiDatalog(func, 	A_iUVp_ExpChg_P,   iUVp_ExpChg_P,				26, POWER_UNIT);
+			PiDatalog(func, 	A_iUVp_ExpA_P,	   iUVp_ExpA_P,					26, POWER_MICRO);
+			PiDatalog(func, 	A_EeTr57_iUVp0_P,   (iUVp_TrCode_P & 0x01)/1,	26, POWER_UNIT);
+			PiDatalog(func, 	A_EeTr58_iUVp1_P,   (iUVp_TrCode_P & 0x02)/2,	26, POWER_UNIT);
+			PiDatalog(func, 	A_EeTr59_iUVp2_P,   (iUVp_TrCode_P & 0x04)/4,	26, POWER_UNIT);
+			PiDatalog(func, 	A_EeTr60_iUVp3_P,   (iUVp_TrCode_P & 0x08)/8,	26, POWER_UNIT);
+
+		TrimCode_To_TrimBit(iUVp_TrCode_P, "IUV_P", 'p');	//convert trimcode to register bits and store to register temp array
+
+		TrCode_shift_n_bits = gP_Reg_Start_Bit_uVADC - g_E6_start_bit;
+		EEpr_Bank_P[E6] = EEpr_Bank_P[E6] | ( iUVp_TrCode_P << TrCode_shift_n_bits );
+
+		Regain_I2C_P(g_TSpin_Low_to_High);
+		//EEPROM_Write_Enable_P();
+		Program_Single_TrimRegister(g_EEP_W_E6);
+
+		Disable_n_Disconnect_DSMI2C_via(g_release_Vpin);
+
+		//release VPIN (SDA) for VPIN operation.  		
+			UV_dvi->set_current(UV_ch, 5e-6, RANGE_300_UA);	//set really low current to start
+			UV_dvi->set_voltage(UV_ch, 45, VOLT_50_RANGE); 
+			delay(1);
+
+		//Ramp up iUV with Voltage source through Resistor for better accuracy until D switch from 0 to 1
+			Search_iUVp_P(&iUVp_Sim_P);
+
+			iUVp_Sim_Chg_P = ((iUVp_Sim_P/iUVp_pt_P)-1)*100.0;
+
+				PiDatalog(func, 	A_iUVp_Sim_P,      iUVp_Sim_P,              26, POWER_MICRO);
+				PiDatalog(func, 	A_iUVp_Sim_Chg_P,  iUVp_Sim_Chg_P,          26, POWER_UNIT);
+	}
+	//*********************************************************************************************
+	//*** Simulation IUV_Sim End ******************************************************************
+	//*********************************************************************************************
+
+
+	//-----------------------------------------------------------------
+	//---- iUV Bitweight CHAR starts --------------------------------- 
+	//For bitweight char only (TEST Engineer will need to manually measure from scope)
+	if(1)
+	{
+		for(i=0; i<=15; i++)
+		{
+			smallest_diff_idx	= i;	//expect sim result to be the same if 0.  
+			EEpr_Bank_P[E0]		= 0;	//
+			iUVp_TrCode_P   = smallest_diff_idx;
+			iUVp_TrCode_P   = iUV_P_TrCode[smallest_diff_idx];
+			TrimCode_To_TrimBit(iUVp_TrCode_P, "iUV_P", 'p');	//convert trimcode to register bits and store to register temp array
+			TrCode_shift_n_bits = gP_Reg_Start_Bit_yInter - g_E0_start_bit;
+			EEpr_Bank_P[E0] = EEpr_Bank_P[E0] | ( iUVp_TrCode_P << TrCode_shift_n_bits );
+
+		Regain_I2C_P(g_TSpin_Low_to_High);
+
+			Program_Single_TrimRegister(g_EEP_W_E0);
+			wait.delay_10_us(1);
+
+			EEPROM_Read_Enable_P();
+			pE0_data[i] = DSM_I2C_Read(g_EEP_R_C0); //Read data[i] of RegAddr 0xE0 from 0xC0 RegAddr from READ_ADDR 0x00
+			pE2_data[i] = DSM_I2C_Read(g_EEP_R_C2); //Read data[i] of RegAddr 0xE0 from 0xC2 RegAddr from READ_ADDR 0x00
+			pE4_data[i] = DSM_I2C_Read(g_EEP_R_C4); //Read data[i] of RegAddr 0xE4 from 0xC4 RegAddr from READ_ADDR 0x00
+			pE6_data[i] = DSM_I2C_Read(g_EEP_R_C6); //Read data[i] of RegAddr 0xE6 from 0xC6 RegAddr from READ_ADDR 0x00
+			pE8_data[i] = DSM_I2C_Read(g_EEP_R_C8); //Read data[i] of RegAddr 0xE8 from 0xC8 RegAddr from READ_ADDR 0x00
+
+
+		Disable_n_Disconnect_DSMI2C_via(g_release_Vpin);
+
+			//release VPIN (SDA) for VPIN operation.  		
+				UV_dvi->set_current(UV_ch, 5e-6, RANGE_300_UA);	//set really low current to start
+				UV_dvi->set_voltage(UV_ch, 45, VOLT_50_RANGE); 
+				delay(1);
+
+			//Ramp up iUV with Voltage source through Resistor for better accuracy until D switch from 0 to 1
+				Search_iUVp_P(&iUVp_char[i]);
+				wait.delay_10_us(1);
+		}
+	}
+	//---- iUV Bitweight CHAR stop --------------------------------- 	
+	//-----------------------------------------------------------------
+
+
 
 			Open_relay(K1_UV_RB);	//UV to RB_10kohm
 			Open_relay(K2_UV_RB);	//UV to RB_600k to K2_UV to DVI-21-1
@@ -251,7 +353,6 @@ void IUV_Pre_P(test_function& func)
 		Open_relay(K3_DSM_TB);	
 		delay(1);
 
-
 		Close_relay(K1_UV_RB);	//UV to RB_10kohm
 		Close_relay(K2_UV_RB);	//UV to RB_600k to K2_UV to DVI-21-1
 		Close_relay(K2_D_RB);	//D  to RB_82uH_50ohm to K2_D to DVI-11-0
@@ -264,14 +365,6 @@ void IUV_Pre_P(test_function& func)
 			D_dvi->set_meas_mode(D_ch, DVI_MEASURE_VOLTAGE);
 			wait.delay_10_us(20);
 
-
-	//BPP zig zag (5V to 5.5V to 4.3V to 5.4V below OV threshold)
-	////BPP_dvi->set_voltage(BPP_ch, 5.5, VOLT_10_RANGE); // DVI_11_1
-	////delay(1);
-	////BPP_dvi->set_voltage(BPP_ch, 4.3, VOLT_10_RANGE); // DVI_11_1
-	////delay(1);
-	////BPP_dvi->set_voltage(BPP_ch, 5.4, VOLT_10_RANGE); // DVI_11_1
-	////delay(1);
 	BPP_zigzag(5.5, 4.3, 5.4);
 
 		//7. inject current into VPIN starting low to find the IOV+ threshold by looking when drain flips.	

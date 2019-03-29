@@ -41,7 +41,7 @@ void Fosc_Pre_P(test_function& func)
 
 	// Datalog gFuncNum variable //
 	if(gDisplay_FuncNum)
-		PiDatalog(func, A_fnum_Fosc_Pre_P, gFuncNum, 14, POWER_UNIT);
+		PiDatalog(func, A_fnum_Fosc_Tr_P, gFuncNum, 14, POWER_UNIT);
 
 	// Skip Test if AbortTest set //
 	if (AbortTest)
@@ -53,77 +53,63 @@ void Fosc_Pre_P(test_function& func)
 
 	//if (g_Fn_Fosc_Pre_P == 0 )  return;
 
-	float Fosc_pt_P     =0;
-	float Fosc_prg_P    =0;
-	float Fosc_Target_P = 5.25; 
-	int Fosc_TrCode_P   = 0;
-	int Fosc_BitCode_P  = 0;
-	int EEtr27_ZTML0_P  = 0;
-	int EEtr28_ZTML1_P  = 0;
+	float	Fosc_pt_P		=0;
+	float	Fosc_prg_P		=0;
+	int		Fosc_TrCode_P   =0;
+	int		Fosc_BitCode_P  =0;
+	int		EEtr27_ZTML0_P  =0;
+	int		EEtr28_ZTML1_P  =0;
 	
-	float Fosc_Sim_P = 0;
-	float Fosc_Sim_Chg_P = 0;
-	float Fosc_ExpChg   = 0;
-	float Fosc_PrgChg   = 0;
-	float Fosc_pst_P =0;
-	float Fosc_Pre_P_TT =0;
+	float Fosc_Sim_P		=0;
+	float Fosc_Sim_Chg_P	=0;
+	float Fosc_ExpChg_P		=0;
+	float Fosc_ExpHz_P		=0;
+	float Fosc_PrgChg_P		=0;
+	float Fosc_pst_P		=0;
+	float Fosc_Pre_P_TT		=0;
 
 
 	//Trimcode & bit weights.
 	float	Fosc_P_TrimWt[32]   = {0.0};
-	float	Fosc_P_code[32]     = {0.0};
+	float	Fosc_P_TrCode[32]     = {0.0};
+	float	Fosc_P_SignCode[32] = {0.0};
 	float   smallest_diff_val  = 999999.9;
 	float   temp_1             = 0;
 	int     smallest_diff_idx  = 0;
 	int		WordArray[16]	   = {0};
 	int		i;
+	int		TrCode_shift_n_bits	=0;
 
 	float	tmeas=0;
 
 
-	i=0;
-	Fosc_P_code[i] =  0	;	 Fosc_P_TrimWt[i] 	=	0.000	;	    i++	;
-	Fosc_P_code[i] =  1	;	 Fosc_P_TrimWt[i] 	=	1.000	;	    i++	;
-	Fosc_P_code[i] =  2	;	 Fosc_P_TrimWt[i] 	=	2.000	;	    i++	;
-	Fosc_P_code[i] =  3	;	 Fosc_P_TrimWt[i] 	=	3.000	;	    i++	;
-	Fosc_P_code[i] =  4	;	 Fosc_P_TrimWt[i] 	=	4.000	;	    i++	;
-	Fosc_P_code[i] =  5	;	 Fosc_P_TrimWt[i] 	=	5.000	;	    i++	;
-	Fosc_P_code[i] =  6	;	 Fosc_P_TrimWt[i] 	=	6.000	;	    i++	;
-	Fosc_P_code[i] =  7	;	 Fosc_P_TrimWt[i] 	=	7.000	;	    i++	;
-	Fosc_P_code[i] =  8	;	 Fosc_P_TrimWt[i] 	=	8.000	;	    i++	;
-	Fosc_P_code[i] =  9	;	 Fosc_P_TrimWt[i] 	=	9.000	;	    i++	;
-	Fosc_P_code[i] = 10	;	 Fosc_P_TrimWt[i] 	=	10.000	;	    i++	;
-	Fosc_P_code[i] = 11	;	 Fosc_P_TrimWt[i] 	=	11.000	;	    i++	;
-	Fosc_P_code[i] = 12	;	 Fosc_P_TrimWt[i] 	=	12.000	;	    i++	;
-	Fosc_P_code[i] = 13	;	 Fosc_P_TrimWt[i] 	=	13.000	;	    i++	;
-	Fosc_P_code[i] = 14	;	 Fosc_P_TrimWt[i] 	=	14.000	;	    i++	;
-	Fosc_P_code[i] = 15	;	 Fosc_P_TrimWt[i] 	=	15.000	;	    i++	;
+	i=0;																
+	Fosc_P_TrCode[i]	=	0	;		Fosc_P_SignCode[i] 	=	0	;		 Fosc_P_TrimWt[i] 	=	0.00	;		    i++	;
+	Fosc_P_TrCode[i]	=	1	;		Fosc_P_SignCode[i] 	=	-4	;		 Fosc_P_TrimWt[i] 	=	-3.97	;		    i++	;
+	Fosc_P_TrCode[i]	=	2	;		Fosc_P_SignCode[i] 	=	-8	;		 Fosc_P_TrimWt[i] 	=	-8.40	;		    i++	;
+	Fosc_P_TrCode[i]	=	3	;		Fosc_P_SignCode[i] 	=	-12	;		 Fosc_P_TrimWt[i] 	=	-12.70	;		    i++	;
+	Fosc_P_TrCode[i]	=	4	;		Fosc_P_SignCode[i] 	=	-16	;		 Fosc_P_TrimWt[i] 	=	-16.68	;		    i++	;
+	Fosc_P_TrCode[i]	=	5	;		Fosc_P_SignCode[i] 	=	-20	;		 Fosc_P_TrimWt[i] 	=	-20.68	;		    i++	;
+	Fosc_P_TrCode[i]	=	6	;		Fosc_P_SignCode[i] 	=	-24	;		 Fosc_P_TrimWt[i] 	=	-24.65	;		    i++	;
+	Fosc_P_TrCode[i]	=	7	;		Fosc_P_SignCode[i] 	=	-28	;		 Fosc_P_TrimWt[i] 	=	-28.57	;		    i++	;
+	Fosc_P_TrCode[i]	=	8	;		Fosc_P_SignCode[i] 	=	32	;		 Fosc_P_TrimWt[i] 	=	30.92	;		    i++	;
+	Fosc_P_TrCode[i]	=	9	;		Fosc_P_SignCode[i] 	=	28	;		 Fosc_P_TrimWt[i] 	=	27.18	;		    i++	;
+	Fosc_P_TrCode[i]	=	10	;		Fosc_P_SignCode[i] 	=	24	;		 Fosc_P_TrimWt[i] 	=	22.71	;		    i++	;
+	Fosc_P_TrCode[i]	=	11	;		Fosc_P_SignCode[i] 	=	20	;		 Fosc_P_TrimWt[i] 	=	19.21	;		    i++	;
+	Fosc_P_TrCode[i]	=	12	;		Fosc_P_SignCode[i] 	=	16	;		 Fosc_P_TrimWt[i] 	=	15.59	;		    i++	;
+	Fosc_P_TrCode[i]	=	13	;		Fosc_P_SignCode[i] 	=	12	;		 Fosc_P_TrimWt[i] 	=	11.74	;		    i++	;
+	Fosc_P_TrCode[i]	=	14	;		Fosc_P_SignCode[i] 	=	8	;		 Fosc_P_TrimWt[i] 	=	7.80	;		    i++	;
+	Fosc_P_TrCode[i]	=	15	;		Fosc_P_SignCode[i] 	=	4	;		 Fosc_P_TrimWt[i] 	=	3.72	;		    i++	;
 
-	//Pass Bank E0 trim registers data to the WordArray
+
+
+	//Bank E0 trim registers
 	/*
 		fOSC_3_P	bit 11
 		fOSC_2_P	bit 10
 		fOSC_1_P	bit 9
 		fOSC_0_P	bit 8
 	*/
-
-	WordArray[0]  	=	 g_S_TrimRegister[0];	//E0 bit 0
-	WordArray[1]  	=	 g_S_TrimRegister[1];	//E0 bit 1
-	WordArray[2]  	=	 g_S_TrimRegister[2];	//E0 bit 2
-	WordArray[3]  	=	 g_S_TrimRegister[3];	//E0 bit 3
-	WordArray[4]  	=	 g_S_TrimRegister[4];	//E0 bit 4
-	WordArray[5]  	=	 g_S_TrimRegister[5];	//E0 bit 5
-	WordArray[6]  	=	 g_S_TrimRegister[6];	//E0 bit 6
-	WordArray[7]  	=	 g_S_TrimRegister[7];	//E0 bit 7
-	WordArray[8]  	=	 g_S_TrimRegister[8];	//E0 bit 8	fosc_0
-	WordArray[9]  	=	 g_S_TrimRegister[9];	//E0 bit 9	fosc_1
-	WordArray[10] 	=	 g_S_TrimRegister[10];	//E0 bit 10	fosc_2
-	WordArray[11] 	=	 g_S_TrimRegister[11];	//E0 bit 11	fosc_3
-	WordArray[12] 	=	 g_S_TrimRegister[12];	//E0 bit 12
-	WordArray[13] 	=	 g_S_TrimRegister[13];	//E0 bit 13
-	WordArray[14] 	=	 g_S_TrimRegister[14];	//E0 bit 14
-	WordArray[15] 	=	 g_S_TrimRegister[15];	//E0 bit 15
-
 
 	// Test Time Begin //
 	 if (g_TstTime_Enble_P)
@@ -154,8 +140,6 @@ void Fosc_Pre_P(test_function& func)
 	tmu_6->close_relay(TMU_HIZ_DUT1);    // Connect TMU HIZ to Drain 
 	tmu_6->start_trigger_setup(1.5, NEG_SLOPE, TMU_HIZ, TMU_IN_5V);		
 	tmu_6->stop_trigger_setup(1.7,  NEG_SLOPE, TMU_HIZ, TMU_IN_5V);
-	//tmu_6->start_trigger_setup(2.5, NEG_SLOPE, TMU_HIZ, TMU_IN_5V);		
-	//tmu_6->stop_trigger_setup(2.7,  NEG_SLOPE, TMU_HIZ, TMU_IN_5V);
 	//tmu_6->start_trigger_setup(-0.25, NEG_SLOPE, TMU_HIZ, TMU_IN_5V);		//noise level only
 	//tmu_6->stop_trigger_setup(-0.15,  NEG_SLOPE, TMU_HIZ, TMU_IN_5V);		//noise level only
 	tmu_6->start_holdoff(5,TRUE);
@@ -169,6 +153,92 @@ void Fosc_Pre_P(test_function& func)
 	tmeas/=10;	
 	Fosc_pt_P = 1/tmeas;
 
+	//
+	//Datalog
+	PiDatalog(func, A_Fosc_pt_P,		Fosc_pt_P,					14,	POWER_MEGA);	
+	PiDatalog(func, A_Fosc_target_P,	g_Fosc_P_TARGET_Trimops_P,	14,	POWER_MEGA);	
+
+
+
+	//*********************************************************************************************
+	//*** Simulation ******************************************************************************
+	//*********************************************************************************************
+		// Find which trim code will make Fosc_pt_P closest to target //
+		smallest_diff_val = 999999.9;
+		smallest_diff_idx = 0;
+		for (i=0; i<=31; i++)
+		{
+			temp_1 = (Fosc_pt_P * (1 + (Fosc_P_TrimWt[i]/100)) -  g_Fosc_P_TARGET_Trimops_P);
+			if (fabs(temp_1) < fabs(smallest_diff_val))
+			{
+				smallest_diff_val = temp_1;
+				smallest_diff_idx = i;
+			}
+		}
+
+		//Debug only start for Manual forcing
+			//smallest_diff_idx	= 5;	//expect sim result to be the same if 0.  
+			EEpr_Bank_P[E0]		= 0;	//
+		//Debug only stop for Manual forcing
+
+		Fosc_TrCode_P   = smallest_diff_idx;
+		Fosc_TrCode_P   = Fosc_P_TrCode[smallest_diff_idx];
+		Fosc_BitCode_P  = Fosc_P_SignCode[smallest_diff_idx];
+		Fosc_ExpChg_P     = Fosc_P_TrimWt[smallest_diff_idx];
+		Fosc_ExpHz_P		= (Fosc_P_TrimWt[smallest_diff_idx]/100 +1)*Fosc_pt_P - Fosc_pt_P;
+
+			PiDatalog(func, 	A_Fosc_TrCode_P,	Fosc_TrCode_P,				26, POWER_UNIT);
+			PiDatalog(func, 	A_Fosc_BitCode_P,	Fosc_BitCode_P,				26, POWER_UNIT);
+			PiDatalog(func, 	A_Fosc_ExpChg_P,	Fosc_ExpChg_P,				26, POWER_UNIT);
+			//PiDatalog(func, 	A_Fosc_ExpHz_P,		Fosc_ExpHz_P,				26, POWER_KILO);
+			PiDatalog(func, 	A_EeTr8_fOSC0_P,	(Fosc_TrCode_P & 0x01)/1,	26, POWER_UNIT);
+			PiDatalog(func, 	A_EeTr9_fOSC1_P,	(Fosc_TrCode_P & 0x02)/2,	26, POWER_UNIT);
+			PiDatalog(func, 	A_EeTr10_fOSC2_P,   (Fosc_TrCode_P & 0x04)/4,	26, POWER_UNIT);
+			PiDatalog(func, 	A_EeTr11_fOSC3_P,   (Fosc_TrCode_P & 0x08)/8,	26, POWER_UNIT);
+
+		TrimCode_To_TrimBit(Fosc_TrCode_P, "fOSC_P", 'p');	//convert trimcode to register bits and store to register temp array
+
+		TrCode_shift_n_bits = gP_Reg_Start_Bit_fOSC - g_E0_start_bit;
+		EEpr_Bank_P[E0] = EEpr_Bank_P[E0] | ( Fosc_TrCode_P << TrCode_shift_n_bits );
+
+		Program_Single_TrimRegister(g_EEP_W_E0);
+
+	//Measure simulated Fosc_P with TrimCode 
+	tmu_6->arm();				
+	delay(1);					
+	tmeas = tmu_6->read(1e-3);	
+	tmeas/=10;	
+	Fosc_Sim_P = 1/tmeas;
+
+		Fosc_Sim_Chg_P = (Fosc_Sim_P/Fosc_pt_P -1.0)*100.0;
+
+		PiDatalog(func, A_Fosc_Sim_P,		Fosc_Sim_P,			ours->fail_bin, POWER_MEGA);
+		PiDatalog(func, A_Fosc_Sim_Chg_P,	Fosc_Sim_Chg_P,		ours->fail_bin, POWER_UNIT);
+
+	//---------------------------------
+	//For bitweight char only
+	if(0)
+	{
+		for(i=1; i<=15; i++)
+		{
+			smallest_diff_idx	= i;	//expect sim result to be the same if 0.  
+			EEpr_Bank_P[E0]		= 0;	//
+			Fosc_TrCode_P   = smallest_diff_idx;
+			Fosc_TrCode_P   = Fosc_P_TrCode[smallest_diff_idx];
+			TrimCode_To_TrimBit(Fosc_TrCode_P, "fOSC_P", 'p');	//convert trimcode to register bits and store to register temp array
+			TrCode_shift_n_bits = gP_Reg_Start_Bit_fOSC - g_E0_start_bit;
+			EEpr_Bank_P[E0] = EEpr_Bank_P[E0] | ( Fosc_TrCode_P << TrCode_shift_n_bits );
+
+			Program_Single_TrimRegister(g_EEP_W_E0);
+			tmu_6->arm();				
+			delay(1);					
+			tmeas = tmu_6->read(1e-3);	
+			tmeas/=10;	
+			Fosc_Sim_P = 1/tmeas;
+			wait.delay_10_us(1);
+		}
+	}
+	//---------------------------------
 
 	tmu_6->open_relay(TMU_HIZ_DUT1);    //TMU HIZ1 to Drain 
 	Open_relay(K2_D_RB);	//D  to RB_82uH_50ohm to K2_D to DVI-11-0
@@ -176,8 +246,6 @@ void Fosc_Pre_P(test_function& func)
 	delay(4);
 	Power_Down_I2C_P();
 
-	//Datalog
-	PiDatalog(func, A_Fosc_pt_P, Fosc_pt_P, 14,	POWER_KILO);	
 
 
 	// Test Time End //
@@ -185,7 +253,7 @@ void Fosc_Pre_P(test_function& func)
 	{
 		g_endtime = g_mytimer.GetElapsedTime();
 		Fosc_Pre_P_TT = (g_endtime - g_begintime)*1e-6;
-		PiDatalog(func, A_Fosc_Pre_P_TT, Fosc_Pre_P_TT, 14, POWER_MILLI);
+		PiDatalog(func, A_Fosc_Trim_P_TT, Fosc_Pre_P_TT, 14, POWER_MILLI);
 	}
 
 	// Check any test failed //

@@ -27,17 +27,21 @@ void setup_TonMin_Pre_P(test_function &func,char **function_name,char *heading_l
 // ***********************************************************
 
 enum TonMin_Pre_P{
-	A_fnum_TMin_Tr_P,
-	A_TonMin_pt_P,
-	A_TonMin_target_P,
-	A_TonMin_code_P,
-	A_TonMin_BitCode_P,
-	A_TonMin_needed_P,
-	A_EeTr77_TonM0_P,
-	A_EeTr78_TonM1_P,
-	A_EeTr79_TonM2_P,
-	A_TonMin_Sim,
-	A_TonM_Sim_Chg,
-	A_TonMin_pst_P,
-	A_TonMin_Tr_P_TT,
+		A_fnum_TMin_Tr_P	,	
+		A_TonMin_pt_P	,	
+		A_TonMin_target_P	,	
+		A_TonMin_TrCode_P	,	
+		A_TonMinBitCode_P	,	
+		A_TonMin_ExpChg_P	,	
+	//	A_TonMin_ExpUs_P	,	
+		A_EeTr77_TonM0_P	,	
+		A_EeTr78_TonM1_P	,	
+		A_EeTr79_TonM2_P	,	
+		A_TonMin_Sim_P	,	
+		A_TonMin_SimChg_P,		
+		A_TonMin_pst_P	,	
+		A_TonMin_Tr_P_TT	,	
+
+
+
 };

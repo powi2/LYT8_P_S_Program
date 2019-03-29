@@ -178,11 +178,11 @@ void First(test_function& func)
 	g_FOSC_pt_S =0.0;
     g_FOSC_exp_P =0.0;   
 	g_FOSC_exp_S =0.0;
-    g_TonMax_Pt  =0.0;
-    g_TonMax_exp =0.0;
-	g_tOVL_Pt	=0;
-	g_tOVL_exp	=0;
-    g_HandShake_PASS =0;
+ //   g_TonMax_Pt  =0.0;
+ //   g_TonMax_exp =0.0;
+	//g_tOVL_Pt	=0;
+	//g_tOVL_exp	=0;
+ //   g_HandShake_PASS =0;
 	gCV_VO_pt_S  =0.0;
 	gCV_S =0.0;
     gVclamp_2pct_S=0.0; 
