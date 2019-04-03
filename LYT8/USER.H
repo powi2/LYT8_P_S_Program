@@ -305,6 +305,18 @@ extern int	FB_ch;         //OVI_3_7
 extern uint16_t EEpr_Bank_P[5];
 extern uint16_t EEpr_Array_S[5];
 
+extern int	g_Pre_E0_data_P;
+extern int	g_Pre_E2_data_P;
+extern int	g_Pre_E4_data_P;
+extern int  g_Pre_E6_data_P;
+extern int  g_Pre_E8_data_P;
+		
+extern int	g_Pre_E0_data_S;
+extern int  g_Pre_E2_data_S;
+extern int	g_Pre_E4_data_S;
+extern int  g_Pre_E6_data_S;
+extern int	g_Pre_E8_data_S;
+
 // Program Name
 //extern STRING ProgramName;
 
@@ -325,10 +337,29 @@ extern int g_CB_rev_needed;
 
 /* ======================  Die Parameters  =========================================*/
 extern int g_DevFamily_Trimops;
-extern int g_DevNum_Trimops;
-extern int g_BV_Trimops;
-extern int g_FET_Size_Trimops;
-
+//extern int g_DevNum_Trimops;
+extern int	g_BV_Trimops									,
+			g_FET_Size_Trimops								,
+			gP_Reserved_Trimops								, //bit 0 to 7
+			gP_Trim_AR_SKIP_time_Trimops					,	//bit 21
+			gP_Trim_Disable_TON_foldback_Trimops			,	//bit 22
+			gP_Trim_AR_OFF_TIME_Trimops						,	//bit 23,24
+			gP_Trim_START_UP_FREQ_Trimops					, //bit 25
+			gP_Trim_Enable_Shunt_during_Cap_Select_Trimops	, //bit31
+			gP_Trim_RCV_threshold_Trimops					, //bit 32,33,34
+			gP_Trim_GaN_Mode_Trimops						, //bit 35
+			gP_Trim_Sense_Voltage_ILIM_Trimops				, //bit 36,37,38,39,40
+			gP_Trim_Driver_Size_Trimops						, //bit 41,42,43,44
+			gP_Trim_AR_ON_time_Trimops						, //bit 45
+			gP_Trim_GaN_On_Delay_Trimops					, //bit 46,47
+			gP_Trim_ILIMTC_Trimops							, //bit 48,49,50,51
+			gP_Trim_Bandgap_TSD_Trimops						, //bit 52,53
+			gP_Trim_DOPL_mode_Trimops						, //bit 54
+			gP_Trim_Disable_ILIM_cap_Select_Trimops			, //bit 55
+			gP_Trim_Set_ILIMP_Trimops						, //bit 56
+			gP_Trim_Junction_Start_Temp_Trimops				, //bit 61,62,63
+			gP_Trim_Junction_TSD_Trimops					, //bit 64,65,66
+			gP_Trim_iUV_10pct_Trimops						; //but 71
 
 /* ======================  Test Flow Control Parameter  ============================*/
 //extern int  g_First_Time_Run;
@@ -339,7 +370,7 @@ extern int  g_Trim_Enable_S;
 extern int	g_Erase_Enable_P;
 extern int  g_Erase_Enable_S;
 extern int  g_TstTime_Enble_P;
-extern char* Part_ID_Trimops;
+extern char* g_Part_ID_Trimops;
 extern char *PrgRev;
 extern char *FamilyName;
 extern char *gDev_Family;
@@ -527,20 +558,6 @@ extern int Low_pat_start, Low_pat_stop,
 		FWPK_test_pulses_start3_single, FWPK_test_pulses_stop3_single,
 		FWPK_test_pulses_start4_single, FWPK_test_pulses_stop4_single,
 		FWPK_test_pulses_start5_single, FWPK_test_pulses_stop5_single,
-		//FWPK_test_pulses_start2, FWPK_test_pulses_stop2,
-		//FWPK_test_pulses_start3, FWPK_test_pulses_stop3,
-		//FWPK_test_pulses_start4, FWPK_test_pulses_stop4,
-		//FWPK_test_pulses_start5, FWPK_test_pulses_stop5,
-		//FWPK_test_pulses_start6, FWPK_test_pulses_stop6,
-		//FWPK_test_pulses_start7, FWPK_test_pulses_stop7,
-		//FWPK_test_pulses_start8, FWPK_test_pulses_stop8,
-		//FWPK_test_pulses_start9, FWPK_test_pulses_stop9,
-		//FWPK_test_pulses_start10, FWPK_test_pulses_stop10,
-		//FWPK_test_pulses_start11, FWPK_test_pulses_stop11,
-		//FWPK_test_pulses_start12, FWPK_test_pulses_stop12,
-		//FWPK_test_pulses_start13, FWPK_test_pulses_stop13,
-		//FWPK_test_pulses_start14, FWPK_test_pulses_stop14,
-		//FWPK_test_pulses_start15, FWPK_test_pulses_stop15,
 		HIZallChannels_start, HIZallChannels_stop, 
 		FW_Neg_loop_pulse_start, FW_Neg_loop_pulse_stop,
 		FB_100kHz_loop_pulse_start, FB_100kHz_loop_pulse_stop, 
@@ -719,6 +736,8 @@ extern int	g_Trim_iov_Off_P_Trimops		,
 			g__Trim_iLTC_P_Trimops			, //4 bits
 			gTrim_AR_req_Trimops			;
 
+
+
 extern int gTrim_SdwReg0_Trimops;
 extern int gTrim_SdwReg1_Trimops;
 extern int gTrim_SdwReg2_Trimops;
@@ -845,16 +864,16 @@ extern int		gSiOption_s;
 /*====================    Fosc Function Variables    ===============================*/
 extern float	g_Fosc_pt_P,    g_FOSC_pt_S;
 extern float    g_FOSC_S;
-extern float	g_Fosc_P_TARGET_Trimops_P, gFOSC_TARGET_S_Trimops;
+extern float	gP_Fosc_TARGET_Trimops, gFOSC_TARGET_S_Trimops;
 extern float    g_FOSC_exp_P,   g_FOSC_exp_S;
 //extern float    gFOSC_post_S;
 
 /*======================    TonMax Variables    ====================================*/
-extern float   g_TonMin_TARGET_Trimops_P;
+extern float   gP_TonMin_TARGET_Trimops;
 
 /*======================    Ton Slope & Offset Variables    ====================================*/
-extern float	g_Slope_TARGET_Trimops_P;
-extern float	g_Offset_TARGET_Trimops_P;
+extern float	gP_Slope_TARGET_Trimops;
+extern float	gP_Offset_TARGET_Trimops;
 
 //extern float   g_TonMax_Pt, g_TonMax_S;
 //extern float   g_ToffMin_s;
@@ -865,14 +884,14 @@ extern float	g_Offset_TARGET_Trimops_P;
 //extern int	   g_HandShake_PASS;
 
 /*======================    iOV- Variables    ====================================*/
-extern float	g_iOVp_TARGET_Trimops_P;
-extern float	g_iOVm_TARGET_Trimops_P;
+extern float	gP_iOVp_TARGET_Trimops;
+extern float	gP_iOVm_TARGET_Trimops;
 extern float	g_iOVp_pt_P;
 extern float	g_iOVp_exp;
 
 /*======================    iUV+ Variables    ====================================*/
-extern float	g_iUVp_TARGET_Trimops_P;
-extern float    g_iUVm_TARGET_Trimops_P;
+extern float	gP_iUVp_TARGET_Trimops;
+extern float    gP_iUVm_TARGET_Trimops;
 extern float	g_iUVp_pt_P;
 extern float	g_iUVp_exp;
 
@@ -880,7 +899,7 @@ extern float	g_iUVp_exp;
 extern float 	gCV_FB_Init_pt_S;
 //extern float	gCV_FB_pt_S;
 extern float	gCV_VO_pt_S;
-extern float    gCVtgt_15pct_Higher; //gCV_FB_Pre;
+//extern float    gCVtgt_15pct_Higher; //gCV_FB_Pre;
 extern float gCV_Vout_TARGET_Trimops;
 extern float	gCV_S,		gCV_post_S;
 extern float	gCV_FB_S,	gCV_FB_post_S;
@@ -940,15 +959,15 @@ extern float	gIFB_TH_pt_S;
 extern float	gIFB_exp_S;
 
 /*======================    Dtemp Variables    ====================================*/
-extern float	g_Dtemp_TARGET_P;
+extern float	gP_Dtemp_TARGET_Trimops;
+extern float	gP_VTSstart_TARGET_Trimops;
 
 /*======================    ILIM Variables    ====================================*/
 extern float	gVped_Ilim, gVped_Ilim_Incr;
 extern float	gVind_RM;
 extern float	g_Vpedestal;
 
-extern float	g_ILIM_TARGET_Trimops_P;
-extern float	g_ILIM_TARGET_P;
+extern float	gP_ILIM_TARGET_Trimops;
 extern float	g_ILIM_LO_TARGET;
 extern float	g_ILIM_LO_Med_TARGET;
 extern float	g_ILIM_UP_Med_TARGET;
@@ -1101,6 +1120,7 @@ void Initialize_Instruments();
 void Program_Trim_Register(int *Trim_Register);
 void Read_Trim_Register(int *TrimBank);
 void Program_All_TrimRegister();
+void Program_All_TrimRegister_P();
 void Program_Single_TrimRegister(int TrimLocation);
 
 //-------------------------------
@@ -1416,6 +1436,7 @@ extern int g_TrimRegister_P[80];
 extern int g_S_TrimRegister[80];
 extern int g_TrimRegisterTemp_P[80];
 extern int g_S_TrimRegisterTemp[80];
+extern int g_S_EEpromTemp[80];
 //----------------------------
 extern int g_binary_array[30];
 extern int g_Read_HiByte_Mem[30];
@@ -2357,6 +2378,7 @@ void Hardware_Check_Binno();
 uint16_t Convert_BIN_2_Dec(int *WordArray);
 
 void TrimCode_To_TrimBit(short TrimCode, char TrimParam[99], char p_or_s);
+void EEprcode_2_EEprArray(int TrimCode, int *EEpr, int Startbit);
 void CV_Search(float &CV_minus1p5pct, float &CV_th, float &CV_plus1p5pct, float vStart, float Step_size);
 void Load_10Khz_Pulses();
 void Stop_10Khz_Pulses();
@@ -2378,6 +2400,7 @@ void Stop_100Khz_Pulses_TS();
 void EEPROM_Write_Enable_P();
 void EEPROM_Read_Enable_P();
 void PowerUp_I2C_P();
+void PowerUp_I2C_S();
 void DSM_init_LYT8();
 void Setup_Resources_for_I2C_P();
 void Power_Down_I2C_P();

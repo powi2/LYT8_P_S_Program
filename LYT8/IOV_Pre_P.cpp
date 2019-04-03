@@ -172,6 +172,12 @@ void IOV_Pre_P(test_function& func)
 		Setup_Resources_for_I2C_P();
 		PowerUp_I2C_P();
 
+		if (g_Trim_Enable_P != 0)
+		{
+			EEPROM_Write_Enable_P();
+			Program_All_TrimRegister_P();	//Loading previous trimming before performing the test.
+		}
+
 		DSM_I2C_Write('b', g_TM_CTRL, 0x06);	//0x40, 0x06 (enable analog mode + core_en)
 
 		//3. write CFG<18:17>=10 on RegAddr 'ANA_CTRL_1' to stay in I2C after powerup.
@@ -202,7 +208,7 @@ void IOV_Pre_P(test_function& func)
 			//8. Once drain flipped, now search down to find IOV-		
 			Search_iOVp_P(&iOVp_pt_P);
 				PiDatalog(func, 	A_iOVp_pt_P,      iOVp_pt_P,				26, POWER_MICRO);
-				PiDatalog(func, 	A_iOVp_target_P,  g_iOVp_TARGET_Trimops_P,  26, POWER_MICRO);
+				PiDatalog(func, 	A_iOVp_target_P,  gP_iOVp_TARGET_Trimops,  26, POWER_MICRO);
 
 
 			g_iOVp_pt_P = iOVp_pt_P;
@@ -280,15 +286,15 @@ void IOV_Pre_P(test_function& func)
 
 
 	//Simulation
-	//if(g_Trim_Enable_P)
-	//{
+	if(g_Trim_Enable_P)
+	{
 		// IOV_Code //
 		// Find which trim code will make iOVp_pt_P closest to target //
 		smallest_diff_val = 999999.9;
 		smallest_diff_idx = 0;
 		for (i=0; i<=31; i++)
 		{
-			temp_1 = (iOVp_pt_P * (1 + (iOVp_TrimWt[i]/100)) -  g_iOVp_TARGET_Trimops_P);
+			temp_1 = (iOVp_pt_P * (1 + (iOVp_TrimWt[i]/100)) -  gP_iOVp_TARGET_Trimops);
 			if (fabs(temp_1) < fabs(smallest_diff_val))
 			{
 				smallest_diff_val = temp_1;
@@ -298,7 +304,7 @@ void IOV_Pre_P(test_function& func)
 
 		//Debug only start for Manual forcing
 			//smallest_diff_idx	= 31;	//expect sim result to be the same if 0.  
-			EEpr_Bank_P[E8]		= 0;	//
+			//EEpr_Bank_P[E8]		= 0;	//
 		//Debug only stop for Manual forcing
 
 		iOVp_TrCode_P   = smallest_diff_idx;
@@ -325,11 +331,11 @@ void IOV_Pre_P(test_function& func)
 		Regain_I2C_P(g_TSpin_Low_to_High);
 		EEPROM_Write_Enable_P();
 		Program_Single_TrimRegister(g_EEP_W_E8);
-	//}
+	}
 
 
 	//post Simulation measurement
-	if(g_USE_VR_600K==false)
+	if(g_USE_VR_600K==false && g_Trim_Enable_P==1)
 	{
 		//Setup_Resources_for_I2C_P();
 		//PowerUp_I2C_P();
@@ -380,6 +386,16 @@ void IOV_Pre_P(test_function& func)
 
 		Power_Down_I2C_P();
 	}
+	else
+	{
+		Open_relay(K1_UV_RB);	//UV to RB_10kohm
+		Open_relay(K2_UV_RB);	//UV to RB_600k to K2_UV to DVI-21-1
+		Open_relay(K2_D_RB);	//D  to RB_82uH_50ohm to K2_D to DVI-11-0
+		delay(1);
+
+		Power_Down_I2C_P();
+	}
+
 	//vForce control iVpin version
 	if(g_USE_VR_600K==true)
 	{

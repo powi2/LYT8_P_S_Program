@@ -345,6 +345,18 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\EEPROM_P_Burn.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						PreprocessorDefinitions="$(Inherit)"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath=".\EEPROM_Pre.cpp"
 				>
 				<FileConfiguration
@@ -1021,6 +1033,10 @@
 			</File>
 			<File
 				RelativePath=".\EEprom_DevID.h"
+				>
+			</File>
+			<File
+				RelativePath=".\EEPROM_P_Burn.h"
 				>
 			</File>
 			<File

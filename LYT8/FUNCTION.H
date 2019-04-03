@@ -200,6 +200,12 @@ typedef struct
 
 typedef struct
 {
+    double      NEW_PARAM;
+} EEPROM_P_Burn_params;
+
+
+typedef struct
+{
     USHORT      fail_bin;
 } CV_Pre_params;
 
@@ -565,6 +571,11 @@ void setup_IUV_Pre_P(test_function &func, char **function_name, char *heading_li
 void NTC_Pre_P(test_function &func);
 void initialize_NTC_Pre_P(short test_entry, test_function &func, char **func_name);
 void setup_NTC_Pre_P(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+
+/////////// EEPROM_P_Burn ///////////////////////////////////////////////////////
+void EEPROM_P_Burn(test_function &func);
+void initialize_EEPROM_P_Burn(short test_entry, test_function &func, char **func_name);
+void setup_EEPROM_P_Burn(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
 /////////// CV_Pre ///////////////////////////////////////////////////////
 void CV_Pre(test_function &func);

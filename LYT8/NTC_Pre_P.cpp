@@ -252,6 +252,12 @@ void NTC_Pre_P(test_function& func)
 	Setup_Resources_for_I2C_P();
 	PowerUp_I2C_P();
 
+	if (g_Trim_Enable_P != 0)
+	{
+		EEPROM_Write_Enable_P();
+		Program_All_TrimRegister_P();	//Loading previous trimming before performing the test.
+	}
+
 	//Disable DSM I2C after Vpin or TSpin release
 	DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);	//Disable DSM I2C
 
@@ -275,7 +281,7 @@ void NTC_Pre_P(test_function& func)
 														//				 to Drain switching.  Code diff observed is 1 bit less @5V)
 		wait.delay_10_us(20);
 
-	BPP_zigzag(5.5, 4.3, 5.4);
+	BPP_zigzag(5.5, 4.3, 5.3);
 
 	//Initial observation: Drain output --> expect 101 on TSMODE<2:0> bits using negative duty cycle 
 	//										to determine if it's 1 (2us width) or 0 (1us width).
@@ -343,88 +349,94 @@ void NTC_Pre_P(test_function& func)
 	PiDatalog(func, A_tShort_Dtemp,		tShort_Dtemp*20e-9,	ours->fail_bin, POWER_MICRO);
 	PiDatalog(func, A_Dtemp_pt_P,		Dtemp_pt_P,			ours->fail_bin, POWER_UNIT);
 	PiDatalog(func, A_ITS_P,			ITS_P,				ours->fail_bin, POWER_MICRO);
-	PiDatalog(func, A_Dtemp_target_P,	g_Dtemp_TARGET_P,	ours->fail_bin, POWER_UNIT);
+	PiDatalog(func, A_Dtemp_target_P,	gP_Dtemp_TARGET_Trimops,	ours->fail_bin, POWER_UNIT);
 
 
-	// Find which trim code will make closest to target //
-	smallest_diff_val = 999999.9;
-	smallest_diff_idx = 0;
-	for (i=0; i<=15; i++)
+	//*********************************************************************************************
+	//*** Dtemp_P Simulation  Start ****************************************************************
+	//*********************************************************************************************
+	if(g_Trim_Enable_P)
 	{
-		temp_1 = (Dtemp_pt_P * (1 + (Dtemp_TrimWt[i]/100)) -  g_Dtemp_TARGET_P);
-		if (fabs(temp_1) < fabs(smallest_diff_val))
+		// Find which trim code will make closest to target //
+		smallest_diff_val = 999999.9;
+		smallest_diff_idx = 0;
+		for (i=0; i<=15; i++)
 		{
-			smallest_diff_val = temp_1;
-			smallest_diff_idx = i;
+			temp_1 = (Dtemp_pt_P * (1 + (Dtemp_TrimWt[i]/100)) -  gP_Dtemp_TARGET_Trimops);
+			if (fabs(temp_1) < fabs(smallest_diff_val))
+			{
+				smallest_diff_val = temp_1;
+				smallest_diff_idx = i;
+			}
 		}
+
+		Dtemp_BitCode_P = Dtemp_SignCode[smallest_diff_idx];
+		Dtemp_TrCode_P  = Dtemp_TrimCode[smallest_diff_idx];
+		Dtemp_ExpChg    = Dtemp_TrimWt[smallest_diff_idx];
+
+		//Debug only start
+			//Dtemp_TrCode_P = 7;	//expect sim result to be the same if 0.  
+			//EEpr_Bank_P[E8]= 0;
+		//Debug only stop
+
+			PiDatalog(func, 	A_Dtemp_TrCode_P,   Dtemp_TrCode_P,					26, POWER_UNIT);
+			PiDatalog(func, 	A_Dtemp_BitCode_P,  Dtemp_BitCode_P,				26, POWER_UNIT);
+			PiDatalog(func, 	A_Dtemp_ExpChg_P,   Dtemp_ExpChg,					26, POWER_UNIT);
+			PiDatalog(func, 	A_EeTr67_TsADC0_P,   (Dtemp_TrCode_P & 0x01)/1,		26, POWER_UNIT);
+			PiDatalog(func, 	A_EeTr68_TsADC1_P,   (Dtemp_TrCode_P & 0x02)/2,		26, POWER_UNIT);
+			PiDatalog(func, 	A_EeTr69_TsADC2_P,   (Dtemp_TrCode_P & 0x04)/4,		26, POWER_UNIT);
+			PiDatalog(func, 	A_EeTr70_TsADC3_P,   (Dtemp_TrCode_P & 0x08)/8,		26, POWER_UNIT);
+
+		TrimCode_To_TrimBit(Dtemp_TrCode_P, "TsADC_P", 'p');	//convert trimcode to register bits and store to register temp array
+
+		TrCode_shift_n_bits = gP_Reg_Start_Bit_TsADC - g_E8_start_bit;
+		EEpr_Bank_P[E8] = EEpr_Bank_P[E8] | ( Dtemp_TrCode_P << TrCode_shift_n_bits );
+
+
+		Regain_I2C_P(g_Vpin_Low_to_High);
+		//EEPROM_Write_Enable_P();	//Only if you need to burn, then you need to do a Write Enable
+		Program_Single_TrimRegister(g_EEP_W_E8);
+
+		DSM_I2C_Write('b', 0x4C, 0x01);				//release TSPIN			
+		Disable_n_Disconnect_DSMI2C_via(g_release_TSpin);
+
+		//Force TSPIN voltage to 2.5V and observe lower 9bits for 256		
+		TS_ovi3->set_voltage(TSovi3_ch, 2.5, VOLT_10_RANGE); // OVI_3_0
+		delay(5);
+
+		//Capture waveform and analyze
+			Gage_Start_Capture(  );	
+			Gage_Wait_For_Capture_Complete();
+			g_WAVE_NAME =  "Dtemp_Sim";
+			Gage_Find_Dtemp_code(&Dtemp_Sim_P, &tLong_Dtemp_Sim, &dbus1_HighByte_Sim, &tShort_Dtemp_Sim, &dbus1_LowByte_Sim);
+
+			Dtemp_Sim_Chg_P = ((float)Dtemp_Sim_P/(float)Dtemp_pt_P -1.0)*100.0;
+
+			PiDatalog(func, A_Dtemp_Sim,		Dtemp_Sim_P,		ours->fail_bin, POWER_UNIT);
+			PiDatalog(func, A_Dtemp_Sim_Chg_P,	Dtemp_Sim_Chg_P,    ours->fail_bin, POWER_UNIT);
+
+		//code_diff	= Dtemp_Sim_P - 256;
+		//Dtemp_LSBmV	= 2.5/256.0;
+		//if(code_diff < 0)	
+		//	VTS_start = 2.5 - code_diff * Dtemp_LSBmV;
+		//else				
+		//	VTS_start = 2.5 + code_diff * Dtemp_LSBmV;
+
+		//Force TSPIN voltage to 2.5V and observe lower 9bits for 256		
+		//TS_ovi3->set_voltage(TSovi3_ch, VTS_start, VOLT_10_RANGE); // OVI_3_0
+
+		//VTS_Stop = 1V
+		TS_ovi3->set_voltage(TSovi3_ch, 1.0, VOLT_10_RANGE); // OVI_3_0		
+		delay(5);
+
+		//Capture waveform and analyze
+			Gage_Start_Capture(  );	
+			Gage_Wait_For_Capture_Complete();
+			g_WAVE_NAME =  "Dtemp_VTS_stop";
+			Gage_Find_Dtemp_code(&Dtemp_VTSstop_P, &tLong_Dtemp_VTSstop, &dbus1_HighByte_VTSstop, &tShort_Dtemp_VTSstop, &dbus1_LowByte_VTSstop);
+
+			PiDatalog(func, A_VTSstop_511,		Dtemp_VTSstop_P,		ours->fail_bin, POWER_UNIT);
 	}
-
-	Dtemp_BitCode_P = Dtemp_SignCode[smallest_diff_idx];
-	Dtemp_TrCode_P  = Dtemp_TrimCode[smallest_diff_idx];
-	Dtemp_ExpChg    = Dtemp_TrimWt[smallest_diff_idx];
-
-	//Debug only start
-		//Dtemp_TrCode_P = 7;	//expect sim result to be the same if 0.  
-		EEpr_Bank_P[E8]= 0;
-	//Debug only stop
-
-		PiDatalog(func, 	A_Dtemp_TrCode_P,   Dtemp_TrCode_P,					26, POWER_UNIT);
-		PiDatalog(func, 	A_Dtemp_BitCode_P,  Dtemp_BitCode_P,				26, POWER_UNIT);
-		PiDatalog(func, 	A_Dtemp_ExpChg_P,   Dtemp_ExpChg,					26, POWER_UNIT);
-		PiDatalog(func, 	A_EeTr67_TsADC0_P,   (Dtemp_TrCode_P & 0x01)/1,		26, POWER_UNIT);
-		PiDatalog(func, 	A_EeTr68_TsADC1_P,   (Dtemp_TrCode_P & 0x02)/2,		26, POWER_UNIT);
-		PiDatalog(func, 	A_EeTr69_TsADC2_P,   (Dtemp_TrCode_P & 0x04)/4,		26, POWER_UNIT);
-		PiDatalog(func, 	A_EeTr70_TsADC3_P,   (Dtemp_TrCode_P & 0x08)/8,		26, POWER_UNIT);
-
-	TrimCode_To_TrimBit(Dtemp_TrCode_P, "TsADC_P", 'p');	//convert trimcode to register bits and store to register temp array
-
-	TrCode_shift_n_bits = gP_Reg_Start_Bit_TsADC - g_E8_start_bit;
-	EEpr_Bank_P[E8] = EEpr_Bank_P[E8] | ( Dtemp_TrCode_P << TrCode_shift_n_bits );
-
-
-	Regain_I2C_P(g_Vpin_Low_to_High);
-	//EEPROM_Write_Enable_P();	//Only if you need to burn, then you need to do a Write Enable
-	Program_Single_TrimRegister(g_EEP_W_E8);
-
-	DSM_I2C_Write('b', 0x4C, 0x01);				//release TSPIN			
-	Disable_n_Disconnect_DSMI2C_via(g_release_TSpin);
-
-	//Force TSPIN voltage to 2.5V and observe lower 9bits for 256		
-	TS_ovi3->set_voltage(TSovi3_ch, 2.5, VOLT_10_RANGE); // OVI_3_0
-	delay(5);
-
-	//Capture waveform and analyze
-		Gage_Start_Capture(  );	
-		Gage_Wait_For_Capture_Complete();
-		g_WAVE_NAME =  "Dtemp_Sim";
-		Gage_Find_Dtemp_code(&Dtemp_Sim_P, &tLong_Dtemp_Sim, &dbus1_HighByte_Sim, &tShort_Dtemp_Sim, &dbus1_LowByte_Sim);
-
-		Dtemp_Sim_Chg_P = ((float)Dtemp_Sim_P/(float)Dtemp_pt_P -1.0)*100.0;
-
-		PiDatalog(func, A_Dtemp_Sim,		Dtemp_Sim_P,		ours->fail_bin, POWER_UNIT);
-		PiDatalog(func, A_Dtemp_Sim_Chg_P,	Dtemp_Sim_Chg_P,    ours->fail_bin, POWER_UNIT);
-
-	//code_diff	= Dtemp_Sim_P - 256;
-	//Dtemp_LSBmV	= 2.5/256.0;
-	//if(code_diff < 0)	
-	//	VTS_start = 2.5 - code_diff * Dtemp_LSBmV;
-	//else				
-	//	VTS_start = 2.5 + code_diff * Dtemp_LSBmV;
-
-	//Force TSPIN voltage to 2.5V and observe lower 9bits for 256		
-	//TS_ovi3->set_voltage(TSovi3_ch, VTS_start, VOLT_10_RANGE); // OVI_3_0
-
-	//VTS_Stop = 1V
-	TS_ovi3->set_voltage(TSovi3_ch, 1.0, VOLT_10_RANGE); // OVI_3_0		
-	delay(5);
-
-	//Capture waveform and analyze
-		Gage_Start_Capture(  );	
-		Gage_Wait_For_Capture_Complete();
-		g_WAVE_NAME =  "Dtemp_VTS_stop";
-		Gage_Find_Dtemp_code(&Dtemp_VTSstop_P, &tLong_Dtemp_VTSstop, &dbus1_HighByte_VTSstop, &tShort_Dtemp_VTSstop, &dbus1_LowByte_VTSstop);
-
-		PiDatalog(func, A_VTSstop_511,		Dtemp_VTSstop_P,		ours->fail_bin, POWER_UNIT);
 
 	Power_Down_I2C_P();
 	Open_relay(K2_D_RB);	//D  to RB_82uH_50ohm to K2_D to DVI-11-0		disconnect

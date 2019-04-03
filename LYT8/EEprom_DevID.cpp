@@ -244,6 +244,8 @@ AT9		| x	 |		|	 |	x	|	  | 	  |   x	  |	x		 |		 |	x	|		|0x18 0x08	0001 1000	0000 
 
 		}
 
+		//g_Trim_Enable_P = 1;	//for DEBUG ONLY
+
 		PiDatalog(func, A_Pri_UnTrimmed, Pri_Untrimmed, 20, POWER_UNIT);
 		//-------------------------------------------------------------
 		// Read EEprom Primary.  Detect & Decide Erase/Trim flag *END

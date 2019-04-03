@@ -54,6 +54,7 @@ test_descriptions g_test_list[] =
 	{ "ILIM_Pre",-1L,ILIM_Pre,setup_ILIM_Pre,initialize_ILIM_Pre,sizeof(ILIM_Pre_params) },
 	{ "IUV_Pre_P",-1L,IUV_Pre_P,setup_IUV_Pre_P,initialize_IUV_Pre_P,sizeof(IUV_Pre_P_params) },
 	{ "NTC_Pre_P",-1L,NTC_Pre_P,setup_NTC_Pre_P,initialize_NTC_Pre_P,sizeof(NTC_Pre_P_params) },
+	{ "EEPROM_P_Burn",-1L,EEPROM_P_Burn,setup_EEPROM_P_Burn,initialize_EEPROM_P_Burn,sizeof(EEPROM_P_Burn_params) },
 	{ "CV_Pre",-1L,CV_Pre,setup_CV_Pre,initialize_CV_Pre,sizeof(CV_Pre_params) },
 	{ "VDDA_Pre",-1L,VDDA_Pre,setup_VDDA_Pre,initialize_VDDA_Pre,sizeof(VDDA_Pre_params) },
 	{ "IRSET_Pre",-1L,IRSET_Pre,setup_IRSET_Pre,initialize_IRSET_Pre,sizeof(IRSET_Pre_params) },

@@ -120,6 +120,13 @@ void TonMin_Pre_P(test_function& func)
 	Setup_Resources_for_I2C_P();
 	PowerUp_I2C_P();
 
+	if (g_Trim_Enable_P != 0)
+	{
+		EEPROM_Write_Enable_P();
+		Program_All_TrimRegister_P();	//Loading previous trimming before performing the test.
+	}
+
+	DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);	//Disable DSM I2C
 	DSM_I2C_Write('b', g_TM_CTRL, 0x02);	//0x40, 0x02 (enable analog mode + core_en)
 
 	//3. write CFG<18:17>=10 on RegAddr 'ANA_CTRL_1' to stay in I2C after powerup.
@@ -155,7 +162,7 @@ void TonMin_Pre_P(test_function& func)
 		D_dvi->set_voltage(D_ch, 5.0, VOLT_20_RANGE); // DVI_11_0
 		delay(1);
 
-	BPP_zigzag(5.5, 4.3, 5.4);
+	BPP_zigzag(5.5, 4.3, 5.3);
 
 	Load_100Khz_Pulses_TS();
 	delay(1);
@@ -176,17 +183,19 @@ void TonMin_Pre_P(test_function& func)
 
 	//Datalog
 	PiDatalog(func, A_TonMin_pt_P,		TonMin_pt_P,				14,	POWER_MICRO);	
-	PiDatalog(func, A_TonMin_target_P,	g_TonMin_TARGET_Trimops_P,	14,	POWER_MICRO);	
+	PiDatalog(func, A_TonMin_target_P,	gP_TonMin_TARGET_Trimops,	14,	POWER_MICRO);	
 
 	//*********************************************************************************************
-	//*** Simulation ******************************************************************************
+	//*** TonMin_P Simulation Start ***************************************************************
 	//*********************************************************************************************
+	if(g_Trim_Enable_P)
+	{
 		// Find which trim code will make TonMin_pt_P closest to target //
 		smallest_diff_val = 999999.9;
 		smallest_diff_idx = 0;
 		for (i=0; i<=31; i++)
 		{
-			temp_1 = (TonMin_pt_P * (1 + (TonMin_P_TrimWt[i]/100)) -  g_TonMin_TARGET_Trimops_P);
+			temp_1 = (TonMin_pt_P * (1 + (TonMin_P_TrimWt[i]/100)) -  gP_TonMin_TARGET_Trimops);
 			if (fabs(temp_1) < fabs(smallest_diff_val))
 			{
 				smallest_diff_val = temp_1;
@@ -196,7 +205,7 @@ void TonMin_Pre_P(test_function& func)
 
 		//Debug only start for Manual forcing
 			//smallest_diff_idx	= 0;	//expect sim result to be the same if 0.  
-			EEpr_Bank_P[E8]		= 0;	//
+			//EEpr_Bank_P[E8]		= 0;	//
 		//Debug only stop for Manual forcing
 
 		TonMin_TrCode_P		= smallest_diff_idx;
@@ -232,6 +241,40 @@ void TonMin_Pre_P(test_function& func)
 			wait.delay_10_us(10);
 
 		Program_Single_TrimRegister(g_EEP_W_E8);
+
+			TS_ovi->set_voltage(TSovi1_ch, 1.0, VOLT_1_RANGE); // OVI_1_5 for Comparator LT1719 Vref input
+			wait.delay_10_us(10);
+			TS_ovi3->set_voltage(TSovi3_ch, 0.0, VOLT_10_RANGE); // OVI_3_0
+			wait.delay_10_us(10);
+			Close_relay(K2_TS_TB); //TS disconnect from OVI_3_0_TS_RB
+			Close_relay(K3_TS_IB); //DDD7_1 to Comparator LT1719 to COMP_OUT to TS
+			//Disconnect DSM from Primary after releasing VPIN or TS pins
+			Open_relay(K1_DSM_TB);	
+			Open_relay(K3_DSM_TB);	
+			delay(4);
+			Run_100Khz_Pulses_TS();	//DE want 50ns high duty cycle ideally.
+			delay(1);
+
+		tmeas[1]=0;
+		TonMin_Sim_P=0;
+		for(i=1; i<=10; i++)
+		{
+			tmu_6->arm();				
+			wait.delay_10_us(10);
+			tmeas[i] = tmu_6->read(100e-6);	
+			TonMin_Sim_P += tmeas[i];
+		}
+		TonMin_Sim_P = TonMin_Sim_P/10;
+
+		TonMin_Sim_Chg_P = (TonMin_Sim_P/TonMin_pt_P -1.0)*100.0;
+
+		PiDatalog(func, A_TonMin_Sim_P,		TonMin_Sim_P,		14,	POWER_MICRO);	
+		PiDatalog(func, A_TonMin_SimChg_P, TonMin_Sim_Chg_P,	14,	POWER_UNIT);	
+	}
+	//*********************************************************************************************
+	//*** TonMin_P Simulation Stop ****************************************************************
+	//*********************************************************************************************
+
 	//---------------------------------
 	//For bitweight char only (TEST Engineer will need to manually measure from scope)
 	if(0)
@@ -294,34 +337,7 @@ void TonMin_Pre_P(test_function& func)
 	}
 	//---------------------------------
 
-			TS_ovi->set_voltage(TSovi1_ch, 1.0, VOLT_1_RANGE); // OVI_1_5 for Comparator LT1719 Vref input
-			wait.delay_10_us(10);
-			TS_ovi3->set_voltage(TSovi3_ch, 0.0, VOLT_10_RANGE); // OVI_3_0
-			wait.delay_10_us(10);
-			Close_relay(K2_TS_TB); //TS disconnect from OVI_3_0_TS_RB
-			Close_relay(K3_TS_IB); //DDD7_1 to Comparator LT1719 to COMP_OUT to TS
-			//Disconnect DSM from Primary after releasing VPIN or TS pins
-			Open_relay(K1_DSM_TB);	
-			Open_relay(K3_DSM_TB);	
-			delay(4);
-			Run_100Khz_Pulses_TS();	//DE want 50ns high duty cycle ideally.
-			delay(1);
 
-		tmeas[1]=0;
-		TonMin_Sim_P=0;
-		for(i=1; i<=10; i++)
-		{
-			tmu_6->arm();				
-			wait.delay_10_us(10);
-			tmeas[i] = tmu_6->read(100e-6);	
-			TonMin_Sim_P += tmeas[i];
-		}
-		TonMin_Sim_P = TonMin_Sim_P/10;
-
-		TonMin_Sim_Chg_P = (TonMin_Sim_P/TonMin_pt_P -1.0)*100.0;
-
-		PiDatalog(func, A_TonMin_Sim_P,		TonMin_Sim_P,		14,	POWER_MICRO);	
-		PiDatalog(func, A_TonMin_SimChg_P, TonMin_Sim_Chg_P,	14,	POWER_UNIT);	
 
 	tmu_6->open_relay(TMU_HIZ_DUT1);    //TMU HIZ1 to Drain									
 	Open_relay(K1_TMU_TB);				//D  to TMU_HIZ1										Disconnect

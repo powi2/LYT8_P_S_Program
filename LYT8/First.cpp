@@ -162,6 +162,13 @@ void First(test_function& func)
 		g_S_TrimRegisterTemp[i] = 0;
 	}
 
+	EEpr_Bank_P[E0]		= 0;
+	EEpr_Bank_P[E2]		= 0;
+	EEpr_Bank_P[E4]		= 0;
+	EEpr_Bank_P[E6]		= 0;
+	EEpr_Bank_P[E8]		= 0;
+
+
 	gVBPS_P_Init=0.0; 
 	gVBPP_P_Init=0.0; 
 	gVBPP_M_Init= 0.0; 
@@ -404,7 +411,7 @@ void First(test_function& func)
 	// Check to make sure the program (.prg) selected matches the Part ID entered in the New Lot Information Screen. //
 	if (0)//!strnicmp( Part_ID_LimitSet, "SC", 2)) HL disabled for Binno preliminary trimming
 	{
-		if (strnicmp( Part_ID_LimitSet, Part_ID_Trimops, 6))
+		if (strnicmp( Part_ID_LimitSet, g_Part_ID_Trimops, 6))
 		{
 			Setup = 999; // Failed setup
 			g_Error_Flag = -222;
@@ -413,7 +420,7 @@ void First(test_function& func)
 	}
 	else
 	{
-		if (0)//strnicmp( Part_ID_LimitSet, Part_ID_Trimops, 7)) HL disabled for Binno preliminary trimming
+		if (0)//strnicmp( Part_ID_LimitSet, g_Part_ID_Trimops, 7)) HL disabled for Binno preliminary trimming
 		{
 			Setup = 999; // Failed setup
 			g_Error_Flag = -222;
@@ -458,11 +465,11 @@ void First(test_function& func)
 		g_Trim_Enable_P =0;  // Do not trim golden units. //
 	}
 
-	if (g_DevNum_Trimops == -99)
-	{
-		//Setup = 999; // Failed setup
-		//g_Error_Flag = -222;
-	}
+	//if (g_DevNum_Trimops == -99)
+	//{
+	//	//Setup = 999; // Failed setup
+	//	//g_Error_Flag = -222;
+	//}
 	//if( !HardwareList.VerifyRequiredBoardList() )
 	if(g_Setup_OK == 0)
 	{

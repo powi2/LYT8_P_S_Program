@@ -158,6 +158,12 @@ void ILIM_Pre(test_function& func)
 	Setup_Resources_for_I2C_P();
 	PowerUp_I2C_P();
 
+	if (g_Trim_Enable_P != 0)
+	{
+		EEPROM_Write_Enable_P();
+		Program_All_TrimRegister_P();	//Loading previous trimming before performing the test.
+	}
+
 	DSM_I2C_Write('b', g_TM_CTRL, 0x06);		//0x40, 0x06 (enable analog mode + core_en)
 	DSM_I2C_Write('w', g_ANA_CTRL_1, 0x2804);	//0x46, 0x2804
 	DSM_I2C_Write('w', 0x44, 0x0402);			//choose min ON time and allow flux link thru TSPIN + disable receiver output
@@ -204,7 +210,7 @@ void ILIM_Pre(test_function& func)
 		PV3_Connect_Drain_and_DriveON(gVind_RM); // Drive Voltage
 	}
 
-	BPP_zigzag(5.5, 4.3, 5.4);
+	BPP_zigzag(5.5, 4.3, 5.3);
 
 		Load_100Khz_Pulses_TS();
 		wait.delay_10_us(50);
@@ -226,19 +232,19 @@ g_Debug=0;
 	PiDatalog(func, A_ILIM_pt_P,		ILIM_pt_P,					ours->fail_bin, POWER_MILLI);
 	PiDatalog(func, A_ILIM_pt_didt_P,	ILIM_pt_didt_P,				ours->fail_bin, POWER_MILLI);
 	PiDatalog(func, A_ILIM_pt_ton_P,	ILIM_pt_ton_P,				ours->fail_bin, POWER_MICRO);
-	PiDatalog(func, A_ILIM_target_P,	g_ILIM_TARGET_Trimops_P,	ours->fail_bin, POWER_MILLI);
+	PiDatalog(func, A_ILIM_target_P,	gP_ILIM_TARGET_Trimops,	ours->fail_bin, POWER_MILLI);
 	
 	//*********************************************************************************************
-	//*** Simulation ILIM_Sim Start **************************************************************
+	//*** ILIM_P Simulation  Start ****************************************************************
 	//*********************************************************************************************
-	if(1)
+	if(g_Trim_Enable_P)
 	{
 		// Find which trim code will make ILIM_pt_P closest to target //
 		smallest_diff_val = 999999.9;
 		smallest_diff_idx = 0;
 		for (i=0; i<=31; i++)
 		{
-			temp_1 = (ILIM_pt_P * (1 + (ILIM_P_TrimWt[i]/100)) -  g_ILIM_TARGET_Trimops_P);
+			temp_1 = (ILIM_pt_P * (1 + (ILIM_P_TrimWt[i]/100)) -  gP_ILIM_TARGET_Trimops);
 			if (fabs(temp_1) < fabs(smallest_diff_val))
 			{
 				smallest_diff_val = temp_1;
@@ -248,7 +254,7 @@ g_Debug=0;
 
 		//Debug only start for Manual forcing
 			//smallest_diff_idx	= 5;	//expect sim result to be the same if 0.  
-			EEpr_Bank_P[E2]		= 0;	//
+			//EEpr_Bank_P[E2]		= 0;	//
 		//Debug only stop for Manual forcing
 
 		ILIM_TrCode_P   = smallest_diff_idx;
@@ -337,7 +343,7 @@ g_Debug=0;
 			PiDatalog(func, A_ILIM_SimChg_P,	ILIM_Sim_Chg_P,		ours->fail_bin, POWER_UNIT);
 	}
 	//*********************************************************************************************
-	//*** Simulation ILIM_Sim End ****************************************************************
+	//*** ILIM_P Simulation  End ******************************************************************
 	//*********************************************************************************************
 
 

@@ -157,7 +157,23 @@ void IUV_Pre_P(test_function& func)
 		Setup_Resources_for_I2C_P();
 		PowerUp_I2C_P();
 
+		if (g_Trim_Enable_P != 0)
+		{
+			EEPROM_Write_Enable_P();
+			Program_All_TrimRegister_P();	//Loading previous trimming before performing the test.
+		}
+
 		DSM_I2C_Write('b', g_TM_CTRL, 0x06);		//0x40, 0x06 (enable analog mode + core_en)
+	////DSM_I2C_Write('w', g_ANA_CTRL_1, 0x2824);	//0x46, 0x0824 "FOSC --> Drain" & password
+	////Close_relay(K2_D_RB);	//D  to RB_82uH_50ohm to K2_D to DVI-11-0
+	////Close_relay(K1_TMU_TB);	//D  to TMU_HIZ1
+	////delay(4);
+	//////Drain setup to connect to Ridder board with RL load and set Drain to 5V and ready for vMeas mode
+	////D_dvi->set_current(D_ch, 100e-3, RANGE_300_MA); 
+	////delay(1);
+	////D_dvi->set_voltage(D_ch, 5.0, VOLT_20_RANGE); // DVI_11_0
+	////delay(1);
+
 		DSM_I2C_Write('w', g_ANA_CTRL_1, 0x0824);	//0x46, 0x0824 "LUV --> Drain"
 
 		//Release Vpin and expect Vpin drop to ~2.3V after command issued.
@@ -165,17 +181,15 @@ void IUV_Pre_P(test_function& func)
 
 		Disable_n_Disconnect_DSMI2C_via(g_release_Vpin);
 
-		//////DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);	//Disable DSM I2C
-		//////Disconnect DSM from Primary after releasing VPIN or TS pins
-		////Open_relay(K1_DSM_TB);	
-		////Open_relay(K3_DSM_TB);	
-		////delay(1);
+		////Disconnect DSM from Primary after releasing VPIN or TS pins
+		//Open_relay(K1_DSM_TB);	
+		//Open_relay(K3_DSM_TB);	
+		//delay(1);
 
 		//6. release VPIN (SDA) for VPIN operation.  		
 			UV_dvi->set_current(UV_ch, 5e-6, RANGE_300_UA);	//set really low current to start
 			UV_dvi->set_voltage(UV_ch, 45, VOLT_50_RANGE); 
 			delay(1);
-		delay(5);
 
 		//Drain setup to connect to Ridder board with RL load and set Drain to 5V and ready for vMeas mode
 			D_dvi->set_current(D_ch, 5e-3, RANGE_300_MA); // Does not need 100mA for this test.
@@ -184,12 +198,13 @@ void IUV_Pre_P(test_function& func)
 			D_dvi->set_meas_mode(D_ch, DVI_MEASURE_VOLTAGE);
 			wait.delay_10_us(20);
 
-	BPP_zigzag(5.5, 4.3, 5.4);
+	BPP_zigzag(5.5, 4.3, 5.3);
+	delay(40);
 
 		//7. Ramp up iUV with Voltage source through Resistor for better accuracy until D switch from 0 to 1
 			Search_iUVp_P(&iUVp_pt_P);
 			PiDatalog(func, 	A_iUVp_pt_P,      iUVp_pt_P,					26, POWER_MICRO);
-			PiDatalog(func, 	A_iUVp_target_P,  g_iUVp_TARGET_Trimops_P,      26, POWER_MICRO);
+			PiDatalog(func, 	A_iUVp_target_P,  gP_iUVp_TARGET_Trimops,      26, POWER_MICRO);
 
 			g_iUVp_pt_P = iUVp_pt_P;
 
@@ -207,7 +222,7 @@ void IUV_Pre_P(test_function& func)
 		smallest_diff_idx = 0;
 		for (i=0; i<=31; i++)
 		{
-			temp_1 = (iUVp_pt_P * (1 + (iUVp_TrimWt[i]/100)) -  g_iUVp_TARGET_Trimops_P);
+			temp_1 = (iUVp_pt_P * (1 + (iUVp_TrimWt[i]/100)) -  gP_iUVp_TARGET_Trimops);
 			if (fabs(temp_1) < fabs(smallest_diff_val))
 			{
 				smallest_diff_val = temp_1;
@@ -267,29 +282,40 @@ void IUV_Pre_P(test_function& func)
 	//-----------------------------------------------------------------
 	//---- iUV Bitweight CHAR starts --------------------------------- 
 	//For bitweight char only (TEST Engineer will need to manually measure from scope)
-	if(1)
+	if(0)
 	{
+		Regain_I2C_P(g_TSpin_Low_to_High);
+		DSM_I2C_SREG0_0x7070();	//Get ready for any data to move to read address 0x00
+
 		for(i=0; i<=15; i++)
 		{
 			smallest_diff_idx	= i;	//expect sim result to be the same if 0.  
-			EEpr_Bank_P[E0]		= 0;	//
+			//EEpr_Bank_P[E6]		= 0;	//
 			iUVp_TrCode_P   = smallest_diff_idx;
 			iUVp_TrCode_P   = iUV_P_TrCode[smallest_diff_idx];
-			TrimCode_To_TrimBit(iUVp_TrCode_P, "iUV_P", 'p');	//convert trimcode to register bits and store to register temp array
-			TrCode_shift_n_bits = gP_Reg_Start_Bit_yInter - g_E0_start_bit;
-			EEpr_Bank_P[E0] = EEpr_Bank_P[E0] | ( iUVp_TrCode_P << TrCode_shift_n_bits );
+			TrimCode_To_TrimBit(iUVp_TrCode_P, "uVADC_P", 'p');	//convert trimcode to register bits and store to register temp array
+			TrCode_shift_n_bits = gP_Reg_Start_Bit_uVADC - g_E6_start_bit;
+			EEpr_Bank_P[E6] = EEpr_Bank_P[E6] | ( iUVp_TrCode_P << TrCode_shift_n_bits );
 
 		Regain_I2C_P(g_TSpin_Low_to_High);
+	////			DSM_set_I2C_timeout(0, 1);
+	////			DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
+	////DSM_I2C_Write('w', g_ANA_CTRL_1, 0x2824);	//0x46, 0x0824 "FOSC --> Drain" & password
+	////D_dvi->set_current(D_ch, 100e-3, RANGE_300_MA); 
+	////delay(1);
+	////	DSM_I2C_Write('w', g_ANA_CTRL_1, 0x0824);	//0x46, 0x0824 "LUV --> Drain"
 
-			Program_Single_TrimRegister(g_EEP_W_E0);
-			wait.delay_10_us(1);
+		//EEPROM_Read_Enable_P();
+		//DSM_I2C_SREG0_0x7070();	//Get ready for any data to move to read address 0x00
 
-			EEPROM_Read_Enable_P();
-			pE0_data[i] = DSM_I2C_Read(g_EEP_R_C0); //Read data[i] of RegAddr 0xE0 from 0xC0 RegAddr from READ_ADDR 0x00
-			pE2_data[i] = DSM_I2C_Read(g_EEP_R_C2); //Read data[i] of RegAddr 0xE0 from 0xC2 RegAddr from READ_ADDR 0x00
-			pE4_data[i] = DSM_I2C_Read(g_EEP_R_C4); //Read data[i] of RegAddr 0xE4 from 0xC4 RegAddr from READ_ADDR 0x00
+			Program_Single_TrimRegister(g_EEP_W_E6);
+			delay(15);
+
+			//pE0_data[i] = DSM_I2C_Read(g_EEP_R_C0); //Read data[i] of RegAddr 0xE0 from 0xC0 RegAddr from READ_ADDR 0x00
+			//pE2_data[i] = DSM_I2C_Read(g_EEP_R_C2); //Read data[i] of RegAddr 0xE0 from 0xC2 RegAddr from READ_ADDR 0x00
+			//pE4_data[i] = DSM_I2C_Read(g_EEP_R_C4); //Read data[i] of RegAddr 0xE4 from 0xC4 RegAddr from READ_ADDR 0x00
 			pE6_data[i] = DSM_I2C_Read(g_EEP_R_C6); //Read data[i] of RegAddr 0xE6 from 0xC6 RegAddr from READ_ADDR 0x00
-			pE8_data[i] = DSM_I2C_Read(g_EEP_R_C8); //Read data[i] of RegAddr 0xE8 from 0xC8 RegAddr from READ_ADDR 0x00
+			//pE8_data[i] = DSM_I2C_Read(g_EEP_R_C8); //Read data[i] of RegAddr 0xE8 from 0xC8 RegAddr from READ_ADDR 0x00
 
 
 		Disable_n_Disconnect_DSMI2C_via(g_release_Vpin);
@@ -365,7 +391,7 @@ void IUV_Pre_P(test_function& func)
 			D_dvi->set_meas_mode(D_ch, DVI_MEASURE_VOLTAGE);
 			wait.delay_10_us(20);
 
-	BPP_zigzag(5.5, 4.3, 5.4);
+	BPP_zigzag(5.5, 4.3, 5.3);
 
 		//7. inject current into VPIN starting low to find the IOV+ threshold by looking when drain flips.	
 			//8. Once drain flipped, now search down to find IOV-		

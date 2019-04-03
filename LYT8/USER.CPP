@@ -60,6 +60,7 @@
 03/20/19 CX v0.46cxI  - Update some simulation coding for NTC.  WIP
 03/21/19 CX v0.46cxJ  - Add simulation coding for iOV, NTC.  Need to work on other Primary trim simulations.
 03/28/19 CX v0.46cxK  - Add sim coding for all trim parameters and verified trimweight except iUVp
+04/02/19 CX v0.46cxL  - added EEPROM_P_Burn function and merge EEPROM_Pre function. Work on postTrim funcs next
 
 History Revisions (Above)
 */
@@ -249,9 +250,29 @@ float g_HBP_Pre_S = 0;
 STRING Table_Rev_Trimops = 0;
 
 /* ======================  Die Parameters  =========================================*/
-int  g_DevNum_Trimops	=0;
-int  g_BV_Trimops		=0;
-int  g_FET_Size_Trimops	=0;
+//int  g_DevNum_Trimops	=0;
+int		g_BV_Trimops									=0,
+		g_FET_Size_Trimops								=0,
+		gP_Reserved_Trimops								=0, //bit 0 to 7
+		gP_Trim_AR_SKIP_time_Trimops					=0,	//bit 21
+		gP_Trim_Disable_TON_foldback_Trimops			=0,	//bit 22
+		gP_Trim_AR_OFF_TIME_Trimops						=0,	//bit 23,24
+		gP_Trim_START_UP_FREQ_Trimops					=0, //bit 25
+		gP_Trim_Enable_Shunt_during_Cap_Select_Trimops	=0, //bit31
+		gP_Trim_RCV_threshold_Trimops					=0, //bit 32,33,34
+		gP_Trim_GaN_Mode_Trimops						=0, //bit 35
+		gP_Trim_Sense_Voltage_ILIM_Trimops				=0, //bit 36,37,38,39,40
+		gP_Trim_Driver_Size_Trimops						=0, //bit 41,42,43,44
+		gP_Trim_AR_ON_time_Trimops						=0, //bit 45
+		gP_Trim_GaN_On_Delay_Trimops					=0, //bit 46,47
+		gP_Trim_ILIMTC_Trimops							=0, //bit 48,49,50,51
+		gP_Trim_Bandgap_TSD_Trimops						=0, //bit 52,53
+		gP_Trim_DOPL_mode_Trimops						=0, //bit 54
+		gP_Trim_Disable_ILIM_cap_Select_Trimops			=0, //bit 55
+		gP_Trim_Set_ILIMP_Trimops						=0, //bit 56
+		gP_Trim_Junction_Start_Temp_Trimops				=0, //bit 61,62,63
+		gP_Trim_Junction_TSD_Trimops					=0, //bit 64,65,66
+		gP_Trim_iUV_10pct_Trimops						=0; //bit 71
 
 /* ======================  Test Flow Control Parameter  ============================*/
 //int  g_First_Time_Run =1;
@@ -262,7 +283,7 @@ int   g_Trim_Enable_S = 0;
 int	  g_Erase_Enable_P =0;
 int   g_Erase_Enable_S = 0;
 int   g_TstTime_Enble_P = 0;
-char* Part_ID_Trimops;
+char* g_Part_ID_Trimops;
 char *PrgRev;
 char *FamilyName;
 int	 g_DevFamily_Trimops =0;
@@ -539,6 +560,11 @@ int		gTrim_iov_Off_P_Trimops		=0,
 		gTrim_iLTC_P_Trimops		=0, //4 bits
 		gTrim_AR_req_Trimops		=0;
 
+
+
+
+
+
 int gTrim_SdwReg0_Trimops  = 0;
 int gTrim_SdwReg1_Trimops  = 0;
 int gTrim_SdwReg2_Trimops  = 0;
@@ -658,6 +684,18 @@ int g_SiliconRev_Sec = 1; // Secondary silicon revision //
 uint16_t EEpr_Bank_P[5] = {0};
 uint16_t EEpr_Array_S[5] = {0};
 
+int	g_Pre_E0_data_P = 0;
+int	g_Pre_E2_data_P = 0;
+int	g_Pre_E4_data_P = 0;
+int g_Pre_E6_data_P = 0;
+int g_Pre_E8_data_P = 0;
+		
+int	g_Pre_E0_data_S = 0;
+int g_Pre_E2_data_S = 0;
+int	g_Pre_E4_data_S = 0;
+int g_Pre_E6_data_S = 0;
+int	g_Pre_E8_data_S = 0;
+
 /*=======================    IzPre Function Variables    ===============================*/
 float	gIzpt_NoZ_s=0.0, gIZ_NoZ_s=0.0;
 float   gVread_AF_primary =0.0, gVread_AF_secondary =0.0;
@@ -666,17 +704,17 @@ float   gSec_tr2_AFtrhd  = 0.0;
 int		gSiOption_s=-99;
 
 /*====================    Fosc Function Variables    ===============================*/
-float	g_Fosc_P_TARGET_Trimops_P=0.0, gFOSC_TARGET_S_Trimops =0.0;
+float	gP_Fosc_TARGET_Trimops=0.0, gFOSC_TARGET_S_Trimops =0.0;
 float   g_Fosc_pt_P =0.0,   g_FOSC_pt_S =0.0;
 float   g_FOSC_S = 0;
 float   g_FOSC_exp_P =0.0,  g_FOSC_exp_S=0.0;
 
 /*======================    TonMin Variables    ====================================*/
-float   g_TonMin_TARGET_Trimops_P		=0.0;
+float   gP_TonMin_TARGET_Trimops		=0.0;
 
 /*======================    Ton Slope & Offset Variables    ====================================*/
-float   g_Slope_TARGET_Trimops_P	=0.0;
-float	g_Offset_TARGET_Trimops_P	=0.0;
+float   gP_Slope_TARGET_Trimops	=0.0;
+float	gP_Offset_TARGET_Trimops	=0.0;
 //float	g_TonMax_Pt =0.0, g_TonMax_S=0.0;
 //float   g_ToffMin_s = 0;
 //float   g_TonMax_exp=0.0;
@@ -686,14 +724,14 @@ float	g_Offset_TARGET_Trimops_P	=0.0;
 //int		g_HandShake_PASS =0;
 
 /*======================    iOV+ Variables    ====================================*/
-float   g_iOVp_TARGET_Trimops_P=0.0;
-float   g_iOVm_TARGET_Trimops_P=0.0;
+float   gP_iOVp_TARGET_Trimops=0.0;
+float   gP_iOVm_TARGET_Trimops=0.0;
 float	g_iOVp_pt_P =0.0;
 float   g_iOVp_exp=0.0;
 
 /*======================    iUV Variables    ====================================*/
-float   g_iUVp_TARGET_Trimops_P=0.0;
-float   g_iUVm_TARGET_Trimops_P=0.0;
+float   gP_iUVp_TARGET_Trimops=0.0;
+float   gP_iUVm_TARGET_Trimops=0.0;
 float	g_iUVp_pt_P =0.0;
 float   g_iUVp_exp=0.0;
 
@@ -701,7 +739,7 @@ float   g_iUVp_exp=0.0;
 float 	gCV_FB_Init_pt_S =0.0;
 //float	gCV_FB_pt_S =0;
 float	gCV_VO_pt_S =0;
-float   gCVtgt_15pct_Higher=0.0; //gCV_FB_Pre=0.0;
+//float   gCVtgt_15pct_Higher=0.0; //gCV_FB_Pre=0.0;
 float   gCV_Vout_TARGET_Trimops;
 float	gCV_S =0.0, gCV_post_S=0;
 float	gCV_FB_S=0, gCV_FB_post_S=0;
@@ -758,15 +796,15 @@ float	gIFB_TH_pt_S		=0.0;
 float   gIFB_exp_S			=0.0;
 
 /*======================    Dtemp Variables    ====================================*/
-float	g_Dtemp_TARGET_P=0;
+float	gP_Dtemp_TARGET_Trimops=0;
+float	gP_VTSstart_TARGET_Trimops=0;
 
 /*======================    ILIM Variables    ====================================*/
 float	gVped_Ilim =0.0, gVped_Ilim_Incr=0.0;
 float	gVind_RM =0.0;
 float g_Vpedestal = 0;
 
-float	g_ILIM_TARGET_P=0.0;
-float	g_ILIM_TARGET_Trimops_P=0.0;
+float	gP_ILIM_TARGET_Trimops=0.0;
 float	g_ILIM_LO_TARGET=0.0;
 float	g_ILIM_LO_Med_TARGET=0.0;
 float	g_ILIM_UP_Med_TARGET=0.0;
@@ -1145,7 +1183,9 @@ int g_TrimRegister_P[80]     = {0};
 int g_S_TrimRegister[80]     = {0};
 int g_TrimRegisterTemp_P[80] = {0};
 int g_S_TrimRegisterTemp[80] = {0};
+int g_S_EEpromTemp[80] = {0};
 int g_TrimBank[5]            = {0};
+
 int	g_E0_start_bit = 0;
 int	g_E2_start_bit = 16;
 int	g_E4_start_bit = 32;
@@ -2078,7 +2118,7 @@ void user_load(void)
 	theLimitSetName >> Part_ID_LimitSet  >> g_OperCode >> dummy >> dummy;
 
 	// Test Program Rev //
-	PrgRev = "0.46cxK"; // This should be identical to PiSetProgramName() function call. //
+	PrgRev = "0.46cxL"; // This should be identical to PiSetProgramName() function call. //
 	FamilyName = "LYT8"; // This should be identical to PiSetProgramName() function call. //
 
 	// Modify AutoCorrReport file to share one golden unit for multiple devices of same family. //
@@ -2134,7 +2174,7 @@ void user_load(void)
 	PiEnableGoldenUnit();
 
 	// Test Program Rev //
-	PiSetProgramName("LYT8 0.46cxK");
+	PiSetProgramName("LYT8 0.46cxL");
 
 	// Setup //
 	PiUserLoad( );
@@ -3479,7 +3519,7 @@ void mode_change(void)
 			{
 				DisplayErrorMessage("'Part ID' must be entered in 'New Lot Information' pop-up screen");
 				DisplayErrorMessage("Program can not run.  Please re-enter New Lot Info");
-				g_DevNum_Trimops = 0;
+				//g_DevNum_Trimops = 0;
 				return;
 				//exit(0);
 			}
@@ -3579,14 +3619,14 @@ void mode_change(void)
 
 		
 
-	Part_ID_Trimops = PiGetPartID();
+	g_Part_ID_Trimops = PiGetPartID();
 	if (!strnicmp( g_PrgName, "INN3375GoldenUnit", 17 ))
 	{
-		Part_ID_Trimops = "INN3375golden";
+		g_Part_ID_Trimops = "INN3375golden";
 	}
 
-	printf("\nPart ID = %s\n",Part_ID_Trimops);
-	if((strcmp(Part_ID_Trimops,"NONE")) == 0)
+	printf("\nPart ID = %s\n",g_Part_ID_Trimops);
+	if((strcmp(g_Part_ID_Trimops,"NONE")) == 0)
 	{
 		//HL disabled for Binno prelimiary trimming test program
 		//MessageBox(NULL, "'Part ID' must be entered in 'New Lot Information' pop-up screen.  Program can not run.  Please re-enter New Lot Info.", "Error", MB_OK|MB_TOPMOST);
@@ -3604,202 +3644,77 @@ void mode_change(void)
 	csvpath = GetCSVPath(DllFullName,"LYT8-TrimOptions.csv");
 	printf("\r\n\r\nCSV Path: %s\r\n\r\n",csvpath);
 	PITrimOptions* trimops = new PITrimOptions();
-	int fields = trimops->Read(csvpath, Part_ID_Trimops);	//Allow to read once only
-	if (0)//fields == 0) HL disabled for preliminary Binno  Trimming.
+	int fields = trimops->Read(csvpath, g_Part_ID_Trimops);	//Allow to read once only
+	if (fields != 66)	//LYT8 has 66 fields
 	{
 		MessageBox(NULL, "You've entered wrong 'Part ID'.", "Error", MB_OK|MB_TOPMOST);
-		DisplayErrorMessage("You've entered 'Part ID' = ", Part_ID_Trimops, ". We do not have this product.  Please re-enter the correct Part ID");	
-		g_DevNum_Trimops = -99;
+		DisplayErrorMessage("You've entered 'Part ID' = ", g_Part_ID_Trimops, ". We do not have this product.  Please re-enter the correct Part ID");	
+		//g_DevNum_Trimops = -99;
 		return;
 	}
 
 	// Verify Trim options table revision
-	//HL disabled for Binno preliminary trimming.
-	//Table_Rev_Trimops = trimops->GetRevision();
-	if(0)// strcmp(Table_Rev_Trimops, "3.15") ) //Only accept the correct revision table
+	Table_Rev_Trimops = trimops->GetRevision();
+	if(strcmp(Table_Rev_Trimops, "0.1") ) //Only accept the correct revision table
 	{
 		MessageBox(NULL, "Program can not run.  Trim Option Table is not the correct Revision", "Error", MB_OK|MB_TOPMOST);
 		DisplayErrorMessage("Trim Option Table Revision is '", Table_Rev_Trimops, "', Wrong Revision!\n");
-		//DisplayErrorMessage("Program can not run.  Trim Option Table is not the correct Revision");
 		exit(0);
 	}
-	int trimops_num =5;
+	int trimops_num =5; //start at column 5 "BV" for LYT8 Trimops table
 
 	//Charles temporary put targets here.  Retrieve targets from trimops table once it's available.
-	g_iOVp_TARGET_Trimops_P			= 56.25e-6;
-	g_iOVm_TARGET_Trimops_P			= 54.55e-6;
-	g_Fosc_P_TARGET_Trimops_P		= 1e6;
-	g_TonMin_TARGET_Trimops_P		= 0.7e-6;
-	g_Slope_TARGET_Trimops_P		= 0.0773e-6; //'us/kHz'
-	g_Offset_TARGET_Trimops_P		= 1.233e-6; 
-	g_iUVp_TARGET_Trimops_P			= 12.50e-6;
-	g_iUVm_TARGET_Trimops_P			=  9.63e-6;
-	g_ILIM_TARGET_Trimops_P			= 5.0;
-	g_ILIM_TARGET_P					= 5.0;
-	g_Dtemp_TARGET_P				= 256;
+
 	// Retreive Trim option values
 	// Set trim option values as Long and double
-	// HL disabled for Binno preliminary trimming.
-	////////g_Hcode_Trimops	 = trimops->GetTrimOpAsLong(trimops_num++); // Hcode. //
-	////////g_Trim_code_Trimops = trimops->GetTrimOpAsLong(trimops_num++); // Trim_code.  Trim_code from Vikram //
 	////////g_DevFamily_Trimops = trimops->GetTrimOpAsLong(trimops_num++); // Family.  Device Family (1=CE, 2=CP, 6=EP) //
-	////////g_DLM_BV_Trimops = trimops->GetTrimOpAsLong(trimops_num++); // DLM BV.  (6=650V, 7=725V) //
-	////////g_DLM_Size_Trimops = trimops->GetTrimOpAsLong(trimops_num++); // DLM Size.  (2 to 8) //
-	////////g_DevNum_Trimops = trimops->GetTrimOpAsLong(trimops_num++); // DevNum.  Device Number //
-	////////g_MOSFET_SIZE_Trimops = trimops->GetTrimOpAsLong(trimops_num++); // Die Size. //
-	////////g_iOVp_TARGET_Trimops = trimops->GetTrimOpAsDouble(trimops_num++) / 1e6; // iOV+.  (uA to A) // 
-	////////g_ILIM_TARGET_Trimops_P = trimops->GetTrimOpAsDouble(trimops_num++) / 1000; // ILIM.  (mA to A) //
-	////////g_tOVL_TARGET_Trimops = trimops->GetTrimOpAsDouble(trimops_num++) / 1e6; // tOVL.  (us to S) //
-	////////g_FOSC_TARGET_P_Trimops = trimops->GetTrimOpAsDouble(trimops_num++) * 1000.0; // Fosc_P.  (kHz to Hz) //
-	////////g_Trim_iov_Off_P_Trimops = trimops->GetTrimOpAsLong(trimops_num++); // IovOFF. //
-	////////g_Trim_iuvMinus_P_Trimops = trimops->GetTrimOpAsLong(trimops_num++); // Iuv-_10uA. //
-	////////g_Trim_uvDelay_P_Trimops = trimops->GetTrimOpAsLong(trimops_num++); // uv_dly. //
-	////////g_Trim_Loff_AR_P_Trimops = trimops->GetTrimOpAsLong(trimops_num++); // AR_latch. //
-	////////g_Trim_DisablAR_P_Trimops = trimops->GetTrimOpAsLong(trimops_num++); // AR_off. //
-	////////g_Trim_didtComp_P_Trimops = trimops->GetTrimOpAsLong(trimops_num++); // didtComp. //		
-	////////g_Trim_OT_Hys_P = trimops->GetTrimOpAsLong(trimops_num++); // OT_hys. //
-	////////g_Trim_LoffwOT_P_Trimops = trimops->GetTrimOpAsLong(trimops_num++); // OT_latch. //
-	////////g_Trim_iLselOff_P_Trimops = trimops->GetTrimOpAsLong(trimops_num++); // ILIM_sel_OFF. //
-	////////g_Trim_iLStdIcr_P_Trimops = trimops->GetTrimOpAsLong(trimops_num++); // ILIM_sel. //
-	////////g_Trim_iL20dn_P_Trimops = trimops->GetTrimOpAsLong(trimops_num++); // ILIM_less. //
-	////////g_Trim_iL20up_P_Trimops = trimops->GetTrimOpAsLong(trimops_num++); // ILIM_more. //
-	////////g_Trim_SAM_P_Trimops = trimops->GetTrimOpAsLong(trimops_num++); // Samsung. //
-	////////g_Trim_OTP_P_Trimops = trimops->GetTrimOpAsLong(trimops_num++); // OTP_code.  bits 1,2,3 //
-	////////g_Trim_SDSoff_P_Trimops = trimops->GetTrimOpAsLong(trimops_num++); // Vpin_ctrl_iREF.  Vpin Control Reference current. //
-	////////g_Trim_Rcv_P_Trimops = trimops->GetTrimOpAsLong(trimops_num++);	// Rcv.  bits 1,2,Sign //
-	////////g_BVD_Room_Trimops = trimops->GetTrimOpAsDouble(trimops_num++);// BVD_Rm. //
-	////////g_BVD_Hot_Trimops = trimops->GetTrimOpAsDouble(trimops_num++);// BVD_Hot. //
-	////////gTrim_drvSize_P_Trimops = trimops->GetTrimOpAsLong(trimops_num++); // Driver_Size.  bits 1,2,3,4 //
-	////////gTrim_RsenseUp_P_Trimops = trimops->GetTrimOpAsLong(trimops_num++); // Rs_up. //
-	////////gTrim_vxAdj_P_Trimops = trimops->GetTrimOpAsLong(trimops_num++); // Vx_adj.  bits 1,2,3,4,5 //
-	////////gTrim_iLRatio_P_Trimops = trimops->GetTrimOpAsLong(trimops_num++); // ILIM+1/ILIM.  bits 1,2,3,4 //
-	////////gTrim_iLTC_P_Trimops = trimops->GetTrimOpAsLong(trimops_num++); // ILIM_TC.  bits 1,2,3,4 //
-	////////gTrim_AR_req_Trimops = trimops->GetTrimOpAsLong(trimops_num++); // AR_req. //
+	//g_Hcode_Trimops	 = trimops->GetTrimOpAsLong(trimops_num++); // Hcode. // "Will need to differentiate HX,HC,HE code"
+	//g_Hcode_Trimops									= trimops->GetTrimOpAsLong(trimops_num++); // Hcode. // "Will need to differentiate HX,HC,HE code"
+	g_BV_Trimops									= trimops->GetTrimOpAsLong(trimops_num++); // BV.  (6=650V, 7=725V)
+	g_FET_Size_Trimops								= trimops->GetTrimOpAsLong(trimops_num++); // FET Size.  (2 to 8) 
+	gP_Reserved_Trimops								= trimops->GetTrimOpAsLong(trimops_num++); // Register Reserved bits 0 to 7
+	//trimops_num++; //ignore Reserved column for now.
+	gP_Trim_AR_SKIP_time_Trimops					= trimops->GetTrimOpAsLong(trimops_num++); //   "AR SKIP time"
+	gP_Trim_Disable_TON_foldback_Trimops			= trimops->GetTrimOpAsLong(trimops_num++); //   "TON foldback"
+	gP_Trim_AR_OFF_TIME_Trimops						= trimops->GetTrimOpAsLong(trimops_num++); //   "AR Off TIME"
+	gP_Trim_START_UP_FREQ_Trimops					= trimops->GetTrimOpAsLong(trimops_num++); //   "START-UP FREQ"
+	gP_Trim_Enable_Shunt_during_Cap_Select_Trimops	= trimops->GetTrimOpAsLong(trimops_num++); //   "Shunt during Cap Select"
+	gP_Trim_RCV_threshold_Trimops					= trimops->GetTrimOpAsLong(trimops_num++); //	"Receiver threshold"
+	gP_Trim_GaN_Mode_Trimops						= trimops->GetTrimOpAsLong(trimops_num++); //	"GaN Mode"
+	gP_Trim_Sense_Voltage_ILIM_Trimops				= trimops->GetTrimOpAsLong(trimops_num++); //	"Sense voltage ILIM"
+	gP_Trim_Driver_Size_Trimops						= trimops->GetTrimOpAsLong(trimops_num++); //	"Driver Size"
+	gP_Trim_AR_ON_time_Trimops						= trimops->GetTrimOpAsLong(trimops_num++); //	"AR ON time"
+	gP_Trim_GaN_On_Delay_Trimops					= trimops->GetTrimOpAsLong(trimops_num++); //	"GaN On Delay"
+	gP_Trim_ILIMTC_Trimops							= trimops->GetTrimOpAsLong(trimops_num++); //	"ILIMTC"
+	gP_Trim_Bandgap_TSD_Trimops						= trimops->GetTrimOpAsLong(trimops_num++); //	"Bandgap TSD Target @ 150C"
+	gP_Trim_DOPL_mode_Trimops						= trimops->GetTrimOpAsLong(trimops_num++); //	"DOPL mode"
+	gP_Trim_Disable_ILIM_cap_Select_Trimops			= trimops->GetTrimOpAsLong(trimops_num++); //	" ILIM cap Select"
+	gP_Trim_Set_ILIMP_Trimops						= trimops->GetTrimOpAsLong(trimops_num++); //	"Set ILIM+ if ZTM<55> timmmed"
+	gP_Trim_Junction_Start_Temp_Trimops				= trimops->GetTrimOpAsLong(trimops_num++); //	"Junction Start Temp Target @ 100C"
+	gP_Trim_Junction_TSD_Trimops					= trimops->GetTrimOpAsLong(trimops_num++); //	"Junction TSD Target @ 150C"
+	gP_Trim_iUV_10pct_Trimops						= trimops->GetTrimOpAsLong(trimops_num++); //	"iUV10%"
+	gP_iOVp_TARGET_Trimops							= trimops->GetTrimOpAsDouble(trimops_num++)*1e-6; // iOV+		Target  (uA)
+	gP_iOVm_TARGET_Trimops							= gP_iOVp_TARGET_Trimops - 1.7e-6;				// iOV-		Target  (uA)
+	gP_Fosc_TARGET_Trimops							= trimops->GetTrimOpAsDouble(trimops_num++)*1e6;	// FoscP		Target  (MHz)
+	gP_TonMin_TARGET_Trimops						= trimops->GetTrimOpAsDouble(trimops_num++)*1e-6;	// TonMin	Target  (us)
+	gP_Slope_TARGET_Trimops							= trimops->GetTrimOpAsDouble(trimops_num++)*1e-6;	// TonSlope	Target  (us/kHz)
+	gP_Offset_TARGET_Trimops						= trimops->GetTrimOpAsDouble(trimops_num++)*1e-6;	// TonOfset Target  (us)
+	gP_ILIM_TARGET_Trimops							= trimops->GetTrimOpAsDouble(trimops_num++)*1e-3;	// ILIM		Target  (mA)
+	gP_iUVp_TARGET_Trimops							= trimops->GetTrimOpAsDouble(trimops_num++)*1e-6;	// iUV+		Target  (us)
+	gP_iUVm_TARGET_Trimops							= trimops->GetTrimOpAsDouble(trimops_num++)*1e-6;	// iUV-		Target  (us)
+	gP_VTSstart_TARGET_Trimops						= trimops->GetTrimOpAsDouble(trimops_num++);		// VTSstart	Target  (V)
+	gP_Dtemp_TARGET_Trimops							= gP_VTSstart_TARGET_Trimops/5.0*512;			// Dtemp	Target based on 5V, 512 FullScale code
 
-	////////// Secondary Targets and Feature Trim bits //
-	////////gFOSC_TARGET_S_Trimops = trimops->GetTrimOpAsDouble(trimops_num++) * 1000;// Fosc_S.  (kHz to Hz).  Trim target. //
-	////////gISvth_TARGET_Trimops = trimops->GetTrimOpAsDouble(trimops_num++); // CC_Isvth.  Target in Voltage for external IS resistor. //
-	////////gCV_Vout_TARGET_Trimops = trimops->GetTrimOpAsDouble(trimops_num++); //CV.  CV Target //					
-	////////gTrim_SdwReg0_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg1_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg2_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg3_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg4_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg5_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg6_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg7_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg8_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg9_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg10_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg11_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg12_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg13_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg14_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg15_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg16_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg17_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg18_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg19_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg20_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg21_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg22_Trimops =  trimops->GetTrimOpAsLong(trimops_num++); // DOPL. //
-	////////gTrim_SdwReg23_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg24_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg25_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg26_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg27_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg28_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg29_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg30_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg31_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg32_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg33_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg34_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg35_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg36_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg37_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg38_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg39_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg40_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg41_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg42_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg43_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg44_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg45_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg46_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg47_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg48_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg49_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg50_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg51_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg52_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg53_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg54_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg55_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg56_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg57_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg58_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg59_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg60_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg61_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg62_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg63_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg64_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg65_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg66_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg67_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg68_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg69_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg70_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg71_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg72_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg73_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg74_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg75_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg76_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg77_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg78_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg79_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg80_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg81_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg82_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg83_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg84_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg85_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg86_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg87_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg88_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg89_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg90_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg91_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg92_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg93_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg94_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg95_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg96_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg97_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg98_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg99_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg100_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg101_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg102_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg103_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg104_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg105_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg106_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg107_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg108_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg109_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg110_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
-	////////gTrim_SdwReg111_Trimops =  trimops->GetTrimOpAsLong(trimops_num++);
+	// Secondary Targets and Feature Trim bits
+
 
 	// Initialize global variables based on Trimops //
-	gCVtgt_15pct_Higher = 2.0;	//This will prevent FB glitch result to ILIM functions
+	//gCVtgt_15pct_Higher = 2.0;	//This will prevent FB glitch result to ILIM functions
 	
 
 	// Secondary AF global paramters initialize //		
-	g_Ilim_Incr_max = g_ILIM_TARGET_Trimops_P + 0.275; // ILIM target + 275mA
-	g_I2F_S_TARGET = g_ILIM_TARGET_Trimops_P *g_ILIM_TARGET_Trimops_P * gFOSC_TARGET_S_Trimops * 1e-3;	
+	g_Ilim_Incr_max = gP_ILIM_TARGET_Trimops + 0.275; // ILIM target + 275mA
+	g_I2F_S_TARGET = gP_ILIM_TARGET_Trimops *gP_ILIM_TARGET_Trimops * gFOSC_TARGET_S_Trimops * 1e-3;	
 
 	// Setup Hardware ID //
 	//HardwareList.VerifyRequiredBoardList();
@@ -7950,7 +7865,7 @@ void Gage_Find_Ilim(float *Idmax_ave, float *DiDt_ave, float *Ton_ave, float *Rd
 		// Locate Id_spec, Vd_spec location and calculate Rdson_spec
 		if(g_FIND_RDSON_Spec_FLAG && DiDt[pulse_cnt] !=0.0 && pulse_cnt > 3)
 		{
-			Ilim_spec = 0.25 * g_ILIM_TARGET_P;	
+			Ilim_spec = 0.25 * gP_ILIM_TARGET_Trimops;	
 
 			Id_spec_addr[pulse_cnt] = int(g_Idmax_addr[pulse_cnt] - (g_Idmax[pulse_cnt]- Ilim_spec)/(DiDt[pulse_cnt] *SAMPLE_RATE_s *1e6));
 			Id_temp = Gage_chan_a_voltage[Id_spec_addr[pulse_cnt]]/g_Ilim_gain;	//Id_temp must be > 0 since it's 25-30% of ILIM_target
@@ -15723,6 +15638,20 @@ void Program_All_TrimRegister()
 	}
 }
 
+void Program_All_TrimRegister_P()
+{
+	// This function uses I2C to load the TrimRegister[] array (either g_Pri_TrimRegister[] or 
+	// g_Sec_TrimRegister[] array to the DUTs shadow register. // 
+	int i = 0;
+	int g_EEP_W_Array[] = {g_EEP_W_E0, g_EEP_W_E2, g_EEP_W_E4, g_EEP_W_E6, g_EEP_W_E8};
+
+	for(i=0;i<5;i++)
+	{
+		DSM_I2C_Write('w', g_EEP_W_Array[i], EEpr_Bank_P[i]);
+		DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
+	}
+}
+
 void Program_Single_TrimRegister(int TrimLocation)
 {
 	////g_EEP_W_E0     = 0xE0;       //WR_Word
@@ -16799,6 +16728,45 @@ uint16_t Convert_BIN_2_Dec(int *WordArray)
 }
 
 
+
+void EEprcode_2_EEprArray(int TrimCode, int *EEpr, int Startbit)
+{
+	int k;
+	int TrimCode_Binary;
+	int TrimRange;
+	int NumberTrimBits = 16;
+
+	TrimRange = 1;
+	for (k = 0; k < NumberTrimBits; k++)
+		TrimRange *= 2;
+
+	TrimCode_Binary = TrimCode;	
+
+	int weight = 0;
+	int TRIM_IT= 0;
+	weight = 1;
+	for (k =0; k < NumberTrimBits; k++)
+	{			
+		TRIM_IT = TrimCode_Binary & weight;
+		weight *= 2;
+		
+		if (TRIM_IT > 0)		
+		{
+			g_S_EEpromTemp[k] = 1;
+		}	
+		else
+		{
+			g_S_EEpromTemp[k] = 0;
+		}		
+	}
+	
+	for(k=0;k<NumberTrimBits;k++)
+	{
+		EEpr[k+Startbit] = g_S_EEpromTemp[k];
+	}
+
+}
+
 void TrimCode_To_TrimBit(short TrimCode, char TrimParam[30], char p_or_s)
 {
 	//This function updates the trimcode to the correct global register bits and store it for use through out entire program.
@@ -17703,9 +17671,15 @@ void EEPROM_BURN_P(float *vBurn_th_P)
 			if(vVpin > 2.0) //exit while loop  (cx observed Vpin change state from ~1V to 2.3V)
 			{
 				g_vDrain_Burn_th_P = vD_set+0.2;
+				*vBurn_th_P = g_vDrain_Burn_th_P;
 				D_dvi->set_voltage(D_ch, g_vDrain_Burn_th_P, VOLT_50_RANGE);
 				delay(5);
 				break;
+			}
+			else
+			{
+				g_vDrain_Burn_th_P = -99;
+				*vBurn_th_P = g_vDrain_Burn_th_P;
 			}
 		}
 
@@ -17759,7 +17733,7 @@ void EEPROM_Write_Enable_P()
 void EEPROM_Read_Enable_P()
 {
 	Analog_TM_Enable_Primary();			//2.  Analog Test Mode Enable	-->	0x00 0x40 write 0x02 --> TM_CTRL, enable analog mode
-	DSM_I2C_Write('w', 0x46, 0x2804);	//write I2C password.  After zigzag and stay in I2C
+	//DSM_I2C_Write('w', 0x46, 0x2804);	//write I2C password.  After zigzag and stay in I2C
 	//DSM_I2C_Write('w', 0x44, 0x4000);	//3.  Set EE comparator voltage on CFG14	//per DE
 
 	DSM_I2C_SREG0_0x7070();	//Get ready for any data to move to read address 0x00
@@ -17905,6 +17879,79 @@ void Power_Down_I2C_P()
 	delay(1);
 }
 
+
+void PowerUp_I2C_S()
+{
+	//Drain = 0V
+	D_dvi->set_current(D_ch, 100e-3, RANGE_300_MA);
+	D_dvi->set_voltage(D_ch, 0.0, VOLT_2_RANGE); 
+	//BPP = 0V
+	BPP_dvi->set_current(BPP_ch, 300e-3, RANGE_300_MA);
+	BPP_dvi->set_voltage(BPP_ch, 0.0, VOLT_10_RANGE); 
+
+	//TS = 0V 
+	TS_ovi3->set_current(TSovi3_ch, 30e-3, RANGE_30_MA);
+	TS_ovi3->set_voltage(TSovi3_ch, 0.0, VOLT_10_RANGE); 
+	//UV = 0V 
+	UV_dvi->set_current(UV_ch, 300e-3, RANGE_300_MA);
+	UV_dvi->set_voltage(UV_ch, 0.0, VOLT_10_RANGE);
+
+	//-----------------------------------------------------------------------------------------------------------------
+	//Setup Resource pins on Secondary.
+	//------------------------------------------------------------------------------------------------------------------
+	HSG_ovi->set_current(HSG_ch, 30e-3, RANGE_30_MA);
+	HSG_ovi->set_voltage(HSG_ch, 0, VOLT_20_RANGE); 
+	B_ovi3->set_current(B_ch1, 30e-3, RANGE_30_MA);
+	B_ovi3->set_voltage(B_ch1, 0.0, VOLT_10_RANGE);
+	FW_ovi3->set_current(FW_ch, 3e-3, RANGE_30_MA);
+	FW_ovi3->set_voltage(FW_ch, 0.0, VOLT_2_RANGE); 
+	FB_ovi3->set_current(FB_ch, 30e-3, RANGE_30_MA);
+	FB_ovi3->set_voltage(FB_ch, 0.0, VOLT_5_RANGE); 
+	IS_dvi2k->set_voltage(IS_ch, 0.0, VOLT_5_RANGE);				
+	IS_dvi2k->set_current(IS_ch, 200e-3, RANGE_200_MA);
+	SDA_ovi3->set_current(SDA_ch, 30e-3, RANGE_30_MA);	        
+	SDA_ovi3->set_voltage(SDA_ch, 0.0, VOLT_5_RANGE); 
+	SCL_ovi3->set_current(SCL_ch, 30e-3, RANGE_30_MA);				
+	SCL_ovi3->set_voltage(SCL_ch, 0.0, VOLT_5_RANGE); 
+	BPS_dvi->set_voltage(BPS_ch, 0.0, VOLT_5_RANGE); 
+	BPS_dvi->set_current(BPS_ch, 0.0e-3, RANGE_300_MA);
+	HBP_dvi2k->set_current(HBP_ch, 0.0e-6, RANGE_200_MA);
+	HBP_dvi2k->set_voltage(HBP_ch, 0.0, VOLT_20_RANGE);
+	VR_dvi->set_current(VR_ch, 300e-3, RANGE_300_MA);	
+	VR_dvi->set_voltage(VR_ch, 0.0, VOLT_5_RANGE); 
+	wait.delay_10_us(50);
+
+	//Disonnect Pullup R from TS and UV pins
+	Open_relay(K1_TS_RB);
+	Open_relay(K1_UV_RB);	
+	//Connect Pullup R to SCL & SDA
+	Close_relay(K1_SDA_SPI_TB);
+	Close_relay(K1_SCL_SPI_TB);
+	//Disconnect DSM CLK & Data from primary pins: TS & UV
+	//Connect DSM CLK & Data to secondary:         SCL & SDA
+	Open_relay(K1_DSM_TB);
+	Open_relay(K3_DSM_TB);
+	Close_relay(K2_DSM_TB);
+	Close_relay(K4_DSM_TB);
+	wait.delay_10_us(250);
+
+
+	//Step 1.	vFB = 1.25V
+	FB_ovi3->set_current(FB_ch, 30e-3, RANGE_30_MA);
+	FB_ovi3->set_voltage(FB_ch, 1.25, VOLT_5_RANGE); // DVI_11_0
+	wait.delay_10_us(10);
+
+	//Step 2.	VR = 15V 
+	VR_dvi->set_current(VR_ch, 300e-3, RANGE_300_MA);	//Require >30mA else VR -> 10V, droop, then start rising with weird ramps
+	VR_dvi->set_voltage(VR_ch, 15.0, VOLT_50_RANGE); // DVI_11_1
+	wait.delay_10_us(200);
+
+	//SDA,SCL = 3.3V via pullup resistor. Ready for I2C.
+	SDA_ovi3->set_voltage(SDA_ch, 3.3, VOLT_10_RANGE); // OVI_3_0
+	SCL_ovi3->set_voltage(SCL_ch, 3.3, VOLT_10_RANGE); // DVI_21_1
+	wait.delay_10_us(50);
+}
+
 void Search_iOVp_P(float *iOVp_th_P)
 {
 	//Ramp up to find iOV+ until vDrain toggle from high to low (virgin parts ~53uA)
@@ -17928,8 +17975,8 @@ void Search_iOVp_P(float *iOVp_th_P)
 	if(g_USE_VR_600K==true) //Using vForce indirectly control iVpin
 	{
 		//prevent falling into infinite loop
-		iOVp_target = g_iOVp_TARGET_Trimops_P;
-		if(g_iOVp_TARGET_Trimops_P > 100e-6)
+		iOVp_target = gP_iOVp_TARGET_Trimops;
+		if(gP_iOVp_TARGET_Trimops > 100e-6)
 			iOVp_target = 60e-6;
 
 		vStep		= 62.5e-3;
@@ -17998,8 +18045,8 @@ void Search_iOVp_P(float *iOVp_th_P)
 	if(g_USE_VR_600K==false)	
 	{
 		//prevent falling into infinite loop
-		iOVp_target = g_iOVp_TARGET_Trimops_P;
-		if(g_iOVp_TARGET_Trimops_P > 100e-6)
+		iOVp_target = gP_iOVp_TARGET_Trimops;
+		if(gP_iOVp_TARGET_Trimops > 100e-6)
 			iOVp_target = 60e-6;
 
 		iStep		= 0.05e-6;
@@ -18089,8 +18136,8 @@ void Search_iOVm_P(float *iOVm_th_P)
 	if(g_USE_VR_600K==true) //Using vForce indirectly control iVpin
 	{
 		//prevent falling into infinite loop
-		iOVm_target = g_iOVm_TARGET_Trimops_P;
-		if(g_iOVm_TARGET_Trimops_P > 100e-6)
+		iOVm_target = gP_iOVm_TARGET_Trimops;
+		if(gP_iOVm_TARGET_Trimops > 100e-6)
 			iOVm_target = 60e-6;
 
 		vStep		= 62.5e-3;
@@ -18170,7 +18217,7 @@ void Search_iOVm_P(float *iOVm_th_P)
 		iRamp[0]	= iSet;		//for XY plot variable
 		i=0;
 		//Ramp iVpin with iStep to find iOVm threshold until vDrain toggle from High to Low
-		while( iSet > (g_iOVm_TARGET_Trimops_P - 10e-6) )
+		while( iSet > (gP_iOVm_TARGET_Trimops - 10e-6) )
 		{
 			iOVm_count=i;
 			iSet -= iStep;
@@ -18238,8 +18285,8 @@ void Search_iUVp_P(float *iUVp_th_P)
 	if(g_USE_VR_600K==true) //Using vForce indirectly control iVpin
 	{
 		//prevent falling into infinite loop
-		iUVp_target = g_iUVp_TARGET_Trimops_P;
-		if(g_iUVp_TARGET_Trimops_P > 100e-6)
+		iUVp_target = gP_iUVp_TARGET_Trimops;
+		if(gP_iUVp_TARGET_Trimops > 100e-6)
 			iUVp_target = 60e-6;
 
 		vStep		= 62.5e-3;
@@ -18308,8 +18355,8 @@ void Search_iUVp_P(float *iUVp_th_P)
 	if(g_USE_VR_600K==false)	
 	{
 		//prevent falling into infinite loop
-		iUVp_target = g_iUVp_TARGET_Trimops_P;
-		if(g_iUVp_TARGET_Trimops_P > 20e-6)
+		iUVp_target = gP_iUVp_TARGET_Trimops;
+		if(gP_iUVp_TARGET_Trimops > 20e-6)
 			iUVp_target = 20e-6;
 
 		iStep		= 0.05e-6;
@@ -18398,8 +18445,8 @@ void Search_iUVm_P(float *iUVm_th_P)
 	if(g_USE_VR_600K==true) //Using vForce indirectly control iVpin
 	{
 		//prevent falling into infinite loop
-		iUVm_target = g_iUVm_TARGET_Trimops_P;
-		if(g_iUVm_TARGET_Trimops_P > 100e-6)
+		iUVm_target = gP_iUVm_TARGET_Trimops;
+		if(gP_iUVm_TARGET_Trimops > 100e-6)
 			iUVm_target = 60e-6;
 
 		vStep		= 62.5e-3;
@@ -18479,7 +18526,7 @@ void Search_iUVm_P(float *iUVm_th_P)
 		iRamp[0]	= iSet;		//for XY plot variable
 		i=0;
 		//Ramp iVpin with iStep to find iUVm threshold until vDrain toggle from High to Low
-		while( iSet > (g_iUVm_TARGET_Trimops_P - 10e-6) )
+		while( iSet > (gP_iUVm_TARGET_Trimops - 10e-6) )
 		{
 			iUVm_count=i;
 			iSet -= iStep;
@@ -18543,8 +18590,8 @@ void Regain_I2C_P(int regain_I2C_mode)
 {
 	if(regain_I2C_mode == g_Vpin_Low_to_High)
 	{
-		UV_dvi->set_current(UV_ch,		30e-3,	RANGE_300_MA);	//set really low current for Vmeas
 		UV_dvi->set_voltage(UV_ch,		0.0,	VOLT_10_RANGE); // DVI_21_1
+		UV_dvi->set_current(UV_ch,		30e-3,	RANGE_300_MA);	//set really low current for Vmeas
 		wait.delay_10_us(10);
 		UV_dvi->set_voltage(UV_ch,		3.3,	VOLT_10_RANGE); // DVI_21_1
 		wait.delay_10_us(10);
@@ -18554,6 +18601,7 @@ void Regain_I2C_P(int regain_I2C_mode)
 	else if(regain_I2C_mode == g_TSpin_Low_to_High)
 	{
 		TS_ovi3->set_voltage(TSovi3_ch, 0.0,	VOLT_10_RANGE); // OVI_3_0
+		TS_ovi3->set_current(TSovi3_ch, 30e-3,	RANGE_30_MA);
 		wait.delay_10_us(10);
 		TS_ovi3->set_voltage(TSovi3_ch, 3.3,	VOLT_10_RANGE); // OVI_3_0
 		wait.delay_10_us(10);

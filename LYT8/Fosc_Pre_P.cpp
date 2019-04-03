@@ -119,6 +119,12 @@ void Fosc_Pre_P(test_function& func)
 	Setup_Resources_for_I2C_P();
 	PowerUp_I2C_P();
 
+	if (g_Trim_Enable_P != 0)
+	{
+		EEPROM_Write_Enable_P();
+		Program_All_TrimRegister_P();	//Loading previous trimming before performing the test.
+	}
+
 	DSM_I2C_Write('b', g_TM_CTRL, 0x06);	//0x40, 0x06 (enable analog mode + core_en)
 
 	//3. write CFG<18:17>=10 on RegAddr 'ANA_CTRL_1' to stay in I2C after powerup.
@@ -156,19 +162,20 @@ void Fosc_Pre_P(test_function& func)
 	//
 	//Datalog
 	PiDatalog(func, A_Fosc_pt_P,		Fosc_pt_P,					14,	POWER_MEGA);	
-	PiDatalog(func, A_Fosc_target_P,	g_Fosc_P_TARGET_Trimops_P,	14,	POWER_MEGA);	
-
+	PiDatalog(func, A_Fosc_target_P,	gP_Fosc_TARGET_Trimops,	14,	POWER_MEGA);	
 
 
 	//*********************************************************************************************
-	//*** Simulation ******************************************************************************
+	//*** Fosc_P Simulation Start *****************************************************************
 	//*********************************************************************************************
+	if(g_Trim_Enable_P)
+	{
 		// Find which trim code will make Fosc_pt_P closest to target //
 		smallest_diff_val = 999999.9;
 		smallest_diff_idx = 0;
 		for (i=0; i<=31; i++)
 		{
-			temp_1 = (Fosc_pt_P * (1 + (Fosc_P_TrimWt[i]/100)) -  g_Fosc_P_TARGET_Trimops_P);
+			temp_1 = (Fosc_pt_P * (1 + (Fosc_P_TrimWt[i]/100)) -  gP_Fosc_TARGET_Trimops);
 			if (fabs(temp_1) < fabs(smallest_diff_val))
 			{
 				smallest_diff_val = temp_1;
@@ -178,7 +185,7 @@ void Fosc_Pre_P(test_function& func)
 
 		//Debug only start for Manual forcing
 			//smallest_diff_idx	= 5;	//expect sim result to be the same if 0.  
-			EEpr_Bank_P[E0]		= 0;	//
+			//EEpr_Bank_P[E0]		= 0;	//
 		//Debug only stop for Manual forcing
 
 		Fosc_TrCode_P   = smallest_diff_idx;
@@ -203,17 +210,21 @@ void Fosc_Pre_P(test_function& func)
 
 		Program_Single_TrimRegister(g_EEP_W_E0);
 
-	//Measure simulated Fosc_P with TrimCode 
-	tmu_6->arm();				
-	delay(1);					
-	tmeas = tmu_6->read(1e-3);	
-	tmeas/=10;	
-	Fosc_Sim_P = 1/tmeas;
+		//Measure simulated Fosc_P with TrimCode 
+		tmu_6->arm();				
+		delay(1);					
+		tmeas = tmu_6->read(1e-3);	
+		tmeas/=10;	
+		Fosc_Sim_P = 1/tmeas;
 
 		Fosc_Sim_Chg_P = (Fosc_Sim_P/Fosc_pt_P -1.0)*100.0;
 
 		PiDatalog(func, A_Fosc_Sim_P,		Fosc_Sim_P,			ours->fail_bin, POWER_MEGA);
 		PiDatalog(func, A_Fosc_Sim_Chg_P,	Fosc_Sim_Chg_P,		ours->fail_bin, POWER_UNIT);
+	}
+	//*********************************************************************************************
+	//*** Fosc_P Simulation End *******************************************************************
+	//*********************************************************************************************
 
 	//---------------------------------
 	//For bitweight char only

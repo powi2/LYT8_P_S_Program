@@ -163,6 +163,10 @@ SOURCE=.\NTC_Pre_P.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\EEPROM_P_Burn.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\CV_Pre.cpp
 # End Source File
 # Begin Source File
@@ -424,6 +428,10 @@ SOURCE=.\IUV_Pre_P.h
 # Begin Source File
 
 SOURCE=.\NTC_Pre_P.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\EEPROM_P_Burn.h
 # End Source File
 # Begin Source File
 

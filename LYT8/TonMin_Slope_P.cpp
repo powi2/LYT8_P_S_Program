@@ -200,6 +200,12 @@ void TonMin_Slope_P(test_function& func)
 	Setup_Resources_for_I2C_P();
 	PowerUp_I2C_P();
 
+	if (g_Trim_Enable_P != 0)
+	{
+		EEPROM_Write_Enable_P();
+		Program_All_TrimRegister_P();	//Loading previous trimming before performing the test.
+	}
+
 	DSM_I2C_Write('b', g_TM_CTRL, 0x02);	//0x40, 0x06 (enable analog mode + core_en)
 
 	//3. write CFG<18:17>=10 on RegAddr 'ANA_CTRL_1' to stay in I2C after powerup.
@@ -235,7 +241,7 @@ void TonMin_Slope_P(test_function& func)
 		D_dvi->set_voltage(D_ch, 5.0, VOLT_20_RANGE); // DVI_11_0
 		delay(1);
 	
-	BPP_zigzag(5.5, 4.3, 5.4);
+	BPP_zigzag(5.5, 4.3, 5.3);
 
 		Load_30Khz_Pulses_TS();
 		delay(1);
@@ -280,10 +286,10 @@ void TonMin_Slope_P(test_function& func)
 		dy = Ton_80kHz_pt_P - Ton_30kHz_pt_P;
 		dx = 80 - 30;
 		Slope_pt_P = dy/dx;	//us/kHz
-g_Slope_TARGET_Trimops_P = 0.0773e-6;; //'us/kHz'
+gP_Slope_TARGET_Trimops = 0.0773e-6;; //'us/kHz'
 	//Datalog
 	PiDatalog(func, A_Slope_pt_P,		Slope_pt_P,					14,	POWER_MICRO);	
-	PiDatalog(func, A_Slope_target_P,	g_Slope_TARGET_Trimops_P,	14,	POWER_MICRO);	
+	PiDatalog(func, A_Slope_target_P,	gP_Slope_TARGET_Trimops,	14,	POWER_MICRO);	
 
 	//---------------------------------------------------------------------------------
 	//------- Offset Before Slope_Sim Start ---------------------------
@@ -296,23 +302,23 @@ g_Slope_TARGET_Trimops_P = 0.0773e-6;; //'us/kHz'
 		Offset_pt_P = (Slope_pt_P * 80) - Ton_80kHz_pt_P;
 
 		PiDatalog(func, A_Offset_pt_P,		Offset_pt_P,				14,	POWER_MICRO);	
-		PiDatalog(func, A_Offset_target_P,	g_Offset_TARGET_Trimops_P,	14,	POWER_MICRO);	
+		PiDatalog(func, A_Offset_target_P,	gP_Offset_TARGET_Trimops,	14,	POWER_MICRO);	
 	}
 	//---------------------------------------------------------------------------------
 	//------- Offset Before Slope_Sim Stop ---------------------------
 	//---------------------------------------------------------------------------------
 
 	//*********************************************************************************************
-	//*** Simulation Slope_Sim Start **************************************************************
+	//*** Slope_P Simulation Start ****************************************************************
 	//*********************************************************************************************
-	if(1)
+	if(g_Trim_Enable_P)
 	{
 		// Find which trim code will make Slope_pt_P closest to target //
 		smallest_diff_val = 999999.9;
 		smallest_diff_idx = 0;
 		for (i=0; i<=31; i++)
 		{
-			temp_1 = (Slope_pt_P * (1 + (Slope_P_TrimWt[i]/100)) -  g_Slope_TARGET_Trimops_P);
+			temp_1 = (Slope_pt_P * (1 + (Slope_P_TrimWt[i]/100)) -  gP_Slope_TARGET_Trimops);
 			if (fabs(temp_1) < fabs(smallest_diff_val))
 			{
 				smallest_diff_val = temp_1;
@@ -322,7 +328,7 @@ g_Slope_TARGET_Trimops_P = 0.0773e-6;; //'us/kHz'
 
 		//Debug only start for Manual forcing
 			//smallest_diff_idx	= 5;	//expect sim result to be the same if 0.  
-			EEpr_Bank_P[E2]		= 0;	//
+			//EEpr_Bank_P[E2]		= 0;	//
 		//Debug only stop for Manual forcing
 
 		Slope_TrCode_P   = smallest_diff_idx;
@@ -425,7 +431,7 @@ g_Slope_TARGET_Trimops_P = 0.0773e-6;; //'us/kHz'
 	}
 
 	//*********************************************************************************************
-	//*** Simulation Slope_Sim End ****************************************************************
+	//*** Slope_P Simulation Stop *****************************************************************
 	//*********************************************************************************************
 
 
@@ -553,7 +559,7 @@ g_Slope_TARGET_Trimops_P = 0.0773e-6;; //'us/kHz'
 	//---------------------------------------------------------------------------------
 	//------- Offset after Sim Start ---------------------------
 	//---------------------------------------------------------------------------------
-	if(1)
+	if(g_Trim_Enable_P)
 	{
 		//Find offset using formula y = mx + b where m = slope, x = known frequency in kHz, y = TonMin @ x 
 		////Offset_pt1_P = Ton_80kHz_Sim_P - (Slope_Sim_P * 80);
@@ -572,15 +578,15 @@ g_Slope_TARGET_Trimops_P = 0.0773e-6;; //'us/kHz'
 	//*********************************************************************************************
 	//*** Offset Simulation Start ************************************************************************
 	//*********************************************************************************************
-	if(1)
+	if(g_Trim_Enable_P)
 	{
 		// Find which trim code will make Offset_pt_P closest to target //
 		smallest_diff_val = 999999.9;
 		smallest_diff_idx = 0;
 		for (i=0; i<=31; i++)
 		{
-			//temp_1 = (Offset_pt_P * (1 + (Offset_P_TrimWt[i]/100)) -  g_Offset_TARGET_Trimops_P);
-			temp_1 = (Offset_pst1_P * (1 + (Offset_P_TrimWt[i]/100)) -  g_Offset_TARGET_Trimops_P);
+			//temp_1 = (Offset_pt_P * (1 + (Offset_P_TrimWt[i]/100)) -  gP_Offset_TARGET_Trimops);
+			temp_1 = (Offset_pst1_P * (1 + (Offset_P_TrimWt[i]/100)) -  gP_Offset_TARGET_Trimops);
 			if (fabs(temp_1) < fabs(smallest_diff_val))
 			{
 				smallest_diff_val = temp_1;
@@ -590,7 +596,7 @@ g_Slope_TARGET_Trimops_P = 0.0773e-6;; //'us/kHz'
 
 		//Debug only start for Manual forcing
 			//smallest_diff_idx	= 5;	//expect sim result to be the same if 0.  
-			EEpr_Bank_P[E0]		= 0;	//
+			//EEpr_Bank_P[E0]		= 0;	//
 		//Debug only stop for Manual forcing
 
 		Offset_TrCode_P   = smallest_diff_idx;
