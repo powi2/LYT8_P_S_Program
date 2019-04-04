@@ -177,13 +177,13 @@ typedef struct
 typedef struct
 {
     USHORT      fail_bin;
-} TonMin_Slope_P_params;
+} TonSlpOfst_Pre_P_params;
 
 
 typedef struct
 {
     USHORT      fail_bin;
-} ILIM_Pre_params;
+} ILIM_Pre_P_params;
 
 
 typedef struct
@@ -201,7 +201,55 @@ typedef struct
 typedef struct
 {
     double      NEW_PARAM;
-} EEPROM_P_Burn_params;
+} EEPROM_Burn_P_params;
+
+
+typedef struct
+{
+    USHORT      fail_bin;
+} IOV_P_params;
+
+
+typedef struct
+{
+    USHORT      fail_bin;
+} Fosc_P_params;
+
+
+typedef struct
+{
+    USHORT      fail_bin;
+} TonMin_P_params;
+
+
+typedef struct
+{
+    USHORT      fail_bin;
+} TonSlpOfst_P_params;
+
+
+typedef struct
+{
+    USHORT      fail_bin;
+} ILIM_P_params;
+
+
+typedef struct
+{
+    USHORT      fail_bin;
+} IUV_tUV_P_params;
+
+
+typedef struct
+{
+    USHORT      fail_bin;
+} TSDetect_P_params;
+
+
+typedef struct
+{
+    USHORT      fail_bin;
+} NTC_P_params;
 
 
 typedef struct
@@ -552,15 +600,15 @@ void TonMin_Pre_P(test_function &func);
 void initialize_TonMin_Pre_P(short test_entry, test_function &func, char **func_name);
 void setup_TonMin_Pre_P(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
-/////////// TonMin_Slope_P ///////////////////////////////////////////////////////
-void TonMin_Slope_P(test_function &func);
-void initialize_TonMin_Slope_P(short test_entry, test_function &func, char **func_name);
-void setup_TonMin_Slope_P(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+/////////// TonSlpOfst_Pre_P ///////////////////////////////////////////////////////
+void TonSlpOfst_Pre_P(test_function &func);
+void initialize_TonSlpOfst_Pre_P(short test_entry, test_function &func, char **func_name);
+void setup_TonSlpOfst_Pre_P(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
-/////////// ILIM_Pre ///////////////////////////////////////////////////////
-void ILIM_Pre(test_function &func);
-void initialize_ILIM_Pre(short test_entry, test_function &func, char **func_name);
-void setup_ILIM_Pre(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+/////////// ILIM_Pre_P ///////////////////////////////////////////////////////
+void ILIM_Pre_P(test_function &func);
+void initialize_ILIM_Pre_P(short test_entry, test_function &func, char **func_name);
+void setup_ILIM_Pre_P(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
 /////////// IUV_Pre_P ///////////////////////////////////////////////////////
 void IUV_Pre_P(test_function &func);
@@ -572,10 +620,50 @@ void NTC_Pre_P(test_function &func);
 void initialize_NTC_Pre_P(short test_entry, test_function &func, char **func_name);
 void setup_NTC_Pre_P(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
-/////////// EEPROM_P_Burn ///////////////////////////////////////////////////////
-void EEPROM_P_Burn(test_function &func);
-void initialize_EEPROM_P_Burn(short test_entry, test_function &func, char **func_name);
-void setup_EEPROM_P_Burn(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+/////////// EEPROM_Burn_P ///////////////////////////////////////////////////////
+void EEPROM_Burn_P(test_function &func);
+void initialize_EEPROM_Burn_P(short test_entry, test_function &func, char **func_name);
+void setup_EEPROM_Burn_P(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+
+/////////// IOV_P ///////////////////////////////////////////////////////
+void IOV_P(test_function &func);
+void initialize_IOV_P(short test_entry, test_function &func, char **func_name);
+void setup_IOV_P(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+
+/////////// Fosc_P ///////////////////////////////////////////////////////
+void Fosc_P(test_function &func);
+void initialize_Fosc_P(short test_entry, test_function &func, char **func_name);
+void setup_Fosc_P(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+
+/////////// TonMin_P ///////////////////////////////////////////////////////
+void TonMin_P(test_function &func);
+void initialize_TonMin_P(short test_entry, test_function &func, char **func_name);
+void setup_TonMin_P(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+
+/////////// TonSlpOfst_P ///////////////////////////////////////////////////////
+void TonSlpOfst_P(test_function &func);
+void initialize_TonSlpOfst_P(short test_entry, test_function &func, char **func_name);
+void setup_TonSlpOfst_P(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+
+/////////// ILIM_P ///////////////////////////////////////////////////////
+void ILIM_P(test_function &func);
+void initialize_ILIM_P(short test_entry, test_function &func, char **func_name);
+void setup_ILIM_P(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+
+/////////// IUV_tUV_P ///////////////////////////////////////////////////////
+void IUV_tUV_P(test_function &func);
+void initialize_IUV_tUV_P(short test_entry, test_function &func, char **func_name);
+void setup_IUV_tUV_P(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+
+/////////// TSDetect_P ///////////////////////////////////////////////////////
+void TSDetect_P(test_function &func);
+void initialize_TSDetect_P(short test_entry, test_function &func, char **func_name);
+void setup_TSDetect_P(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+
+/////////// NTC_P ///////////////////////////////////////////////////////
+void NTC_P(test_function &func);
+void initialize_NTC_P(short test_entry, test_function &func, char **func_name);
+void setup_NTC_P(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
 /////////// CV_Pre ///////////////////////////////////////////////////////
 void CV_Pre(test_function &func);

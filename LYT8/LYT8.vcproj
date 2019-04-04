@@ -333,7 +333,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\EEprom_DevID.cpp"
+				RelativePath=".\EEPROM_Burn_P.cpp"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -345,7 +345,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\EEPROM_P_Burn.cpp"
+				RelativePath=".\EEprom_DevID.cpp"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -409,6 +409,18 @@
 			</File>
 			<File
 				RelativePath=".\First.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						PreprocessorDefinitions="$(Inherit)"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\Fosc_P.cpp"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -497,14 +509,25 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="ILIM_Pre.cpp"
+				RelativePath=".\ILIM_P.cpp"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions="$(Inherit)"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ILIM_Pre_P.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
 						PreprocessorDefinitions="$(Inherit)"
 					/>
 				</FileConfiguration>
@@ -531,6 +554,18 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions="$(Inherit)"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\IOV_P.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
 						PreprocessorDefinitions="$(Inherit)"
 					/>
 				</FileConfiguration>
@@ -649,6 +684,18 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\IUV_tUV_P.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						PreprocessorDefinitions="$(Inherit)"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="IzPost.cpp"
 				>
 				<FileConfiguration
@@ -676,6 +723,18 @@
 			</File>
 			<File
 				RelativePath=".\Leakage_Post_Stress.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						PreprocessorDefinitions="$(Inherit)"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\NTC_P.cpp"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -787,6 +846,18 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\TonMin_P.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						PreprocessorDefinitions="$(Inherit)"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath=".\TonMin_Pre_P.cpp"
 				>
 				<FileConfiguration
@@ -799,7 +870,31 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\TonMin_Slope_P.cpp"
+				RelativePath=".\TonSlpOfst_P.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						PreprocessorDefinitions="$(Inherit)"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\TonSlpOfst_Pre_P.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						PreprocessorDefinitions="$(Inherit)"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\TSDetect_P.cpp"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -1032,11 +1127,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\EEprom_DevID.h"
+				RelativePath=".\EEPROM_Burn_P.h"
 				>
 			</File>
 			<File
-				RelativePath=".\EEPROM_P_Burn.h"
+				RelativePath=".\EEprom_DevID.h"
 				>
 			</File>
 			<File
@@ -1057,6 +1152,10 @@
 			</File>
 			<File
 				RelativePath=".\First.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Fosc_P.h"
 				>
 			</File>
 			<File
@@ -1084,7 +1183,11 @@
 				>
 			</File>
 			<File
-				RelativePath="ILIM_Pre.h"
+				RelativePath=".\ILIM_P.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ILIM_Pre_P.h"
 				>
 			</File>
 			<File
@@ -1093,6 +1196,10 @@
 			</File>
 			<File
 				RelativePath="IOV_IUV_OT.h"
+				>
+			</File>
+			<File
+				RelativePath=".\IOV_P.h"
 				>
 			</File>
 			<File
@@ -1132,6 +1239,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\IUV_tUV_P.h"
+				>
+			</File>
+			<File
 				RelativePath="IzPost.h"
 				>
 			</File>
@@ -1141,6 +1252,10 @@
 			</File>
 			<File
 				RelativePath=".\Leakage_Post_Stress.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NTC_P.h"
 				>
 			</File>
 			<File
@@ -1176,11 +1291,23 @@
 				>
 			</File>
 			<File
+				RelativePath=".\TonMin_P.h"
+				>
+			</File>
+			<File
 				RelativePath=".\TonMin_Pre_P.h"
 				>
 			</File>
 			<File
-				RelativePath=".\TonMin_Slope_P.h"
+				RelativePath=".\TonSlpOfst_P.h"
+				>
+			</File>
+			<File
+				RelativePath=".\TonSlpOfst_Pre_P.h"
+				>
+			</File>
+			<File
+				RelativePath=".\TSDetect_P.h"
 				>
 			</File>
 			<File

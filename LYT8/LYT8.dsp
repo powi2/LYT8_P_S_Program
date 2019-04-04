@@ -147,11 +147,11 @@ SOURCE=.\TonMin_Pre_P.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\TonMin_Slope_P.cpp
+SOURCE=.\TonSlpOfst_Pre_P.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\ILIM_Pre.cpp
+SOURCE=.\ILIM_Pre_P.cpp
 # End Source File
 # Begin Source File
 
@@ -163,7 +163,39 @@ SOURCE=.\NTC_Pre_P.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\EEPROM_P_Burn.cpp
+SOURCE=.\EEPROM_Burn_P.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\IOV_P.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\Fosc_P.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\TonMin_P.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\TonSlpOfst_P.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\ILIM_P.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\IUV_tUV_P.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\TSDetect_P.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\NTC_P.cpp
 # End Source File
 # Begin Source File
 
@@ -415,11 +447,11 @@ SOURCE=.\TonMin_Pre_P.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\TonMin_Slope_P.h
+SOURCE=.\TonSlpOfst_Pre_P.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\ILIM_Pre.h
+SOURCE=.\ILIM_Pre_P.h
 # End Source File
 # Begin Source File
 
@@ -431,7 +463,39 @@ SOURCE=.\NTC_Pre_P.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\EEPROM_P_Burn.h
+SOURCE=.\EEPROM_Burn_P.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\IOV_P.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Fosc_P.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\TonMin_P.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\TonSlpOfst_P.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\ILIM_P.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\IUV_tUV_P.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\TSDetect_P.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\NTC_P.h
 # End Source File
 # Begin Source File
 

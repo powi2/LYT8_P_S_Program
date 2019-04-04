@@ -61,6 +61,7 @@
 03/21/19 CX v0.46cxJ  - Add simulation coding for iOV, NTC.  Need to work on other Primary trim simulations.
 03/28/19 CX v0.46cxK  - Add sim coding for all trim parameters and verified trimweight except iUVp
 04/02/19 CX v0.46cxL  - added EEPROM_P_Burn function and merge EEPROM_Pre function. Work on postTrim funcs next
+04/02/19 CX v0.46cxM  - add postTrim functions
 
 History Revisions (Above)
 */
@@ -2118,7 +2119,7 @@ void user_load(void)
 	theLimitSetName >> Part_ID_LimitSet  >> g_OperCode >> dummy >> dummy;
 
 	// Test Program Rev //
-	PrgRev = "0.46cxL"; // This should be identical to PiSetProgramName() function call. //
+	PrgRev = "0.46cxM"; // This should be identical to PiSetProgramName() function call. //
 	FamilyName = "LYT8"; // This should be identical to PiSetProgramName() function call. //
 
 	// Modify AutoCorrReport file to share one golden unit for multiple devices of same family. //
@@ -2174,7 +2175,7 @@ void user_load(void)
 	PiEnableGoldenUnit();
 
 	// Test Program Rev //
-	PiSetProgramName("LYT8 0.46cxL");
+	PiSetProgramName("LYT8 0.46cxM");
 
 	// Setup //
 	PiUserLoad( );

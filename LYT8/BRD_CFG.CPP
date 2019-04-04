@@ -5,7 +5,7 @@ unsigned short g_slots_n = NUMBER_OF_SLOTS;
 unsigned short *g_pBoard_count = NULL;		// number of boards needed by each function
 board_desc **g_pBoard_descs = NULL;
 
-#define NUM_OF_FUNCTIONS_IN_LIST 66
+#define NUM_OF_FUNCTIONS_IN_LIST 74
 
 short g_test_descr_n = NUM_OF_FUNCTIONS_IN_LIST;
 
