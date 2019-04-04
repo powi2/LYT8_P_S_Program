@@ -46,9 +46,9 @@ void TonSlpOfst_Pre_P(test_function& func)
 	if (AbortTest)
 		return;
 
-	//// Skip trimming if g_Trim_Enable_P set //
-	//if (g_Trim_Enable_P == 0)
-	//	return;
+	//// Skip trimming if g_Sim_Enable_P set //
+	if (g_Sim_Enable_P == 0)
+		return;
 
 	//if (g_Fn_Ton_Pre_P == 0 )  return;
 
@@ -199,7 +199,7 @@ void TonSlpOfst_Pre_P(test_function& func)
 	Setup_Resources_for_I2C_P();
 	PowerUp_I2C_P();
 
-	if (g_Trim_Enable_P != 0)
+	if(g_Load_previous_RegBits)	//Always set to 1 for PRODUCTION use at 4200 or 4200RTR
 	{
 		EEPROM_Write_Enable_P();
 		Program_All_TrimRegister_P();	//Loading previous trimming before performing the test.
@@ -310,7 +310,7 @@ void TonSlpOfst_Pre_P(test_function& func)
 	//*********************************************************************************************
 	//*** Slope_P Simulation Start ****************************************************************
 	//*********************************************************************************************
-	if(g_Trim_Enable_P)
+	if(g_Sim_Enable_P)
 	{
 		// Find which trim code will make Slope_pt_P closest to target //
 		smallest_diff_val = 999999.9;
@@ -558,7 +558,7 @@ void TonSlpOfst_Pre_P(test_function& func)
 	//---------------------------------------------------------------------------------
 	//------- Offset after Sim Start ---------------------------
 	//---------------------------------------------------------------------------------
-	if(g_Trim_Enable_P)
+	if(g_Sim_Enable_P)
 	{
 		//Find offset using formula y = mx + b where m = slope, x = known frequency in kHz, y = TonMin @ x 
 		////Offset_pt1_P = Ton_80kHz_Sim_P - (Slope_Sim_P * 80);
@@ -577,7 +577,7 @@ void TonSlpOfst_Pre_P(test_function& func)
 	//*********************************************************************************************
 	//*** Offset Simulation Start ************************************************************************
 	//*********************************************************************************************
-	if(g_Trim_Enable_P)
+	if(g_Sim_Enable_P)
 	{
 		// Find which trim code will make Offset_pt_P closest to target //
 		smallest_diff_val = 999999.9;

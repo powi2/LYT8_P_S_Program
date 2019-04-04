@@ -46,9 +46,6 @@ void ILIM_P(test_function& func)
 	if (AbortTest)
 		return;
 
-	// Skip trimming if g_Trim_Enable_P set //
-	//if (g_Trim_Enable_P == 0)	return;
-
 	//if (g_Fn_ILIM == 0 )  return;
 
 	// Test Time Begin //

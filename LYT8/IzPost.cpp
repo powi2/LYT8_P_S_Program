@@ -480,7 +480,7 @@ void IzPost(test_function& func)
 //////
 //////	// Check to be sure the anti-fuses have the correct values. //
 //////	AntiFuse_Final = 1;
-//////	if (g_OPCODE==4200 && g_Trim_Enable_P == 1)
+//////	if (g_OPCODE==4200 && g_Sim_Enable_P == 1)
 //////	{
 //////		for (i=1;i<56;i++)
 //////		{

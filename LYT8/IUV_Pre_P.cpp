@@ -46,9 +46,9 @@ void IUV_Pre_P(test_function& func)
 	if (AbortTest)
 		return;
 
-	// Skip trimming if g_Trim_Enable_P set //
-	//if (g_Trim_Enable_P == 0)
-	//	return;
+	// Skip trimming if g_Sim_Enable_P set //
+	if (g_Sim_Enable_P == 0)
+		return;
 
 	// Test Time Begin //
 	 if (g_TstTime_Enble_P)
@@ -157,7 +157,7 @@ void IUV_Pre_P(test_function& func)
 		Setup_Resources_for_I2C_P();
 		PowerUp_I2C_P();
 
-		if (g_Trim_Enable_P != 0)
+		if(g_Load_previous_RegBits)	//Always set to 1 for PRODUCTION use at 4200 or 4200RTR
 		{
 			EEPROM_Write_Enable_P();
 			Program_All_TrimRegister_P();	//Loading previous trimming before performing the test.

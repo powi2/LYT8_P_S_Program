@@ -46,8 +46,8 @@ void Feature_Trim_S(test_function& func)
 	if (AbortTest)
 		return;
 
-	// Skip trimming if g_Trim_Enable_P set //
-	if (g_Trim_Enable_P == 0)
+	// Skip trimming if g_Sim_Enable_P set //
+	if (g_Sim_Enable_P == 0)
 		return;
 
 	if (g_Fn_Feature_Trim_S == 0 )  return;

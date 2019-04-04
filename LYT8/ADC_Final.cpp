@@ -68,7 +68,7 @@ void ADC_Final(test_function& func)
 	{
 		// Datalog //
 		PiDatalog(func, A_ADC_Final, g_ADC_Final, 25, POWER_UNIT); // Measured in CV_nDAC_pDAC.cpp //
-		if (g_Trim_Enable_P == 1)
+		if (g_Sim_Enable_P == 1)
 		{
 			ADC_Act_Chg = ((g_ADC_Final - g_ADC_Pt) / g_ADC_Pt)*100; // In percent //
 			PiDatalog(func, A_ADC_Act_Chg, ADC_Act_Chg, 25, POWER_UNIT);

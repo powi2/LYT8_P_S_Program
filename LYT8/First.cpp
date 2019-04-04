@@ -37,13 +37,6 @@ void First(test_function& func)
     First_params *ours;
     ours = (First_params *)func.params;
 
-		if (g_Fn_aFirst == 0 )  return;
-
-	// Initialize timer to zero //
-	g_mytimer.Start();
-
-	// Test Time Begin //
-	g_begintime = g_mytimer.GetElapsedTime();
 
 	// Test Names //
 	int fNum_Setup = 0;
@@ -108,6 +101,59 @@ void First(test_function& func)
 	//float DSM_Library_Version = 0;
 	//float DSM_Firmware_Version = 0;
 	//float FWmeasV = 0;
+
+
+	// Load pass parameters //
+	gDisplay_FuncNum  = ours->fNum_DlogEnable;
+	p_Loop_wait       = ours->Loop_wait;
+	g_Char_Enable_P   = ours->CHAR_Enable;
+	g_Rel_Enable_P    = ours->REL_Enable;
+	p_IOV_Code_P      = ours->IOV_Code_P;
+	p_FOSC_Code_P     = ours->FOSC_Code_P;
+	p_TonMin_Code_P   = ours->TonMin_Code_P;
+	p_Slope_Code_P    = ours->Slope_Code_P;
+	p_Offset_Code_P   = ours->Offset_Code_P;
+	p_ILIM_Code_P     = ours->Ilim_Code_P;
+	p_UV_Code_P       = ours->UV_Code_P;
+    p_NTC_Code_P      = ours->NTC_Code_P;
+
+	p_VDDA_Code_S     = ours->VDDA_Code_S;
+	p_VREF_Code_S     = ours->VREF_Code_S;
+	p_IRSET_Code_S    = ours->IRSET_Code_S;
+	p_nDAC_Code_S     = ours->nDAC_Code_S;
+	p_ZTime_Code_S    = ours->ZTime_Code_S;
+	p_VADC_Code_S     = ours->VADC_Code_S;
+	p_Clock1M_Code_S  = ours->Clock1M_Code_S;
+	p_CCoffset_Code_S = ours->CCoffset_Code_S;
+	p_VccRef_Code_S   = ours->VccRef_Code_S;
+    p_CCPFOFF_Code_S  = ours->CCPFOFF_Code_S;
+	p_FOSC_Code_S     = ours->FOSC_Code_S;
+	p_BFreq_Code_S    = ours->BFreq_Code_S;
+	p_CP_Code_S       = ours->CP_Code_S;
+	p_VbILimit_Code_S = ours->VbILimit_Code_S;
+
+	g_Trim_Enable_P = ours->TRIM_Enable;
+	g_TstTime_Enble_P = ours->TestTime_Enable;
+	p_Rewrite_EPROM = ours->Rewrite_EPROM;
+	p_ExtraParam1 = ours->ExtraParam1;
+	p_ExtraParam2 = ours->ExtraParam2;
+
+	gFuncNum=1;
+	if(gDisplay_FuncNum)
+	{
+		PiDatalog(func, A_fNum_First, gFuncNum, 31, POWER_UNIT);
+	}
+
+	if (g_Fn_aFirst == 0 )  return;
+
+
+	// Initialize timer to zero //
+	g_mytimer.Start();
+
+	// Test Time Begin //
+	g_begintime = g_mytimer.GetElapsedTime();
+
+
 	Pulse pulse;
 
 	//---------------------------------------------------
@@ -145,13 +191,6 @@ void First(test_function& func)
 	//Global search thresholds
 	g_vDrain_Erase_th_P = 0;
 	g_vDrain_Burn_th_P = 0;
-
-	gDisplay_FuncNum = 0;
-	gFuncNum=1;
-	if(gDisplay_FuncNum)
-	{
-		PiDatalog(func, A_fNum_First, gFuncNum, 31, POWER_UNIT);
-	}
 
 	// Initialize variables //
 	for(i=0;i<=80;i++)
@@ -374,39 +413,6 @@ void First(test_function& func)
 	// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
 
 
-	// Load pass parameters //
-	p_Loop_wait       = ours->Loop_wait;
-	g_Char_Enable_P   = ours->CHAR_Enable;
-	g_Rel_Enable_P    = ours->REL_Enable;
-	p_IOV_Code_P      = ours->IOV_Code_P;
-	p_FOSC_Code_P     = ours->FOSC_Code_P;
-	p_TonMin_Code_P   = ours->TonMin_Code_P;
-	p_Slope_Code_P    = ours->Slope_Code_P;
-	p_Offset_Code_P   = ours->Offset_Code_P;
-	p_ILIM_Code_P     = ours->Ilim_Code_P;
-	p_UV_Code_P       = ours->UV_Code_P;
-    p_NTC_Code_P      = ours->NTC_Code_P;
-
-	p_VDDA_Code_S     = ours->VDDA_Code_S;
-	p_VREF_Code_S     = ours->VREF_Code_S;
-	p_IRSET_Code_S    = ours->IRSET_Code_S;
-	p_nDAC_Code_S     = ours->nDAC_Code_S;
-	p_ZTime_Code_S    = ours->ZTime_Code_S;
-	p_VADC_Code_S     = ours->VADC_Code_S;
-	p_Clock1M_Code_S  = ours->Clock1M_Code_S;
-	p_CCoffset_Code_S = ours->CCoffset_Code_S;
-	p_VccRef_Code_S   = ours->VccRef_Code_S;
-    p_CCPFOFF_Code_S  = ours->CCPFOFF_Code_S;
-	p_FOSC_Code_S     = ours->FOSC_Code_S;
-	p_BFreq_Code_S    = ours->BFreq_Code_S;
-	p_CP_Code_S       = ours->CP_Code_S;
-	p_VbILimit_Code_S = ours->VbILimit_Code_S;
-
-	g_Trim_Enable_P = ours->TRIM_Enable;
-	g_TstTime_Enble_P = ours->TestTime_Enable;
-	p_Rewrite_EPROM = ours->Rewrite_EPROM;
-	p_ExtraParam1 = ours->ExtraParam1;
-	p_ExtraParam2 = ours->ExtraParam2;
 
 	// Check to make sure the program (.prg) selected matches the Part ID entered in the New Lot Information Screen. //
 	if (0)//!strnicmp( Part_ID_LimitSet, "SC", 2)) HL disabled for Binno preliminary trimming

@@ -46,8 +46,8 @@ void NTC_P(test_function& func)
 	if (AbortTest)
 		return;
 
-	// Skip trimming if g_Trim_Enable_P set //
-	//if (g_Trim_Enable_P == 0)	return;
+	// Skip trimming if g_Sim_Enable_P set //
+	//if (g_Sim_Enable_P == 0)	return;
 
 	// Test Time Begin //
 	 if (g_TstTime_Enble_P)

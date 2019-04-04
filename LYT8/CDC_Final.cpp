@@ -834,7 +834,7 @@ void CDC_Final(test_function& func)
 		}
 		PiDatalog(func, A_CDC_400mV_S, CDC_400mV_S, 26, POWER_MILLI);
 		PiDatalog(func, A_CDC_Final_S, CDC_Final_S, 26, POWER_MILLI);
-		if(g_Trim_Enable_P)
+		if(g_Sim_Enable_P)
 		{
 			PiDatalog(func, A_CDC_Act_Chg_S, CDC_Act_Chg_S, 26, POWER_UNIT);
 		}

@@ -365,7 +365,8 @@ extern int	g_BV_Trimops									,
 //extern int  g_First_Time_Run;
 extern bool g_Require_PartID;
 extern int	AbortTest; 
-extern int	g_Trim_Enable_P;
+extern int	g_Sim_Enable_P;
+extern int  g_Trim_Enable_P;
 extern int  g_Trim_Enable_S;
 extern int	g_Erase_Enable_P;
 extern int  g_Erase_Enable_S;
@@ -501,8 +502,9 @@ extern int	g_Erase_dly_P,
 			g_Burn_dly_S;
 
 //CX added for Primary variables
-extern float g_vDrain_Erase_th_P;
-extern float g_vDrain_Burn_th_P;
+extern float	g_vDrain_Erase_th_P;
+extern float	g_vDrain_Burn_th_P;
+extern bool		g_Load_previous_RegBits;
 
 //HL---------------------------------------------------------------------------------
 //Secondary Variables.
@@ -886,7 +888,7 @@ extern float	gP_Offset_TARGET_Trimops;
 /*======================    iOV- Variables    ====================================*/
 extern float	gP_iOVp_TARGET_Trimops;
 extern float	gP_iOVm_TARGET_Trimops;
-extern float	g_iOVp_pt_P;
+extern float	g_iOVp_meas_P;
 extern float	g_iOVp_exp;
 
 /*======================    iUV+ Variables    ====================================*/

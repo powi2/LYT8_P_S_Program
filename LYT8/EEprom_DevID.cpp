@@ -115,32 +115,10 @@ void EEprom_DevID(test_function& func)
 		delay(5);
 		////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	float vpullup_P=3.3;	//5.0V does not work
+		float vpullup_P=3.3;	//5.0V does not work
 
-	DSM_init_LYT8();
-	PowerUp_I2C_P();
-		//////BPP to 5.0V first.
-		////float j = 0.0;
-		////while(j<=vpullup_P)
-		////{
-		////	BPP_dvi->set_voltage(BPP_ch, j, VOLT_10_RANGE); // DVI_11_1
-		////	if(j >=vpullup_P)
-		////	{
-		////	TS_ovi3->set_voltage(TSovi3_ch, vpullup_P, VOLT_10_RANGE); // OVI_3_0
-		////	UV_dvi->set_voltage(UV_ch,		vpullup_P, VOLT_10_RANGE); // DVI_21_1
-		////	}
-		////	j=j+1;
-		////}
-		////BPP_dvi->set_voltage(BPP_ch, 5, VOLT_10_RANGE); // DVI_11_1
-		////wait.delay_10_us(10);
-
-		//////Set pullup voltage at TS @ UV pins.
-		////TS_ovi3->set_voltage(TSovi3_ch, vpullup_P, VOLT_10_RANGE); // OVI_3_0
-
-		//////UV = 0V via pullup resistor. Ready for I2C.
-		////UV_dvi->set_voltage(UV_ch, vpullup_P, VOLT_10_RANGE); // DVI_21_1
-		////wait.delay_10_us(5);
-
+		DSM_init_LYT8();
+		PowerUp_I2C_P();
 
 		int	DSM_context = 0x00;
 		uint16_t address = 0x00;
@@ -165,23 +143,23 @@ void EEprom_DevID(test_function& func)
 		//Primary Die ID
 		if(1)	
 		{
-/*		|			|				  | "Separation   |					 |				|
-Silicon	|			|				  | btw	passFET/  |	"PassFet driver	 |				|
-Options	|  CC Hyst	|	RC time		  |	Boost and CC" |	frequency clamp" |	comm driver	|	HW ID		
---------|----------------------------------------------------------------------------------------------------------------
-		|0mV |0.5mV	|1us | 4us	| 8us |	3.50% |	1.75% |	No Clamp | 50kHz |INNO3	| BINNO	|Hex ID		High Byte	Low Byte	
--------------------------------------------------------------------------------------------------------------------------
-AT1		|	 |  x	|	 |		|  x  |	 x	  |		  |			 |	x	 |		|	x	|0x18 0x00	0001 1000	0000 0000	
-AT2		|	 |  x	|	 |		|  x  |	 x	  |		  |			 |	x	 |	x	|		|0x18 0x01	0001 1000	0000 0001	
-AT3		| x	 |		| x	 |		|	  |	 x	  |		  |			 |	x	 |	x	|		|0x18 0x02	0001 1000	0000 0010	
-AT4		| x	 |		| x	 |		|	  |	 x	  |		  |			 |	x	 |		|	x	|0x18 0x03	0001 1000	0000 0011	
-AT5		|	 |  x	|	 |	x	|	  |	 x	  |		  |			 |	x	 |		|	x	|0x18 0x04	0001 1000	0000 0100	
-AT6		| x	 |		| x	 |		|	  |	 x	  |		  |	x		 |		 |	x	|		|0x18 0x05	0001 1000	0000 0101	
-AT7		| x	 |		| x	 |		|	  |		  |	  x	  |	x		 |		 |	x	|		|0x18 0x06	0001 1000	0000 0110	
-AT8		| x	 |		|	 |	x	|	  |	 x	  |		  |			 |	x	 |		|	x	|0x18 0x07	0001 1000	0000 0111	
-AT9		| x	 |		|	 |	x	|	  | 	  |   x	  |	x		 |		 |	x	|		|0x18 0x08	0001 1000	0000 1000	
--------------------------------------------------------------------------------------------------------------------------
-*/
+			/*		|			|				  | "Separation   |					 |				|
+			Silicon	|			|				  | btw	passFET/  |	"PassFet driver	 |				|
+			Options	|  CC Hyst	|	RC time		  |	Boost and CC" |	frequency clamp" |	comm driver	|	HW ID		
+			--------|----------------------------------------------------------------------------------------------------------------
+					|0mV |0.5mV	|1us | 4us	| 8us |	3.50% |	1.75% |	No Clamp | 50kHz |INNO3	| BINNO	|Hex ID		High Byte	Low Byte	
+			-------------------------------------------------------------------------------------------------------------------------
+			AT1		|	 |  x	|	 |		|  x  |	 x	  |		  |			 |	x	 |		|	x	|0x18 0x00	0001 1000	0000 0000	
+			AT2		|	 |  x	|	 |		|  x  |	 x	  |		  |			 |	x	 |	x	|		|0x18 0x01	0001 1000	0000 0001	
+			AT3		| x	 |		| x	 |		|	  |	 x	  |		  |			 |	x	 |	x	|		|0x18 0x02	0001 1000	0000 0010	
+			AT4		| x	 |		| x	 |		|	  |	 x	  |		  |			 |	x	 |		|	x	|0x18 0x03	0001 1000	0000 0011	
+			AT5		|	 |  x	|	 |	x	|	  |	 x	  |		  |			 |	x	 |		|	x	|0x18 0x04	0001 1000	0000 0100	
+			AT6		| x	 |		| x	 |		|	  |	 x	  |		  |	x		 |		 |	x	|		|0x18 0x05	0001 1000	0000 0101	
+			AT7		| x	 |		| x	 |		|	  |		  |	  x	  |	x		 |		 |	x	|		|0x18 0x06	0001 1000	0000 0110	
+			AT8		| x	 |		|	 |	x	|	  |	 x	  |		  |			 |	x	 |		|	x	|0x18 0x07	0001 1000	0000 0111	
+			AT9		| x	 |		|	 |	x	|	  | 	  |   x	  |	x		 |		 |	x	|		|0x18 0x08	0001 1000	0000 1000	
+			-------------------------------------------------------------------------------------------------------------------------
+			*/
 			g_Debug = 1;
 			Primary_Die_ID = DSM_I2C_Read(0x00);
 			PiDatalog(func, A_Pri_Si_ID, Primary_Die_ID, 20, POWER_UNIT);
@@ -233,18 +211,18 @@ AT9		| x	 |		|	 |	x	|	  | 	  |   x	  |	x		 |		 |	x	|		|0x18 0x08	0001 1000	0000 
 			if(pE0_data == 0 && pE2_data == 0 && pE4_data == 0 && pE6_data == 0&& pE8_data ==0)
 			{
 				g_Erase_Enable_P = 0;
-				g_Trim_Enable_P	 = 1;
+				g_Sim_Enable_P	 = 1;
 				Pri_Untrimmed	 = 1;
 			}
 			else
 			{
-				g_Trim_Enable_P = 0;
+				g_Sim_Enable_P = 0;
 				Pri_Untrimmed	= 0;
 			}
 
 		}
 
-		//g_Trim_Enable_P = 1;	//for DEBUG ONLY
+		g_Sim_Enable_P = 1;	//for DEBUG ONLY
 
 		PiDatalog(func, A_Pri_UnTrimmed, Pri_Untrimmed, 20, POWER_UNIT);
 		//-------------------------------------------------------------

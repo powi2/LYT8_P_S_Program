@@ -318,7 +318,7 @@ void IsDAC_Final(test_function& func)
 	////	// IsDAC_final.  Measure voltage on FB (COMP) pin. //
 	////	wait.delay_10_us(100);
 	////	g_IsDAC_final = dvi_13->measure_average(10); // DVI_13_0, dvi2k //
-	////	if (g_Trim_Enable_P == 1)
+	////	if (g_Sim_Enable_P == 1)
 	////		IsDAC_Act_Chg = ((g_IsDAC_final - g_IsDAC_Pt_S) / g_IsDAC_Pt_S)*100; // In percent //
 
 
@@ -593,7 +593,7 @@ void IsDAC_Final(test_function& func)
 	////	PiDatalog(func, A_IsDAC_TrCode16, IsDAC_TrCode16, 25, POWER_UNIT);
 	////	PiDatalog(func, A_IsDAC_TrCode31, IsDAC_TrCode31, 25, POWER_UNIT);
 	////}
-	////if (g_Trim_Enable_P == 1)
+	////if (g_Sim_Enable_P == 1)
 	////	PiDatalog(func, A_IsDAC_Act_Chg, IsDAC_Act_Chg, 25, POWER_UNIT);
 	////
 	////// Test Time End //

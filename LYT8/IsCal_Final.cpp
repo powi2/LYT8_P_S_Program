@@ -175,7 +175,7 @@ void IsCal_Final(test_function& func)
 ////		// Measure output of 40X gain amplifier.  Value should be around 400mV.  10mV offset source x 10 = 400mV. //
 ////		wait.delay_10_us(100);
 ////		g_IsCal_final = FB_ovi->measure_average(50);
-////		if (g_Trim_Enable_P == 1)
+////		if (g_Sim_Enable_P == 1)
 ////			IsCal_Act_Chg = ((g_IsCal_final - g_IsCal_Pt_S) / g_IsCal_Pt_S)*100; // In percent //
 ////	}
 ////
@@ -210,7 +210,7 @@ void IsCal_Final(test_function& func)
 ////	if (g_Char_Enable_P) // Characterization only //
 ////	{
 ////		PiDatalog(func, A_IsCal_final, g_IsCal_final, 25, POWER_MILLI);
-////		if (g_Trim_Enable_P == 1)
+////		if (g_Sim_Enable_P == 1)
 ////			PiDatalog(func, A_IsCal_Act_Chg, IsCal_Act_Chg, 25, POWER_UNIT);
 ////	}
 ////

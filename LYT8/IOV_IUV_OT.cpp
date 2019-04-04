@@ -1330,7 +1330,7 @@ DSM_Write_Word(g_TM_EN, g_TestMode_Enter); // Write I2C key to get into test mod
 		PiDatalog(func, A_iOV_Hys, iOV_Hys, 24, POWER_MICRO);
 		PiDatalog(func, A_tOV_P_S, tOV_P_S, 24, POWER_MICRO);
 
-		if(g_Trim_Enable_P)
+		if(g_Sim_Enable_P)
 		{
 			// iOV_plus_act
 			if( giOV_plus_Pt_P !=0)		

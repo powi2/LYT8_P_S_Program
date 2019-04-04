@@ -61,7 +61,8 @@
 03/21/19 CX v0.46cxJ  - Add simulation coding for iOV, NTC.  Need to work on other Primary trim simulations.
 03/28/19 CX v0.46cxK  - Add sim coding for all trim parameters and verified trimweight except iUVp
 04/02/19 CX v0.46cxL  - added EEPROM_P_Burn function and merge EEPROM_Pre function. Work on postTrim funcs next
-04/02/19 CX v0.46cxM  - add postTrim functions
+04/03/19 CX v0.46cxM  - add postTrim functions
+04/04/19 CX v0.46cxN  - update program to take pass parameter from First function to reflect flow change of program.
 
 History Revisions (Above)
 */
@@ -279,7 +280,8 @@ int		g_BV_Trimops									=0,
 //int  g_First_Time_Run =1;
 bool  g_Require_PartID = true;
 int	  AbortTest =0; 
-int	  g_Trim_Enable_P =0;
+int	  g_Sim_Enable_P =0;
+int	  g_Trim_Enable_P = 0;
 int   g_Trim_Enable_S = 0;
 int	  g_Erase_Enable_P =0;
 int   g_Erase_Enable_S = 0;
@@ -357,8 +359,9 @@ int		g_Erase_dly_P,
 		g_Burn_dly_S;
 
 //CX added for Primary variables
-float g_vDrain_Erase_th_P = 0;
-float g_vDrain_Burn_th_P = 0;
+float	g_vDrain_Erase_th_P = 0;
+float	g_vDrain_Burn_th_P = 0;
+bool	g_Load_previous_RegBits = true;
 
 //HL added for the 2ndary variables.
 int   g_DDD_10Khz_Pulses_StopAddr = 0;
@@ -727,7 +730,7 @@ float	gP_Offset_TARGET_Trimops	=0.0;
 /*======================    iOV+ Variables    ====================================*/
 float   gP_iOVp_TARGET_Trimops=0.0;
 float   gP_iOVm_TARGET_Trimops=0.0;
-float	g_iOVp_pt_P =0.0;
+float	g_iOVp_meas_P =0.0;
 float   g_iOVp_exp=0.0;
 
 /*======================    iUV Variables    ====================================*/
@@ -2119,7 +2122,7 @@ void user_load(void)
 	theLimitSetName >> Part_ID_LimitSet  >> g_OperCode >> dummy >> dummy;
 
 	// Test Program Rev //
-	PrgRev = "0.46cxM"; // This should be identical to PiSetProgramName() function call. //
+	PrgRev = "0.46cxN"; // This should be identical to PiSetProgramName() function call. //
 	FamilyName = "LYT8"; // This should be identical to PiSetProgramName() function call. //
 
 	// Modify AutoCorrReport file to share one golden unit for multiple devices of same family. //
@@ -2175,7 +2178,7 @@ void user_load(void)
 	PiEnableGoldenUnit();
 
 	// Test Program Rev //
-	PiSetProgramName("LYT8 0.46cxM");
+	PiSetProgramName("LYT8 0.46cxN");
 
 	// Setup //
 	PiUserLoad( );
@@ -7222,10 +7225,10 @@ void VBPP_ramp_up(float vstart, float vstop, float vstep)
 	while( vstart < (vstop-vstep) ) // Ramp up VBPP to reduce overshoot
 	{	
 		vstart +=vstep;
-		BPP_dvi->set_voltage(BPP_ch, vstart, RANGE_10_V); // OVI_1_0
+		BPP_dvi->set_voltage(BPP_ch, vstart, VOLT_10_RANGE); // OVI_1_0
 		wait.delay_10_us(5);
 	}	
-	BPP_dvi->set_voltage(BPP_ch, vstop,	RANGE_10_V);	
+	BPP_dvi->set_voltage(BPP_ch, vstop,	VOLT_10_RANGE);	
 	wait.delay_10_us(5);
 }
 
@@ -7235,10 +7238,10 @@ void VBPP_ramp_down(float vstart, float vstop, float vstep)
 	while( vstart > (vstop+vstep) ) // Ramp down VBPP to reduce undershoot
 	{	
 		vstart -=vstep;
-		BPP_dvi->set_voltage(BPP_ch, vstart, RANGE_10_V); // OVI_1_0
+		BPP_dvi->set_voltage(BPP_ch, vstart, VOLT_10_RANGE); // DVI_11_0
 		wait.delay_10_us(5);
 	}	
-		BPP_dvi->set_voltage(BPP_ch, vstop,	RANGE_10_V); // OVI_1_0
+		BPP_dvi->set_voltage(BPP_ch, vstop,	VOLT_10_RANGE); // DVI_11_0
 		wait.delay_10_us(5);
 }
 
@@ -18208,7 +18211,7 @@ void Search_iOVm_P(float *iOVm_th_P)
 	{
 		iStep		= 0.05e-6;
 		iSet		= 0.0;
-		iStart		= g_iOVp_pt_P + 2e-6;  //start with iOVp+2uA ramp down
+		iStart		= g_iOVp_meas_P + 2e-6;  //start with iOVp+2uA ramp down
 		vMeas[0]	= 0.0;
 		*iOVm_th_P	= 99.0;
 		tStep		= 1;	//ms

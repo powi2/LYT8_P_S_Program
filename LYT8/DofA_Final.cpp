@@ -188,7 +188,7 @@ void DofA_Final(test_function& func)
 		// DofA_Final.  Measure voltage on FB (COMP) pin. //
 		wait.delay_10_us(100);	
 		DofA_final = dvi_13->measure_average(10); // DVI_13_0, dvi2k //
-		if (g_Trim_Enable_P == 1)
+		if (g_Sim_Enable_P == 1)
 			DofA_Act_Chg = ((DofA_final - g_DofA_Pt_S) / g_DofA_Pt_S)*100; // In percent //
 
 		if (g_Char_Enable_P) // Characterization only //
@@ -419,7 +419,7 @@ void DofA_Final(test_function& func)
 			PiDatalog(func, A_DofA_TrCode16, DofA_TrCode16, 25, POWER_UNIT);
 			PiDatalog(func, A_DofA_TrCode31, DofA_TrCode31, 25, POWER_UNIT);
 		}
-		if (g_Trim_Enable_P == 1)
+		if (g_Sim_Enable_P == 1)
 			PiDatalog(func, A_DofA_Act_Chg, DofA_Act_Chg, 25, POWER_UNIT);
 
 		// Test Time End //

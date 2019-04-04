@@ -224,7 +224,7 @@ DSM_Write_Word(g_TM_EN, g_TestMode_Enter); // Write I2C key to get into test mod
 
 		// Gain_Final.  Calculate the Gain by (Volt2-Volt1)/0.024 //
 		g_Gain_Final = (Volt2-Volt1)/0.024;
-		if (g_Trim_Enable_P == 1)
+		if (g_Sim_Enable_P == 1)
 			Gain_Act_Chg = ((g_Gain_Final - g_Gain_Pt_S) / g_Gain_Pt_S)*100; // In percent //
 
 		// Reset test mode control register for next test. //
@@ -272,7 +272,7 @@ DSM_Write_Word(g_TM_EN, g_TestMode_Enter); // Write I2C key to get into test mod
 	{
 		PiDatalog(func, A_Gain_IsPin_32mV, Gain_IsPin_32mV, 25, POWER_MILLI); // Note, measured using 800kHz I2C clock frequency. //
 	}
-	if (g_Trim_Enable_P == 1)
+	if (g_Sim_Enable_P == 1)
 		PiDatalog(func, A_Gain_Act_Chg, Gain_Act_Chg, 25, POWER_UNIT);
 
 	// Test Time End //

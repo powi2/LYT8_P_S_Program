@@ -47,8 +47,8 @@ void BPS_STRESS(test_function& func)
 	if (AbortTest)
 		return;
 
-	// Skip trimming if g_Trim_Enable_P set //
-	if (g_Trim_Enable_P == 0)
+	// Skip trimming if g_Sim_Enable_P set //
+	if (g_Sim_Enable_P == 0)
 		return;
 
 	if (g_Fn_BPS_STRESS == 0 )  return;
@@ -453,7 +453,7 @@ void BPS_STRESS(test_function& func)
 	//Write_Byte(g_Watchdog_Timer, 0x00, NObin, HEX); // Disable watchdog timer //
 
 	// The shadow register should only be loaded if this is a virgin part and EEPROM has not yet been written. //
-	if (g_Trim_Enable_P == 0)
+	if (g_Sim_Enable_P == 0)
 	{
 		// Do not load shadow register because this is already a trimmed part and EEPROM has already been written. //
 	}

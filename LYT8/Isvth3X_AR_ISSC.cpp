@@ -316,7 +316,7 @@ void Isvth3X_AR_ISSC(test_function& func)
 ////
 ////	// Datalog //
 ////	PiDatalog(func, A_ISvth3X_S, ISvth3X_S, 26, POWER_MILLI);
-////	if(g_Trim_Enable_P)
+////	if(g_Sim_Enable_P)
 ////	{
 ////		PiDatalog(func, A_ISvth3X_act_S, ISvth3X_act_S, 26, POWER_UNIT);
 ////	}

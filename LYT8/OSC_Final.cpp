@@ -185,7 +185,7 @@ void OSC_Final(test_function& func)
 	//////	wait.delay_10_us(10);
 	//////	Period = tmu_6->read();
 	//////	OSC_Final = 1/Period;
-	//////	if (g_Trim_Enable_P == 1)
+	//////	if (g_Sim_Enable_P == 1)
 	//////		OSC_Act_Chg = ((OSC_Final - g_OSC_Pt_S) / g_OSC_Pt_S)*100; // In percent //
 
 	//////	// Reset test mode registers for next test. //
@@ -227,7 +227,7 @@ void OSC_Final(test_function& func)
 
 	//////	// Datalog //
 	//////	PiDatalog(func, A_OSC_Final, OSC_Final, 14, POWER_KILO);
-	//////	if (g_Trim_Enable_P == 1)
+	//////	if (g_Sim_Enable_P == 1)
 	//////		PiDatalog(func, A_OSC_Act_Chg, OSC_Act_Chg, 14, POWER_UNIT);
 	//////	
 	//////	// Test Time End //

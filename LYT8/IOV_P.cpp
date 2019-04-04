@@ -46,10 +46,6 @@ void IOV_P(test_function& func)
 	if (AbortTest)
 		return;
 
-	// Skip trimming if g_Trim_Enable_P set //
-	//if (g_Trim_Enable_P == 0)
-	//	return;
-
 	// Test Time Begin //
 	 if (g_TstTime_Enble_P)
 	 	g_begintime = g_mytimer.GetElapsedTime();
@@ -129,7 +125,10 @@ void IOV_P(test_function& func)
 				PiDatalog(func, 	A_iOVp_P,      iOVp_P,					26, POWER_MICRO);
 				PiDatalog(func, 	A_iOVp_Tgt_P,  gP_iOVp_TARGET_Trimops,  26, POWER_MICRO);
 
-			Search_iOVm_P(&iOVm_P);  //only for TEST to observe iOV- is working here.  No need to datalog.
+			g_iOVp_meas_P = iOVp_P;
+			if(iOVp_P > 90) g_iOVp_meas_P = 99e-6;
+
+			Search_iOVm_P(&iOVm_P);  
 				PiDatalog(func, 	A_iOVm_P,      iOVm_P,					26, POWER_MICRO);
 
 		Open_relay(K1_UV_RB);	//UV to RB_10kohm

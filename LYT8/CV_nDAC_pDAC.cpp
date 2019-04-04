@@ -332,7 +332,7 @@ void CV_nDAC_pDAC(test_function& func)
 		pDAC_Final_S = VO_dvi->measure_average(50);
 		pDAC_Final_dlta = CV_Ref - pDAC_Final_S;
 	}
-	if (g_Trim_Enable_P == 1)
+	if (g_Sim_Enable_P == 1)
 		pDAC_Act_Chg_S = ((pDAC_Final_S - g_pDAC_Pt_S) / g_pDAC_Pt_S)*100; // In percent //
 
 	// Write byte to disable 10msec VI update lockout //
@@ -794,7 +794,7 @@ VBD_ramp_up(11.5, 24, 0.2);
 		nDAC_Final_S = VO_dvi->measure_average(50);
 		nDAC_Final_dlta = nDAC_Final_S - CV_Ref;
 	}
-	if (g_Trim_Enable_P == 1)
+	if (g_Sim_Enable_P == 1)
 		nDAC_Act_Chg_S = ((nDAC_Final_S - g_nDAC_Pt_S) / g_nDAC_Pt_S)*100; // In percent //	
 
 
@@ -1544,7 +1544,7 @@ VO_dvi->set_voltage(VO_ch, 4.5, VOLT_10_RANGE); // DVI_9_0, get ready for next t
 			SumResult += g_CV_Final_S;
 		}
 		g_CV_Final_S = SumResult / 5;
-		if (g_Trim_Enable_P == 1)
+		if (g_Sim_Enable_P == 1)
 			CV_Act_Chg_S = ((g_CV_Final_S - g_CV_pt_S) / g_CV_pt_S)*100; // In percent //
 	}
 	else // Production //
@@ -1585,7 +1585,7 @@ VO_dvi->set_voltage(VO_ch, 4.5, VOLT_10_RANGE); // DVI_9_0, get ready for next t
 				UpperLimit = Vforce;		
 		}
 		g_CV_Final_S = Vforce;
-		if (g_Trim_Enable_P == 1)
+		if (g_Sim_Enable_P == 1)
 			CV_Act_Chg_S = ((g_CV_Final_S - g_CV_pt_S) / g_CV_pt_S)*100; // In percent //	
 	}
 
@@ -2192,7 +2192,7 @@ wait.delay_10_us(300);
 		PiDatalog(func, A_pDAC_TrCode16, pDAC_TrCode16, 26, POWER_UNIT);
 		PiDatalog(func, A_pDAC_TrCode31, pDAC_TrCode31, 26, POWER_UNIT);
 	}
-	if (g_Trim_Enable_P == 1)
+	if (g_Sim_Enable_P == 1)
 		PiDatalog(func, A_pDAC_Act_Chg_S, pDAC_Act_Chg_S, 26, POWER_UNIT);
 	if ( g_OPCODE != 4300 || g_Char_Enable_P) // Skip at 4300. Test if characterization enabled. //
 	{
@@ -2224,10 +2224,10 @@ wait.delay_10_us(300);
 		PiDatalog(func, A_nDAC_TrCode16, nDAC_TrCode16, 26, POWER_UNIT);
 		PiDatalog(func, A_nDAC_TrCode31, nDAC_TrCode31, 26, POWER_UNIT);
 	}
-	if (g_Trim_Enable_P == 1)
+	if (g_Sim_Enable_P == 1)
 		PiDatalog(func, A_nDAC_Act_Chg_S, nDAC_Act_Chg_S, 26, POWER_UNIT);
 	PiDatalog(func, A_CV_Final_S, g_CV_Final_S, 26, POWER_UNIT);
-	if (g_Trim_Enable_P == 1)
+	if (g_Sim_Enable_P == 1)
 		PiDatalog(func, A_CV_Act_Chg_S, CV_Act_Chg_S, 26, POWER_UNIT);
 	//PiDatalog(func, A_VOUT_T, VOUT_T, 25, POWER_MILLI); // No longer needed //
 

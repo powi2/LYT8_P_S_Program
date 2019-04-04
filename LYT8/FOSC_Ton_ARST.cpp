@@ -508,7 +508,7 @@ void FOSC_Ton_ARST(test_function& func)
 			g_FOSC_S = 0.0;
 
 	// Only calculate if preTrim was measured. //
-	if (g_Trim_Enable_P == 1)
+	if (g_Sim_Enable_P == 1)
 		FOSC_Act_Chg_S = ((g_FOSC_S - gFOSC_pt_S) / gFOSC_pt_S)*100; // In percent //
 
 	//Ton setup for TMU
@@ -2656,7 +2656,7 @@ DSM_Write_Byte(g_Watchdog_Timer, 0x00); // Disable watchdog timer //
 
 	//Datalog
 	PiDatalog(func, A_FOSC_P, FOSC_P, 14, POWER_KILO);
-	if(g_Trim_Enable_P)
+	if(g_Sim_Enable_P)
 	{
 		PiDatalog(func, A_FOSC_exp_P, gFOSC_exp_P, 14, POWER_UNIT);	
 		PiDatalog(func, A_FOSC_act_P, FOSC_act_P, 14, POWER_UNIT);
@@ -2676,7 +2676,7 @@ DSM_Write_Byte(g_Watchdog_Timer, 0x00); // Disable watchdog timer //
 		PiDatalog(func, A_Loff_w_OT_P, Loff_w_OT_P, 30, POWER_UNIT);
 	}
 	PiDatalog(func, A_FOSC_S, g_FOSC_S, 14, POWER_KILO);
-	if (g_Trim_Enable_P == 1)
+	if (g_Sim_Enable_P == 1)
 	{
 		PiDatalog(func, A_FOSC_Act_Chg_S, FOSC_Act_Chg_S, 14, POWER_UNIT);	
 	}
@@ -2698,7 +2698,7 @@ DSM_Write_Byte(g_Watchdog_Timer, 0x00); // Disable watchdog timer //
 	PiDatalog(func, A_tAR_Off_TM_P, tAR_Off_TM_P, 21, POWER_MILLI);
 	PiDatalog(func, A_tOVL_S, tOVL_S, 14, POWER_MICRO);
 	//PiDatalog(func, A_tOVL_Err_S, tOVL_Err_S, 14, POWER_UNIT);	
-	if(g_Trim_Enable_P)
+	if(g_Sim_Enable_P)
 	{
 		PiDatalog(func, A_tOVL_exp, g_tOVL_exp, 14, POWER_UNIT);
 		PiDatalog(func, A_tOVL_act, tOVL_act, 14, POWER_UNIT);

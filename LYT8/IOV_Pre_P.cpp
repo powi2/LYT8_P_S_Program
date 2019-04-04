@@ -47,9 +47,9 @@ void IOV_Pre_P(test_function& func)
 	if (AbortTest)
 		return;
 
-	// Skip trimming if g_Trim_Enable_P set //
-	//if (g_Trim_Enable_P == 0)
-	//	return;
+	// Skip trimming if g_Sim_Enable_P set //
+	if (g_Sim_Enable_P == 0)
+		return;
 
 	// Test Time Begin //
 	 if (g_TstTime_Enble_P)
@@ -172,7 +172,7 @@ void IOV_Pre_P(test_function& func)
 		Setup_Resources_for_I2C_P();
 		PowerUp_I2C_P();
 
-		if (g_Trim_Enable_P != 0)
+		if(g_Load_previous_RegBits)	//Always set to 1 for PRODUCTION use at 4200 or 4200RTR
 		{
 			EEPROM_Write_Enable_P();
 			Program_All_TrimRegister_P();	//Loading previous trimming before performing the test.
@@ -209,12 +209,6 @@ void IOV_Pre_P(test_function& func)
 			Search_iOVp_P(&iOVp_pt_P);
 				PiDatalog(func, 	A_iOVp_pt_P,      iOVp_pt_P,				26, POWER_MICRO);
 				PiDatalog(func, 	A_iOVp_target_P,  gP_iOVp_TARGET_Trimops,  26, POWER_MICRO);
-
-
-			g_iOVp_pt_P = iOVp_pt_P;
-			if(iOVp_pt_P > 90) g_iOVp_pt_P = 99e-6;
-
-			Search_iOVm_P(&iOVm_pt_P);  //only for TEST to observe iOV- is working here.  No need to datalog.
 
 		//	Open_relay(K1_UV_RB);	//UV to RB_10kohm
 		//	Open_relay(K2_UV_RB);	//UV to RB_600k to K2_UV to DVI-21-1
@@ -286,7 +280,7 @@ void IOV_Pre_P(test_function& func)
 
 
 	//Simulation
-	if(g_Trim_Enable_P)
+	if(g_Sim_Enable_P)
 	{
 		// IOV_Code //
 		// Find which trim code will make iOVp_pt_P closest to target //
@@ -335,7 +329,7 @@ void IOV_Pre_P(test_function& func)
 
 
 	//post Simulation measurement
-	if(g_USE_VR_600K==false && g_Trim_Enable_P==1)
+	if(g_USE_VR_600K==false)
 	{
 		//Setup_Resources_for_I2C_P();
 		//PowerUp_I2C_P();
@@ -375,7 +369,7 @@ void IOV_Pre_P(test_function& func)
 				PiDatalog(func, 	A_iOVp_Sim_P,      iOVp_Sim_P,              26, POWER_MICRO);
 				PiDatalog(func, 	A_iOVp_Sim_Chg_P,  iOVp_Sim_Chg_P,          26, POWER_UNIT);
 
-			//g_iOVp_pt_P = iOVp_Sim_P;
+			//g_iOVp_meas_P = iOVp_Sim_P;
 
 			//Search_iOVm_P(&iOVm_pt_P);  //only for TEST to observe iOV- is working here.  No need to datalog.
 

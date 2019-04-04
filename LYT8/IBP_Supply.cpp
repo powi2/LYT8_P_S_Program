@@ -866,23 +866,23 @@ DSM_Write_Byte(g_FWPK_reg, 0x00); // Disable FW peak peak switch function. //
 	PiDatalog(func, A_BPP_ICH4_D_p, BPP_ICH4_D_p, 12, POWER_MILLI);	
 	PiDatalog(func, A_BPP_ICH5_CEN_p, BPP_ICH5_CEN_p, 12, POWER_MILLI);	
 	PiDatalog(func, A_BPS_IS1_nsw_s, BPS_IS1_nsw_s, 12, POWER_MICRO);
-	if (g_Trim_Enable_P == 1) // Only tested for virgin part. //
+	if (g_Sim_Enable_P == 1) // Only tested for virgin part. //
 	{
 		PiDatalog(func, A_BPS_IS1_Diff, BPS_IS1_Diff, 12, POWER_MICRO);
 	}
 	PiDatalog(func, A_BPS_IS1_nswHF_s, BPS_IS1_nswHF_s, 12, POWER_MICRO);
 	PiDatalog(func, A_BPS_IS2_sw_s, BPS_IS2_sw_s, 12, POWER_MILLI);	
-	if (g_Trim_Enable_P == 1) // Only tested for virgin part. //
+	if (g_Sim_Enable_P == 1) // Only tested for virgin part. //
 	{
 		PiDatalog(func, A_BPS_IS2_Diff, BPS_IS2_Diff, 12, POWER_MILLI);	
 	}
 	PiDatalog(func, A_BPP_IS1_nsw_P, g_BPP_IS1_nsw_P, 12, POWER_MICRO); // Measured in Fosc_post_S.cpp //
-	if (g_Trim_Enable_P == 1) // Only tested for virgin part. //
+	if (g_Sim_Enable_P == 1) // Only tested for virgin part. //
 	{
 		PiDatalog(func, A_BPP_IS1_Diff, g_BPP_IS1_Diff, 12, POWER_MICRO); // Measured in Fosc_post_S.cpp // 
 	}
 	PiDatalog(func, A_BPP_IS2_sw_P, g_BPP_IS2_sw_P, 12, POWER_MILLI); // Measured in Fosc_post_S.cpp //
-	if (g_Trim_Enable_P == 1) // Only tested for virgin part. //
+	if (g_Sim_Enable_P == 1) // Only tested for virgin part. //
 	{
 		PiDatalog(func, A_BPP_IS2_Diff, g_BPP_IS2_Diff, 12, POWER_MILLI); // Measured in Fosc_post_S.cpp //
 	}
