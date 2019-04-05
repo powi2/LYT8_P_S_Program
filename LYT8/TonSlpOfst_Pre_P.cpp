@@ -362,7 +362,7 @@ void TonSlpOfst_Pre_P(test_function& func)
 			delay(4);
 			TS_ovi3->set_voltage(TSovi3_ch, 3.3, VOLT_10_RANGE); // OVI_3_0
 			wait.delay_10_us(10);
-		Program_Single_TrimRegister(g_EEP_W_E2);
+		Program_Single_TrimRegister_P(g_EEP_W_E2);
 
 		//TS setup for 30kHz and 80kHz toggling
 			TS_ovi->set_voltage(TSovi1_ch, 1.0, VOLT_1_RANGE); // OVI_1_5 for Comparator LT1719 Vref input
@@ -480,7 +480,7 @@ void TonSlpOfst_Pre_P(test_function& func)
 			TrCode_shift_n_bits = gP_Reg_Start_Bit_OnTSL - g_E2_start_bit;
 			EEpr_Bank_P[E2] = EEpr_Bank_P[E2] | ( Slope_TrCode_P << TrCode_shift_n_bits );
 
-			Program_Single_TrimRegister(g_EEP_W_E2);
+			Program_Single_TrimRegister_P(g_EEP_W_E2);
 			wait.delay_10_us(1);
 
 		EEPROM_Read_Enable_P();
@@ -629,7 +629,7 @@ void TonSlpOfst_Pre_P(test_function& func)
 			delay(4);
 			TS_ovi3->set_voltage(TSovi3_ch, 3.3, VOLT_10_RANGE); // OVI_3_0
 			wait.delay_10_us(10);
-		Program_Single_TrimRegister(g_EEP_W_E0);
+		Program_Single_TrimRegister_P(g_EEP_W_E0);
 
 		//TS setup for 30kHz and 80kHz toggling
 			TS_ovi->set_voltage(TSovi1_ch, 1.0, VOLT_1_RANGE); // OVI_1_5 for Comparator LT1719 Vref input
@@ -746,7 +746,7 @@ void TonSlpOfst_Pre_P(test_function& func)
 			TrCode_shift_n_bits = gP_Reg_Start_Bit_yInter - g_E0_start_bit;
 			EEpr_Bank_P[E0] = EEpr_Bank_P[E0] | ( Offset_TrCode_P << TrCode_shift_n_bits );
 
-			Program_Single_TrimRegister(g_EEP_W_E0);
+			Program_Single_TrimRegister_P(g_EEP_W_E0);
 			wait.delay_10_us(1);
 
 		EEPROM_Read_Enable_P();

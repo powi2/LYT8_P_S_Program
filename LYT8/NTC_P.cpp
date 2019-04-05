@@ -274,7 +274,7 @@ void NTC_P(test_function& func)
 	   			g_SAMPLE_SIZE);						// 20ns * GAGE_WAVEFORM_BUFFER_SIZE
 
 	//Capture waveform and analyze
-		Gage_Start_Capture(  );	
+		Gage_Start_Capture(0);	
 		Gage_Wait_For_Capture_Complete();
 		g_WAVE_NAME =  "Dtemp";
 		Gage_Find_Dtemp_code(&Dtemp_P, &tLong_Dtemp, &dbus1_HighByte, &tShort_Dtemp, &dbus1_LowByte);
@@ -299,7 +299,7 @@ void NTC_P(test_function& func)
 	delay(5);
 
 	//Capture waveform and analyze
-		Gage_Start_Capture(  );	
+		Gage_Start_Capture(0);	
 		Gage_Wait_For_Capture_Complete();
 		g_WAVE_NAME =  "Dtemp_VTS_stop";
 		Gage_Find_Dtemp_code(&Dtemp_VTSstop_P, &tLong_Dtemp_VTSstop, &dbus1_HighByte_VTSstop, &tShort_Dtemp_VTSstop, &dbus1_LowByte_VTSstop);

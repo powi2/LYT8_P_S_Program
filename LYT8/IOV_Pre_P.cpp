@@ -324,7 +324,7 @@ void IOV_Pre_P(test_function& func)
 
 		Regain_I2C_P(g_TSpin_Low_to_High);
 		EEPROM_Write_Enable_P();
-		Program_Single_TrimRegister(g_EEP_W_E8);
+		Program_Single_TrimRegister_P(g_EEP_W_E8);
 	}
 
 

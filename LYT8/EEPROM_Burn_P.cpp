@@ -62,7 +62,7 @@ void EEPROM_Burn_P(test_function& func)
 		pE6_data=0,
 		pE8_data=0;
 
-	if(g_Trim_Enable_P)
+	if(g_Burn_Enable_P)
 	{
 		Setup_Resources_for_I2C_P();
 		PowerUp_I2C_P();

@@ -257,7 +257,7 @@ void IUV_Pre_P(test_function& func)
 
 		Regain_I2C_P(g_TSpin_Low_to_High);
 		//EEPROM_Write_Enable_P();
-		Program_Single_TrimRegister(g_EEP_W_E6);
+		Program_Single_TrimRegister_P(g_EEP_W_E6);
 
 		Disable_n_Disconnect_DSMI2C_via(g_release_Vpin);
 
@@ -308,7 +308,7 @@ void IUV_Pre_P(test_function& func)
 		//EEPROM_Read_Enable_P();
 		//DSM_I2C_SREG0_0x7070();	//Get ready for any data to move to read address 0x00
 
-			Program_Single_TrimRegister(g_EEP_W_E6);
+			Program_Single_TrimRegister_P(g_EEP_W_E6);
 			delay(15);
 
 			//pE0_data[i] = DSM_I2C_Read(g_EEP_R_C0); //Read data[i] of RegAddr 0xE0 from 0xC0 RegAddr from READ_ADDR 0x00

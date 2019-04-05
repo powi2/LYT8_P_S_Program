@@ -48,10 +48,12 @@ void CLOCK1M_Pre(test_function& func)
 	if (AbortTest)
 		return;
 
-	// Skip trimming if g_Sim_Enable_P set //
-	//if (g_Sim_Enable_P == 0)
+	// Skip trimming if g_Burn_Enable_P set //
+	//if (g_Burn_Enable_P == 0)
 //		return;
 
+	if (g_Trim_Enable_S == 0 && g_GRR == 0)
+		return;
 	//if (g_Fn_CLK1M_Pre == 0 )  return;
 
 	// Test Time Begin //
@@ -93,6 +95,7 @@ Pulse pulse;
 	int     smallest_diff_idx = 0;
 	float   temp_1            = 0;
 	float   tmeas             = 0;
+	int     startbit          = 0;
 
 	
 	i = 0;
@@ -113,26 +116,7 @@ Pulse pulse;
 	CLK1M_S_code[i] = 14; CLK1M_S_TrimWt[i] =  7.17;    i++;     //0 (3 link trimmed-->  -8%)
 	CLK1M_S_code[i] = 15; CLK1M_S_TrimWt[i] =  4.84;    i++;     //0 (4 link trimmed-->  -4%)
 
-	
-	// Load WordArray[] with contents of g_Sec_TrimRegister[] array!  This includes trim bit from other tests & trim options 
-    // This is important for proper trimming! //
-	// E8 Trim register.
-	WordArray[0]  = g_S_TrimRegister[64]; 
-	WordArray[1]  = g_S_TrimRegister[65]; 
-	WordArray[2]  = g_S_TrimRegister[66]; 
-	WordArray[3]  = g_S_TrimRegister[67]; 
-	WordArray[4]  = g_S_TrimRegister[68];
-	WordArray[5]  = g_S_TrimRegister[69];
-	WordArray[6]  = g_S_TrimRegister[70]; //EEtr70_B0_S
-	WordArray[7]  = g_S_TrimRegister[71]; //EEtr71_B1_S
-	WordArray[8]  = g_S_TrimRegister[72]; //EEtr72_B2_S
-	WordArray[9]  = g_S_TrimRegister[73]; //EEtr73_B3_S
-	WordArray[10] = g_S_TrimRegister[74];
-	WordArray[11] = g_S_TrimRegister[75];
-	WordArray[12] = g_S_TrimRegister[76];
-	WordArray[13] = g_S_TrimRegister[77];
-	WordArray[14] = g_S_TrimRegister[78];
-	WordArray[15] = g_S_TrimRegister[79];
+	startbit = 64;
 
 	// Open all relays //
 	Initialize_Relays();
@@ -253,25 +237,8 @@ Pulse pulse;
 
 	//Enter TM
 	Analog_TM_Enable_Secondary();
-	//For TEST only..  Manually raise vFB above 2.5V or 3V here to observe HBP will go low and then lower to 1.25V for HSG to go High
-	//Below to to make sure the FB controlling HBP is working properly before Disabling it.
-	if(0)
-	{
-		FB_ovi3->set_voltage(FB_ch, 2.00, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-		FB_ovi3->set_voltage(FB_ch, 2.25, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-		FB_ovi3->set_voltage(FB_ch, 2.50, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-		FB_ovi3->set_voltage(FB_ch, 2.75, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-		FB_ovi3->set_voltage(FB_ch, 3.00, VOLT_5_RANGE); // DVI_11_0	//1uF on HBP.  The drop is slow if it's only 3ms.  Manual observe drop to ~1.7V
-		delay(3);              
-		FB_ovi3->set_voltage(FB_ch, 1.25, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-	}
 
-////////////pulse.do_pulse();
+	TestMode_Check(0); //Set 1 to step into loop.  Set 0 to skip Test Mode check.
 
 	//ZTMC_Driver_en & ZTMC_Dsbl_FBshrt  (The FBshrt -> FB to HBP short fault protection function.)								  
 	//0x00 0x62 write 0x88 0x00
@@ -293,10 +260,11 @@ Pulse pulse;
 	B_ovi3->set_current(B_ch1, 30e-3, RANGE_30_MA);
 	B_ovi3->set_voltage(B_ch1, 5.0, VOLT_10_RANGE);
 
-
-	//Loading previous trimming before performing the test.
-	Program_Trim_Register(g_S_TrimRegister);
-
+	if (g_Trim_Enable_S != 0)
+	{
+		//Loading previous trimming before performing the test.
+		Program_All_TrimRegister();
+	}
 
 	//DsysClk1Mhz on B.
 	//0x00 0x42 write 0x0F 0x00
@@ -305,8 +273,8 @@ Pulse pulse;
 	//DsysClk6Mhz on B.
 	//0x00 0x42 write 0x0F 0x00
 	//DSM_I2C_Write('w', 0x42, 0x0018);
-DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
-//pulse.do_pulse();
+	DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
+
 
 	//Monitor 1Mhz switching on Boost pin.	
 	tmu_6->start_holdoff(15,TRUE);
@@ -321,8 +289,10 @@ DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
 	else
 		CLK1M_pt_S = 0.0;	
 
+	g_CLK1M_Pre = CLK1M_pt_S;
 
-
+if (g_Trim_Enable_S)
+{
 
 	// CLK1M_S_Code //
 	// Find which trim code will make CLK1M_Pre closest to target //
@@ -344,14 +314,10 @@ DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
 	//Manual forcing:
 	//smallest_diff_idx = 15;
 
-	CLK1M_TrCode_S = smallest_diff_idx;
 	CLK1M_TrCode_S = CLK1M_S_code[smallest_diff_idx];
 	CLK1M_ExpChg   = CLK1M_S_TrimWt[smallest_diff_idx];
-
 	CLK1M_ExpValue = (CLK1M_pt_S * (1 + (CLK1M_S_TrimWt[smallest_diff_idx]/100)));
-
 	TrimCode_To_TrimBit(CLK1M_TrCode_S, "Clock1M_S", 's');
-
 
 	//Convert Trimcode to readable datalog file.
 	///*if(CLK1M_S_code[smallest_diff_idx]>=0 && CLK1M_S_code[smallest_diff_idx] <= 7)
@@ -363,30 +329,11 @@ DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
 	//	VADC_BitCode_S = VADC_TrCode_S - 7;
 	//}*/
 
-	//Update WordArray.
-	WordArray[6]        = g_S_TrimRegisterTemp[70]; //EEtr70_B0_S
-	WordArray[7]        = g_S_TrimRegisterTemp[71]; //EEtr71_B1_S
-	WordArray[8]        = g_S_TrimRegisterTemp[72]; //EEtr72_B2_S
-	WordArray[9]        = g_S_TrimRegisterTemp[73]; //EEtr73_B3_S
+	EEpr_Array[4] = EEpr_Array[4] | (CLK1M_TrCode_S<<(70-startbit));
 
-	//Update secondary trim register array for programming later.
-	g_S_TrimRegister[70] = g_S_TrimRegisterTemp[70]; //EEtr76_ZTLnt0_S
-	g_S_TrimRegister[71] = g_S_TrimRegisterTemp[71]; //EEtr77_ZTLnt1_S
-	g_S_TrimRegister[72] = g_S_TrimRegisterTemp[72]; //EEtr78_ZTLnt2_S
-	g_S_TrimRegister[73] = g_S_TrimRegisterTemp[73]; //EEtr79_ZTLnt3_S
+	Program_Single_TrimRegister(g_EEP_W_E8);
 
-	//Convert from binary to decimal.
-	converted_dec1 = Convert_BIN_2_Dec(WordArray);
-	converted_dec2 = Convert_BIN_2_Dec(WordArray);
-
-DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
-	//Program Trim Register with new calculated bit combination.
-	Program_Trim_Register(g_S_TrimRegister);
-DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
-	int TrimBank[5];
-
-	Read_Trim_Register(TrimBank);
-DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
+}
 	tmeas = 0.0;
 
 	//Monitor 1Mhz switching on Boost pin.	
@@ -401,9 +348,6 @@ DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
 		CLK1M_prg_S = 1/tmeas;
 	else
 		CLK1M_prg_S = 0.0;	
-
-
-
 
 	if(CLK1M_pt_S != 0)
 	{
@@ -449,18 +393,27 @@ DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
 
 
 	PiDatalog(func, A_CLK1M_pt_S,		  CLK1M_pt_S,               26, POWER_MEGA);
-	PiDatalog(func, A_CLK1M_target_S,     CLK1M_Target_S,           26, POWER_MEGA);
-	PiDatalog(func, A_CLK1M_TrCode_S,     CLK1M_TrCode_S,           26, POWER_UNIT);
-	PiDatalog(func, A_CLK1M_BitCode_S,    CLK1M_BitCode_S,           26, POWER_UNIT);
-	PiDatalog(func, A_CLK1M_ExpChg_S,     CLK1M_ExpChg,             26, POWER_UNIT);
-	PiDatalog(func, A_CLK1M_Exp_Value,    CLK1M_ExpValue,           26, POWER_MEGA);
-	PiDatalog(func, A_Eetr70_B0_S,    g_S_TrimRegister[70],    26, POWER_UNIT);
-	PiDatalog(func, A_Eetr71_B1_S,    g_S_TrimRegister[71],    26, POWER_UNIT);
-	PiDatalog(func, A_Eetr72_B2_S,    g_S_TrimRegister[72],    26, POWER_UNIT);
-	PiDatalog(func, A_Eetr73_B3_S,    g_S_TrimRegister[73],    26, POWER_UNIT);
-	PiDatalog(func, A_Bin2Dec1_S,         converted_dec1,          26, POWER_UNIT);
-	PiDatalog(func, A_CLK1M_prg_S,         CLK1M_prg_S,              26, POWER_MEGA);
-	PiDatalog(func, A_CLK1M_prgchg_S,      CLK1M_PrgChg,             26, POWER_UNIT);
+	
+	if (g_Trim_Enable_S)
+	{
+		PiDatalog(func, A_CLK1M_target_S,     CLK1M_Target_S,           26, POWER_MEGA);
+		PiDatalog(func, A_CLK1M_TrCode_S,     CLK1M_TrCode_S,           26, POWER_UNIT);
+		PiDatalog(func, A_CLK1M_BitCode_S,    CLK1M_BitCode_S,           26, POWER_UNIT);
+		PiDatalog(func, A_CLK1M_ExpChg_S,     CLK1M_ExpChg,             26, POWER_UNIT);
+		PiDatalog(func, A_CLK1M_Exp_Value,    CLK1M_ExpValue,           26, POWER_MEGA);
+		PiDatalog(func, A_Eetr70_B0_S,    g_S_TrimRegisterTemp[70],    26, POWER_UNIT);
+		PiDatalog(func, A_Eetr71_B1_S,    g_S_TrimRegisterTemp[71],    26, POWER_UNIT);
+		PiDatalog(func, A_Eetr72_B2_S,    g_S_TrimRegisterTemp[72],    26, POWER_UNIT);
+		PiDatalog(func, A_Eetr73_B3_S,    g_S_TrimRegisterTemp[73],    26, POWER_UNIT);
+		PiDatalog(func, A_Bin2Dec1_S,         EEpr_Array[4],          26, POWER_UNIT);
+		PiDatalog(func, A_CLK1M_prg_S,         CLK1M_prg_S,              26, POWER_MEGA);
+		PiDatalog(func, A_CLK1M_prgchg_S,      CLK1M_PrgChg,             26, POWER_UNIT);
+	}
+	else
+	{
+		PiDatalog(func, A_CLK1M_Pst,         CLK1M_prg_S,              26, POWER_MEGA);
+
+	}
 
 
 }

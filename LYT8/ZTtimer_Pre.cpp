@@ -47,9 +47,12 @@ void ZTtimer_Pre(test_function& func)
 	if (AbortTest)
 		return;
 
-	// Skip trimming if g_Sim_Enable_P set //
-	//if (g_Sim_Enable_P == 0)
+	// Skip trimming if g_Burn_Enable_P set //
+	//if (g_Burn_Enable_P == 0)
 //		return;
+
+	if (g_Trim_Enable_S == 0 && g_GRR == 0)
+		return;
 
 	//if (g_Fn_ZTtimer_Pre == 0 )  return;
 
@@ -60,6 +63,7 @@ void ZTtimer_Pre(test_function& func)
 	// Test variables
 
 	int   i              = 0;
+	int   startbit       = 0;
 	int   WordArray[16]  = {0};
 	uint16_t converted_dec1 = 0;
 	uint16_t converted_dec2 = 0;
@@ -113,26 +117,8 @@ Pulse pulse;
 	ZTtimer_S_code[i] = 14; ZTtimer_S_TrimWt[i] =  -14.5; i++;     
 	ZTtimer_S_code[i] = 15; ZTtimer_S_TrimWt[i] =  -17.0; i++;    
 
-	
-	// Load WordArray[] with contents of g_Sec_TrimRegister[] array!  This includes trim bit from other tests & trim options 
-    // This is important for proper trimming! //
-	// E2 Trim register.
-	WordArray[0]  = g_S_TrimRegister[48];
-	WordArray[1]  = g_S_TrimRegister[49];
-	WordArray[2]  = g_S_TrimRegister[50];
-	WordArray[3]  = g_S_TrimRegister[51];
-	WordArray[4]  = g_S_TrimRegister[52];
-	WordArray[5]  = g_S_TrimRegister[53];
-	WordArray[6]  = g_S_TrimRegister[54]; 
-	WordArray[7]  = g_S_TrimRegister[55]; 
-	WordArray[8]  = g_S_TrimRegister[56]; 
-	WordArray[9]  = g_S_TrimRegister[57]; //EEtr57_ZTtime0_S
-	WordArray[10] = g_S_TrimRegister[58]; //EEtr58_ZTtime1_S
-	WordArray[11] = g_S_TrimRegister[59]; //EEtr59_ZTtime2_S
-	WordArray[12] = g_S_TrimRegister[60]; //EEtr60_ZTtime3_S
-	WordArray[13] = g_S_TrimRegister[61];
-	WordArray[14] = g_S_TrimRegister[62];
-	WordArray[15] = g_S_TrimRegister[63];
+	startbit = 48;
+	//WordArray_Assigned(WordArray, startbit);
 
 	// Open all relays //
 	Initialize_Relays();
@@ -254,25 +240,8 @@ Pulse pulse;
 
 	//Enter TM
 	Analog_TM_Enable_Secondary();
-	//For TEST only..  Manually raise vFB above 2.5V or 3V here to observe HBP will go low and then lower to 1.25V for HSG to go High
-	//Below to to make sure the FB controlling HBP is working properly before Disabling it.
-	if(0)
-	{
-		FB_ovi3->set_voltage(FB_ch, 2.00, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-		FB_ovi3->set_voltage(FB_ch, 2.25, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-		FB_ovi3->set_voltage(FB_ch, 2.50, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-		FB_ovi3->set_voltage(FB_ch, 2.75, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-		FB_ovi3->set_voltage(FB_ch, 3.00, VOLT_5_RANGE); // DVI_11_0	//1uF on HBP.  The drop is slow if it's only 3ms.  Manual observe drop to ~1.7V
-		delay(3);              
-		FB_ovi3->set_voltage(FB_ch, 1.25, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-	}
 
-//////////pulse.do_pulse();
+	TestMode_Check(0); //Set 1 to step into loop.  Set 0 to skip Test Mode check.
 
 	//ZTMC_Drivers_en and ZTMC_Dsbl_FBshrt  (The FBshrt -> FB to HBP short fault protection function.)
 	//											  (This Test Mode disable 
@@ -288,13 +257,12 @@ Pulse pulse;
 	//DSM_I2C_Write('w', g_S_TEST_CTRL1, 0xC000);
 	//HSG_ovi->set_voltage(HSG_ch, 5, VOLT_20_RANGE); 
 
-	//Loading previous trimming before performing the test.
-
 	DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
-	//Program Trim Register with new calculated bit combination.
-	//Program_Trim_Register(g_S_TrimRegister);
-
-
+	if (g_Trim_Enable_S != 0)
+	{
+		//Loading previous trimming before performing the test.
+		Program_All_TrimRegister();
+	}
 
 	if(1)
 	{
@@ -312,10 +280,6 @@ Pulse pulse;
 		Run_100Khz_Pulses();
 	}
 
-	
-	
-
-
 	if(0)
 	{
 		//DX Control S==> Currently having problem.  HSG won't goes low. Need to check with design onthe pin conditions.
@@ -324,8 +288,6 @@ Pulse pulse;
 		Run_10Khz_Pulses();
 	}
 
-	//tmu_6->start_holdoff(15,TRUE);
-	//tmu_6->stop_holdoff(15,TRUE);
 	wait.delay_10_us(10);
 	for (i=0; i<15; i++)
 	{
@@ -335,11 +297,12 @@ Pulse pulse;
 	}
 
 
-	ZTtimer_pt_S = Average_Value(tmeas_array);
+	ZTtimer_pt_S = Average_Value(tmeas_array, 1e-6, 2e-6);
 
-	
-//pulse.do_pulse();
+	g_ZTtimer_Pre = ZTtimer_pt_S;
 
+if (g_Trim_Enable_S)
+{
 
 
 	// ZTtimer_S_Code //
@@ -360,41 +323,19 @@ Pulse pulse;
 
 
 	//Manual forcing:
-	//smallest_diff_idx = 15;
+	//smallest_diff_idx = 7;
 
-	ZTtimer_TrCode_S = smallest_diff_idx;
 	ZTtimer_TrCode_S = ZTtimer_S_code[smallest_diff_idx];
 	ZTtimer_ExpChg   = ZTtimer_S_TrimWt[smallest_diff_idx];
 
 	TrimCode_To_TrimBit(ZTtimer_TrCode_S, "ZTtime_S", 's');
 
-	//Update WordArray.
-	WordArray[9]         = g_S_TrimRegisterTemp[57]; //EEtr57_ZTtime0_S
-	WordArray[10]        = g_S_TrimRegisterTemp[58]; //EEtr58_ZTtime1_S
-	WordArray[11]        = g_S_TrimRegisterTemp[59]; //EEtr59_ZTtime2_S
-	WordArray[12]        = g_S_TrimRegisterTemp[60]; //EEtr60_ZTtime3_S
+	EEpr_Array[3] = EEpr_Array[3] | (ZTtimer_TrCode_S<<(57-startbit));
 
-	//Update secondary trim register array for programming later.
-	g_S_TrimRegister[57] = g_S_TrimRegisterTemp[57]; //EEtr57_ZTtime0_S
-	g_S_TrimRegister[58] = g_S_TrimRegisterTemp[58]; //EEtr58_ZTtime1_S
-	g_S_TrimRegister[59] = g_S_TrimRegisterTemp[59]; //EEtr59_ZTtime2_S
-	g_S_TrimRegister[60] = g_S_TrimRegisterTemp[60]; //EEtr60_ZTtime3_S
+	Program_Single_TrimRegister(g_EEP_W_E6);
 
-	//Convert from binary to decimal.
-	converted_dec1 = Convert_BIN_2_Dec(WordArray);
-	converted_dec2 = Convert_BIN_2_Dec(WordArray);
 
-	DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
-
-	//Program Trim Register with new calculated bit combination.
-	Program_Trim_Register(g_S_TrimRegister);
-
-	DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
-	int TrimBank[5];
-
-	Read_Trim_Register(TrimBank);
-
-//pulse.do_pulse();
+}
 
 	for (i=0; i<15; i++)
 	{
@@ -404,7 +345,7 @@ Pulse pulse;
 	}
 
 
-	ZTtimer_prg_S = Average_Value(tmeas_array);
+	ZTtimer_prg_S = Average_Value(tmeas_array, 1e-6, 2e-6);
 
 	if(ZTtimer_pt_S != 0)
 	{
@@ -462,21 +403,31 @@ Pulse pulse;
 	tmu_6->open_relay(TMU_HIZ_DUT4);
 	tmu_6->open_relay(TMU_CHAN_B_DUT1); 
 	tmu_6->open_relay(TMU_HIZ_DUT3); 
+
 	wait.delay_10_us(250);
 
 
 	PiDatalog(func, A_ZTtimer_pt_S, ZTtimer_pt_S,              26, POWER_MICRO);
-	PiDatalog(func, A_ZTtimer_target_S,     ZTtimer_Target_S,          26, POWER_MICRO);
-	PiDatalog(func, A_ZTtimer_TrCode_S,     ZTtimer_TrCode_S,          26, POWER_UNIT);
-	PiDatalog(func, A_ZTtimer_BitCode_S,  ZTtimer_BitCode_S,         26, POWER_UNIT);
-	PiDatalog(func, A_ZTtimer_ExpChg_S,     ZTtimer_ExpChg,            26, POWER_UNIT);
-	PiDatalog(func, A_Eetr57_ZTtimer0_S,    g_S_TrimRegister[57],    26, POWER_UNIT);
-	PiDatalog(func, A_Eetr58_ZTtimer1_S,    g_S_TrimRegister[58],    26, POWER_UNIT);
-	PiDatalog(func, A_Eetr59_ZTtimer2_S,    g_S_TrimRegister[59],    26, POWER_UNIT);
-	PiDatalog(func, A_Eetr60_ZTtimer3_S,    g_S_TrimRegister[60],    26, POWER_UNIT);
-	PiDatalog(func, A_Bin2Dec1_S,         converted_dec1,          26, POWER_UNIT);
-	PiDatalog(func, A_ZTtimer_prg_S,        ZTtimer_prg_S,             26, POWER_MICRO);
-	PiDatalog(func, A_ZTtimer_prgchg_S,     ZTtimer_PrgChg,            26, POWER_UNIT);
+	
+	if (g_Trim_Enable_S)
+	{
+		PiDatalog(func, A_ZTtimer_target_S,     ZTtimer_Target_S,          26, POWER_MICRO);
+		PiDatalog(func, A_ZTtimer_TrCode_S,     ZTtimer_TrCode_S,          26, POWER_UNIT);
+		PiDatalog(func, A_ZTtimer_BitCode_S,	ZTtimer_BitCode_S,         26, POWER_UNIT);
+		PiDatalog(func, A_ZTtimer_ExpChg_S,     ZTtimer_ExpChg,            26, POWER_UNIT);
+		PiDatalog(func, A_Eetr57_ZTtimer0_S,    g_S_TrimRegisterTemp[57],    26, POWER_UNIT);
+		PiDatalog(func, A_Eetr58_ZTtimer1_S,    g_S_TrimRegisterTemp[58],    26, POWER_UNIT);
+		PiDatalog(func, A_Eetr59_ZTtimer2_S,    g_S_TrimRegisterTemp[59],    26, POWER_UNIT);
+		PiDatalog(func, A_Eetr60_ZTtimer3_S,    g_S_TrimRegisterTemp[60],    26, POWER_UNIT);
+		PiDatalog(func, A_Bin2Dec1_S,			EEpr_Array[3],          26, POWER_UNIT);
+		PiDatalog(func, A_ZTtimer_prg_S,        ZTtimer_prg_S,             26, POWER_MICRO);
+		PiDatalog(func, A_ZTtimer_prgchg_S,     ZTtimer_PrgChg,            26, POWER_UNIT);
+	}
+	else
+	{
+		PiDatalog(func, A_ZTtimer_Pst,        ZTtimer_prg_S,             26, POWER_MICRO);
+
+	}
 
 
 }

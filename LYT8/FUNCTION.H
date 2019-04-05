@@ -13,9 +13,14 @@ typedef struct
     USHORT      TestTime_Enable;
     USHORT      GRR_Enable;
     USHORT      CHAR_Enable;
+    USHORT      CHAR_TEMP;
     USHORT      REL_Enable;
-    USHORT      TRIM_Enable;
-    USHORT      TRIM_Voltage;
+    USHORT      force_ERASE_P;
+    USHORT      force_ERASE_S;
+    USHORT      BURN_Enable_P;
+    USHORT      BURN_Enable_S;
+    USHORT      Sim_Enable_P;
+    USHORT      Sim_Enable_S;
     short       IOV_Code_P;
     short       FOSC_Code_P;
     short       TonMin_Code_P;
@@ -59,6 +64,12 @@ typedef struct
 {
     USHORT      fail_bin;
 } EEprom_DevID_params;
+
+
+typedef struct
+{
+    USHORT      fail_bin;
+} HBP_Pre_S_params;
 
 
 typedef struct
@@ -134,6 +145,23 @@ typedef struct
 
 typedef struct
 {
+    bool        Manual_Prog;
+    short       tsstart_B_8_9_S;
+    short       tfbOption_B_10_11_S;
+    short       DOPL_B_15_S;
+    short       TvrOption_B_16_17_S;
+    short       tenCP_B_18_S;
+    short       zffOption_B_19_20_S;
+    short       DsblJitDim_B_21_S;
+    short       JitterOff_B_22_S;
+    short       ZTMBStr_B_29_30_S;
+    short       DsblFlBck_B_31_S;
+    short       DimTh_B_47_S;
+    short       tHrtBtOpt_B_61_S;
+    short       CPNonI2C_B_62_S;
+    short       Zee_50KStr_B_63_S;
+    short       FlBck_Ccopt_B_74_S;
+    short       FlBck_Sel_B_75_S;
     USHORT      fail_bin;
 } Feature_Trim_S_params;
 
@@ -148,12 +176,6 @@ typedef struct
 {
     double      NEW_PARAM;
 } BPP_STRESS_params;
-
-
-typedef struct
-{
-    USHORT      fail_bin;
-} HBP_Pre_S_params;
 
 
 typedef struct
@@ -305,181 +327,181 @@ typedef struct
 typedef struct
 {
     double      NEW_PARAM;
-} CCoff_Pt_params;
+} ccPFOFF_Pre_S_params;
 
 
 typedef struct
 {
     double      NEW_PARAM;
-} IsCal_Pt_params;
+} Fosc_pt_S_params;
 
 
 typedef struct
 {
     double      NEW_PARAM;
-} ADC_Pt_params;
+} BFreq_Pre_S_params;
 
 
 typedef struct
 {
     double      NEW_PARAM;
-} EEPROM_Write_params;
+} CP_Pre_S_params;
+
+
+typedef struct
+{
+    double      NEW_PARAM;
+} VbILimit_Pre_S_params;
+
+
+typedef struct
+{
+    double      NEW_PARAM;
+} EEPROM_S_Write_params;
 
 
 typedef struct
 {
     USHORT      fail_bin;
-} IzPost_params;
+} HBP_S_params;
 
 
 typedef struct
 {
     double      NEW_PARAM;
-} SoftStart_params;
+} CV_Pst_S_params;
 
 
 typedef struct
 {
     USHORT      fail_bin;
-} VBP_Supply_params;
+} VDDA_Pst_S_params;
 
 
 typedef struct
 {
     USHORT      fail_bin;
-} IBP_Supply_params;
+} IRSET_Pst_S_params;
 
 
 typedef struct
 {
     USHORT      fail_bin;
-} IOV_IUV_OT_params;
+} ZTtimer_Pst_S_params;
 
 
 typedef struct
 {
     USHORT      fail_bin;
-} FOSC_Ton_ARST_params;
+} VADC_Pst_S_params;
 
 
 typedef struct
 {
     USHORT      fail_bin;
-} FWPK_params;
+} CLOCK1M_Pst_S_params;
 
 
 typedef struct
 {
     USHORT      fail_bin;
-} SR_Delay_tREQinh_params;
+} ccOffset_Pst_S_params;
+
+
+typedef struct
+{
+    double      NEW_PARAM;
+} VccRef_Pst_S_params;
+
+
+typedef struct
+{
+    double      NEW_PARAM;
+} ccPFOFF_Pst_S_params;
+
+
+typedef struct
+{
+    double      NEW_PARAM;
+} Fosc_Pst_S_params;
+
+
+typedef struct
+{
+    double      NEW_PARAM;
+} BFreq_Pst_S_params;
+
+
+typedef struct
+{
+    double      NEW_PARAM;
+} CP_Pst_S_params;
+
+
+typedef struct
+{
+    double      NEW_PARAM;
+} VbILimit_Pst_S_params;
 
 
 typedef struct
 {
     USHORT      fail_bin;
-} SOA_SDS_TW50_params;
-
-
-typedef struct
-{
-    double      NEW_PARAM;
-} IsCal_Final_params;
-
-
-typedef struct
-{
-    double      NEW_PARAM;
-} Iout_params;
-
-
-typedef struct
-{
-    double      NEW_PARAM;
-} CV_nDAC_pDAC_params;
+} VR_Detect_S_params;
 
 
 typedef struct
 {
     USHORT      fail_bin;
-} Vesr_params;
+} VR_Det_01_S_params;
 
 
 typedef struct
 {
     USHORT      fail_bin;
-} Isvth3X_AR_ISSC_params;
-
-
-typedef struct
-{
-    double      NEW_PARAM;
-} Vovp_params;
-
-
-typedef struct
-{
-    double      NEW_PARAM;
-} UVP_params;
-
-
-typedef struct
-{
-    double      NEW_PARAM;
-} VBD_uVCC_params;
-
-
-typedef struct
-{
-    double      NEW_PARAM;
-} OSC_Final_params;
-
-
-typedef struct
-{
-    double      NEW_PARAM;
-} DofA_Final_params;
-
-
-typedef struct
-{
-    double      NEW_PARAM;
-} IsDAC_Final_params;
-
-
-typedef struct
-{
-    double      NEW_PARAM;
-} Gain_Final_params;
-
-
-typedef struct
-{
-    double      NEW_PARAM;
-} CDC_Final_params;
-
-
-typedef struct
-{
-    double      NEW_PARAM;
-} Ccoff_Final_params;
-
-
-typedef struct
-{
-    double      NEW_PARAM;
-} VPK_params;
-
-
-typedef struct
-{
-    double      NEW_PARAM;
-} ADC_Final_params;
+} VR_Det_02_S_params;
 
 
 typedef struct
 {
     USHORT      fail_bin;
-} DATT_params;
+} VR_Det_03_S_params;
+
+
+typedef struct
+{
+    USHORT      fail_bin;
+} VR_D_Ext_00_S_params;
+
+
+typedef struct
+{
+    USHORT      fail_bin;
+} VR_D_Ext_01_S_params;
+
+
+typedef struct
+{
+    USHORT      fail_bin;
+} VR_tDeglitch_S_params;
+
+
+typedef struct
+{
+    double      NEW_PARAM;
+} ccTH_S_params;
+
+
+typedef struct
+{
+    double      NEW_PARAM;
+} Fosc_MinJit_S_params;
+
+
+typedef struct
+{
+    USHORT      fail_bin;
+} EEPROM_Pst_params;
 
 
 typedef struct
@@ -509,6 +531,11 @@ void setup_Leakage(test_function &func, char **function_name, char *heading_line
 void EEprom_DevID(test_function &func);
 void initialize_EEprom_DevID(short test_entry, test_function &func, char **func_name);
 void setup_EEprom_DevID(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+
+/////////// HBP_Pre_S ///////////////////////////////////////////////////////
+void HBP_Pre_S(test_function &func);
+void initialize_HBP_Pre_S(short test_entry, test_function &func, char **func_name);
+void setup_HBP_Pre_S(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
 /////////// Scan_Pre_Stress ///////////////////////////////////////////////////////
 void Scan_Pre_Stress(test_function &func);
@@ -579,11 +606,6 @@ void setup_BPS_STRESS(test_function &func, char **function_name, char *heading_l
 void BPP_STRESS(test_function &func);
 void initialize_BPP_STRESS(short test_entry, test_function &func, char **func_name);
 void setup_BPP_STRESS(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
-
-/////////// HBP_Pre_S ///////////////////////////////////////////////////////
-void HBP_Pre_S(test_function &func);
-void initialize_HBP_Pre_S(short test_entry, test_function &func, char **func_name);
-void setup_HBP_Pre_S(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
 /////////// IOV_Pre_P ///////////////////////////////////////////////////////
 void IOV_Pre_P(test_function &func);
@@ -705,155 +727,155 @@ void VccRef_Pre_S(test_function &func);
 void initialize_VccRef_Pre_S(short test_entry, test_function &func, char **func_name);
 void setup_VccRef_Pre_S(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
-/////////// CCoff_Pt ///////////////////////////////////////////////////////
-void CCoff_Pt(test_function &func);
-void initialize_CCoff_Pt(short test_entry, test_function &func, char **func_name);
-void setup_CCoff_Pt(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+/////////// ccPFOFF_Pre_S ///////////////////////////////////////////////////////
+void ccPFOFF_Pre_S(test_function &func);
+void initialize_ccPFOFF_Pre_S(short test_entry, test_function &func, char **func_name);
+void setup_ccPFOFF_Pre_S(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
-/////////// IsCal_Pt ///////////////////////////////////////////////////////
-void IsCal_Pt(test_function &func);
-void initialize_IsCal_Pt(short test_entry, test_function &func, char **func_name);
-void setup_IsCal_Pt(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+/////////// Fosc_pt_S ///////////////////////////////////////////////////////
+void Fosc_pt_S(test_function &func);
+void initialize_Fosc_pt_S(short test_entry, test_function &func, char **func_name);
+void setup_Fosc_pt_S(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
-/////////// ADC_Pt ///////////////////////////////////////////////////////
-void ADC_Pt(test_function &func);
-void initialize_ADC_Pt(short test_entry, test_function &func, char **func_name);
-void setup_ADC_Pt(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+/////////// BFreq_Pre_S ///////////////////////////////////////////////////////
+void BFreq_Pre_S(test_function &func);
+void initialize_BFreq_Pre_S(short test_entry, test_function &func, char **func_name);
+void setup_BFreq_Pre_S(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
-/////////// EEPROM_Write ///////////////////////////////////////////////////////
-void EEPROM_Write(test_function &func);
-void initialize_EEPROM_Write(short test_entry, test_function &func, char **func_name);
-void setup_EEPROM_Write(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+/////////// CP_Pre_S ///////////////////////////////////////////////////////
+void CP_Pre_S(test_function &func);
+void initialize_CP_Pre_S(short test_entry, test_function &func, char **func_name);
+void setup_CP_Pre_S(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
-/////////// IzPost ///////////////////////////////////////////////////////
-void IzPost(test_function &func);
-void initialize_IzPost(short test_entry, test_function &func, char **func_name);
-void setup_IzPost(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+/////////// VbILimit_Pre_S ///////////////////////////////////////////////////////
+void VbILimit_Pre_S(test_function &func);
+void initialize_VbILimit_Pre_S(short test_entry, test_function &func, char **func_name);
+void setup_VbILimit_Pre_S(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
-/////////// SoftStart ///////////////////////////////////////////////////////
-void SoftStart(test_function &func);
-void initialize_SoftStart(short test_entry, test_function &func, char **func_name);
-void setup_SoftStart(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+/////////// EEPROM_S_Write ///////////////////////////////////////////////////////
+void EEPROM_S_Write(test_function &func);
+void initialize_EEPROM_S_Write(short test_entry, test_function &func, char **func_name);
+void setup_EEPROM_S_Write(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
-/////////// VBP_Supply ///////////////////////////////////////////////////////
-void VBP_Supply(test_function &func);
-void initialize_VBP_Supply(short test_entry, test_function &func, char **func_name);
-void setup_VBP_Supply(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+/////////// HBP_S ///////////////////////////////////////////////////////
+void HBP_S(test_function &func);
+void initialize_HBP_S(short test_entry, test_function &func, char **func_name);
+void setup_HBP_S(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
-/////////// IBP_Supply ///////////////////////////////////////////////////////
-void IBP_Supply(test_function &func);
-void initialize_IBP_Supply(short test_entry, test_function &func, char **func_name);
-void setup_IBP_Supply(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+/////////// CV_Pst_S ///////////////////////////////////////////////////////
+void CV_Pst_S(test_function &func);
+void initialize_CV_Pst_S(short test_entry, test_function &func, char **func_name);
+void setup_CV_Pst_S(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
-/////////// IOV_IUV_OT ///////////////////////////////////////////////////////
-void IOV_IUV_OT(test_function &func);
-void initialize_IOV_IUV_OT(short test_entry, test_function &func, char **func_name);
-void setup_IOV_IUV_OT(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+/////////// VDDA_Pst_S ///////////////////////////////////////////////////////
+void VDDA_Pst_S(test_function &func);
+void initialize_VDDA_Pst_S(short test_entry, test_function &func, char **func_name);
+void setup_VDDA_Pst_S(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
-/////////// FOSC_Ton_ARST ///////////////////////////////////////////////////////
-void FOSC_Ton_ARST(test_function &func);
-void initialize_FOSC_Ton_ARST(short test_entry, test_function &func, char **func_name);
-void setup_FOSC_Ton_ARST(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+/////////// IRSET_Pst_S ///////////////////////////////////////////////////////
+void IRSET_Pst_S(test_function &func);
+void initialize_IRSET_Pst_S(short test_entry, test_function &func, char **func_name);
+void setup_IRSET_Pst_S(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
-/////////// FWPK ///////////////////////////////////////////////////////
-void FWPK(test_function &func);
-void initialize_FWPK(short test_entry, test_function &func, char **func_name);
-void setup_FWPK(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+/////////// ZTtimer_Pst_S ///////////////////////////////////////////////////////
+void ZTtimer_Pst_S(test_function &func);
+void initialize_ZTtimer_Pst_S(short test_entry, test_function &func, char **func_name);
+void setup_ZTtimer_Pst_S(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
-/////////// SR_Delay_tREQinh ///////////////////////////////////////////////////////
-void SR_Delay_tREQinh(test_function &func);
-void initialize_SR_Delay_tREQinh(short test_entry, test_function &func, char **func_name);
-void setup_SR_Delay_tREQinh(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+/////////// VADC_Pst_S ///////////////////////////////////////////////////////
+void VADC_Pst_S(test_function &func);
+void initialize_VADC_Pst_S(short test_entry, test_function &func, char **func_name);
+void setup_VADC_Pst_S(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
-/////////// SOA_SDS_TW50 ///////////////////////////////////////////////////////
-void SOA_SDS_TW50(test_function &func);
-void initialize_SOA_SDS_TW50(short test_entry, test_function &func, char **func_name);
-void setup_SOA_SDS_TW50(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+/////////// CLOCK1M_Pst_S ///////////////////////////////////////////////////////
+void CLOCK1M_Pst_S(test_function &func);
+void initialize_CLOCK1M_Pst_S(short test_entry, test_function &func, char **func_name);
+void setup_CLOCK1M_Pst_S(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
-/////////// IsCal_Final ///////////////////////////////////////////////////////
-void IsCal_Final(test_function &func);
-void initialize_IsCal_Final(short test_entry, test_function &func, char **func_name);
-void setup_IsCal_Final(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+/////////// ccOffset_Pst_S ///////////////////////////////////////////////////////
+void ccOffset_Pst_S(test_function &func);
+void initialize_ccOffset_Pst_S(short test_entry, test_function &func, char **func_name);
+void setup_ccOffset_Pst_S(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
-/////////// Iout ///////////////////////////////////////////////////////
-void Iout(test_function &func);
-void initialize_Iout(short test_entry, test_function &func, char **func_name);
-void setup_Iout(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+/////////// VccRef_Pst_S ///////////////////////////////////////////////////////
+void VccRef_Pst_S(test_function &func);
+void initialize_VccRef_Pst_S(short test_entry, test_function &func, char **func_name);
+void setup_VccRef_Pst_S(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
-/////////// CV_nDAC_pDAC ///////////////////////////////////////////////////////
-void CV_nDAC_pDAC(test_function &func);
-void initialize_CV_nDAC_pDAC(short test_entry, test_function &func, char **func_name);
-void setup_CV_nDAC_pDAC(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+/////////// ccPFOFF_Pst_S ///////////////////////////////////////////////////////
+void ccPFOFF_Pst_S(test_function &func);
+void initialize_ccPFOFF_Pst_S(short test_entry, test_function &func, char **func_name);
+void setup_ccPFOFF_Pst_S(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
-/////////// Vesr ///////////////////////////////////////////////////////
-void Vesr(test_function &func);
-void initialize_Vesr(short test_entry, test_function &func, char **func_name);
-void setup_Vesr(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+/////////// Fosc_Pst_S ///////////////////////////////////////////////////////
+void Fosc_Pst_S(test_function &func);
+void initialize_Fosc_Pst_S(short test_entry, test_function &func, char **func_name);
+void setup_Fosc_Pst_S(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
-/////////// Isvth3X_AR_ISSC ///////////////////////////////////////////////////////
-void Isvth3X_AR_ISSC(test_function &func);
-void initialize_Isvth3X_AR_ISSC(short test_entry, test_function &func, char **func_name);
-void setup_Isvth3X_AR_ISSC(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+/////////// BFreq_Pst_S ///////////////////////////////////////////////////////
+void BFreq_Pst_S(test_function &func);
+void initialize_BFreq_Pst_S(short test_entry, test_function &func, char **func_name);
+void setup_BFreq_Pst_S(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
-/////////// Vovp ///////////////////////////////////////////////////////
-void Vovp(test_function &func);
-void initialize_Vovp(short test_entry, test_function &func, char **func_name);
-void setup_Vovp(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+/////////// CP_Pst_S ///////////////////////////////////////////////////////
+void CP_Pst_S(test_function &func);
+void initialize_CP_Pst_S(short test_entry, test_function &func, char **func_name);
+void setup_CP_Pst_S(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
-/////////// UVP ///////////////////////////////////////////////////////
-void UVP(test_function &func);
-void initialize_UVP(short test_entry, test_function &func, char **func_name);
-void setup_UVP(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+/////////// VbILimit_Pst_S ///////////////////////////////////////////////////////
+void VbILimit_Pst_S(test_function &func);
+void initialize_VbILimit_Pst_S(short test_entry, test_function &func, char **func_name);
+void setup_VbILimit_Pst_S(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
-/////////// VBD_uVCC ///////////////////////////////////////////////////////
-void VBD_uVCC(test_function &func);
-void initialize_VBD_uVCC(short test_entry, test_function &func, char **func_name);
-void setup_VBD_uVCC(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+/////////// VR_Detect_S ///////////////////////////////////////////////////////
+void VR_Detect_S(test_function &func);
+void initialize_VR_Detect_S(short test_entry, test_function &func, char **func_name);
+void setup_VR_Detect_S(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
-/////////// OSC_Final ///////////////////////////////////////////////////////
-void OSC_Final(test_function &func);
-void initialize_OSC_Final(short test_entry, test_function &func, char **func_name);
-void setup_OSC_Final(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+/////////// VR_Det_01_S ///////////////////////////////////////////////////////
+void VR_Det_01_S(test_function &func);
+void initialize_VR_Det_01_S(short test_entry, test_function &func, char **func_name);
+void setup_VR_Det_01_S(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
-/////////// DofA_Final ///////////////////////////////////////////////////////
-void DofA_Final(test_function &func);
-void initialize_DofA_Final(short test_entry, test_function &func, char **func_name);
-void setup_DofA_Final(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+/////////// VR_Det_02_S ///////////////////////////////////////////////////////
+void VR_Det_02_S(test_function &func);
+void initialize_VR_Det_02_S(short test_entry, test_function &func, char **func_name);
+void setup_VR_Det_02_S(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
-/////////// IsDAC_Final ///////////////////////////////////////////////////////
-void IsDAC_Final(test_function &func);
-void initialize_IsDAC_Final(short test_entry, test_function &func, char **func_name);
-void setup_IsDAC_Final(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+/////////// VR_Det_03_S ///////////////////////////////////////////////////////
+void VR_Det_03_S(test_function &func);
+void initialize_VR_Det_03_S(short test_entry, test_function &func, char **func_name);
+void setup_VR_Det_03_S(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
-/////////// Gain_Final ///////////////////////////////////////////////////////
-void Gain_Final(test_function &func);
-void initialize_Gain_Final(short test_entry, test_function &func, char **func_name);
-void setup_Gain_Final(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+/////////// VR_D_Ext_00_S ///////////////////////////////////////////////////////
+void VR_D_Ext_00_S(test_function &func);
+void initialize_VR_D_Ext_00_S(short test_entry, test_function &func, char **func_name);
+void setup_VR_D_Ext_00_S(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
-/////////// CDC_Final ///////////////////////////////////////////////////////
-void CDC_Final(test_function &func);
-void initialize_CDC_Final(short test_entry, test_function &func, char **func_name);
-void setup_CDC_Final(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+/////////// VR_D_Ext_01_S ///////////////////////////////////////////////////////
+void VR_D_Ext_01_S(test_function &func);
+void initialize_VR_D_Ext_01_S(short test_entry, test_function &func, char **func_name);
+void setup_VR_D_Ext_01_S(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
-/////////// Ccoff_Final ///////////////////////////////////////////////////////
-void Ccoff_Final(test_function &func);
-void initialize_Ccoff_Final(short test_entry, test_function &func, char **func_name);
-void setup_Ccoff_Final(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+/////////// VR_tDeglitch_S ///////////////////////////////////////////////////////
+void VR_tDeglitch_S(test_function &func);
+void initialize_VR_tDeglitch_S(short test_entry, test_function &func, char **func_name);
+void setup_VR_tDeglitch_S(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
-/////////// VPK ///////////////////////////////////////////////////////
-void VPK(test_function &func);
-void initialize_VPK(short test_entry, test_function &func, char **func_name);
-void setup_VPK(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+/////////// ccTH_S ///////////////////////////////////////////////////////
+void ccTH_S(test_function &func);
+void initialize_ccTH_S(short test_entry, test_function &func, char **func_name);
+void setup_ccTH_S(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
-/////////// ADC_Final ///////////////////////////////////////////////////////
-void ADC_Final(test_function &func);
-void initialize_ADC_Final(short test_entry, test_function &func, char **func_name);
-void setup_ADC_Final(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+/////////// Fosc_MinJit_S ///////////////////////////////////////////////////////
+void Fosc_MinJit_S(test_function &func);
+void initialize_Fosc_MinJit_S(short test_entry, test_function &func, char **func_name);
+void setup_Fosc_MinJit_S(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
-/////////// DATT ///////////////////////////////////////////////////////
-void DATT(test_function &func);
-void initialize_DATT(short test_entry, test_function &func, char **func_name);
-void setup_DATT(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
+/////////// EEPROM_Pst ///////////////////////////////////////////////////////
+void EEPROM_Pst(test_function &func);
+void initialize_EEPROM_Pst(short test_entry, test_function &func, char **func_name);
+void setup_EEPROM_Pst(test_function &func, char **function_name, char *heading_line, unsigned short *want_print, char manual_setup);
 
 /////////// zLast ///////////////////////////////////////////////////////
 void zLast(test_function &func);

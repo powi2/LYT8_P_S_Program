@@ -240,7 +240,7 @@ void TonMin_Pre_P(test_function& func)
 			TS_ovi3->set_voltage(TSovi3_ch, 3.3, VOLT_10_RANGE); // OVI_3_0
 			wait.delay_10_us(10);
 
-		Program_Single_TrimRegister(g_EEP_W_E8);
+		Program_Single_TrimRegister_P(g_EEP_W_E8);
 
 			TS_ovi->set_voltage(TSovi1_ch, 1.0, VOLT_1_RANGE); // OVI_1_5 for Comparator LT1719 Vref input
 			wait.delay_10_us(10);
@@ -314,7 +314,7 @@ void TonMin_Pre_P(test_function& func)
 			TrCode_shift_n_bits = gP_Reg_Start_Bit_TonM - g_E8_start_bit;
 			EEpr_Bank_P[E8] = EEpr_Bank_P[E8] | ( TonMin_TrCode_P << TrCode_shift_n_bits );
 
-			Program_Single_TrimRegister(g_EEP_W_E8);
+			Program_Single_TrimRegister_P(g_EEP_W_E8);
 			wait.delay_10_us(1);
 
 		//EEPROM_Read_Enable_P();

@@ -47,10 +47,11 @@ void IRSET_Pre(test_function& func)
 	if (AbortTest)
 		return;
 
-	// Skip trimming if g_Sim_Enable_P set //
-	//if (g_Sim_Enable_P == 0)
+	// Skip trimming if g_Burn_Enable_P set //
+	//if (g_Burn_Enable_P == 0)
 //		return;
-
+	if (g_Trim_Enable_S == 0 && g_GRR == 0)
+		return;
 	//if (g_Fn_IRSET_Pre == 0 )  return;
 
 	// Test Time Begin //
@@ -60,6 +61,7 @@ void IRSET_Pre(test_function& func)
 	// Test variables
 
 	int   i              = 0;
+	int   startbit       = 64;
 	int   WordArray[16]  = {0};
 	uint16_t converted_dec1 = 0;
 	uint16_t converted_dec2 = 0;
@@ -109,27 +111,6 @@ Pulse pulse;
 	IRSET_S_code[i] = 13; IRSET_S_TrimWt[i] =  6.1;    i++;     //0 (3 link trimmed-->  6.1%)
 	IRSET_S_code[i] = 14; IRSET_S_TrimWt[i] =  4.0;    i++;     //0 (3 link trimmed-->  4.0%)
 	IRSET_S_code[i] = 15; IRSET_S_TrimWt[i] =  2.02;   i++;     //0 (4 link trimmed-->  2.02%)
-
-	
-	// Load WordArray[] with contents of g_Sec_TrimRegister[] array!  This includes trim bit from other tests & trim options 
-    // This is important for proper trimming! //
-	// E2 Trim register.
-	WordArray[0]  = g_S_TrimRegister[64];
-	WordArray[1]  = g_S_TrimRegister[65];
-	WordArray[2]  = g_S_TrimRegister[66];
-	WordArray[3]  = g_S_TrimRegister[67];
-	WordArray[4]  = g_S_TrimRegister[68];
-	WordArray[5]  = g_S_TrimRegister[69];
-	WordArray[6]  = g_S_TrimRegister[70]; 
-	WordArray[7]  = g_S_TrimRegister[71]; 
-	WordArray[8]  = g_S_TrimRegister[72]; 
-	WordArray[9]  = g_S_TrimRegister[73]; 
-	WordArray[10] = g_S_TrimRegister[74];
-	WordArray[11] = g_S_TrimRegister[75];
-	WordArray[12] = g_S_TrimRegister[76];//EEtr76_ZTLnt0_S
-	WordArray[13] = g_S_TrimRegister[77];//EEtr77_ZTLnt1_S
-	WordArray[14] = g_S_TrimRegister[78];//EEtr78_ZTLnt2_S
-	WordArray[15] = g_S_TrimRegister[79];//EEtr79_ZTLnt3_S
 
 	// Open all relays //
 	Initialize_Relays();
@@ -238,25 +219,8 @@ Pulse pulse;
 
 	//Enter TM
 	Analog_TM_Enable_Secondary();
-	//For TEST only..  Manually raise vFB above 2.5V or 3V here to observe HBP will go low and then lower to 1.25V for HSG to go High
-	//Below to to make sure the FB controlling HBP is working properly before Disabling it.
-	if(0)
-	{
-		FB_ovi3->set_voltage(FB_ch, 2.00, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-		FB_ovi3->set_voltage(FB_ch, 2.25, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-		FB_ovi3->set_voltage(FB_ch, 2.50, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-		FB_ovi3->set_voltage(FB_ch, 2.75, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-		FB_ovi3->set_voltage(FB_ch, 3.00, VOLT_5_RANGE); // DVI_11_0	//1uF on HBP.  The drop is slow if it's only 3ms.  Manual observe drop to ~1.7V
-		delay(3);              
-		FB_ovi3->set_voltage(FB_ch, 1.25, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-	}
 
-//pulse.do_pulse();
+	TestMode_Check(0); //Set 1 to step into loop.  Set 0 to skip Test Mode check.
 
 	//ZTMC_Drivers_en and ZTMC_Dsbl_FBshrt  (The FBshrt -> FB to HBP short fault protection function.)
 	//											  (This Test Mode disable 
@@ -268,21 +232,24 @@ Pulse pulse;
 	DSM_I2C_Write('w', g_TM_CTRL, 0x0006);
 
 
-	//Loading previous trimming before performing the test.
-
-	//Program Trim Register with new calculated bit combination.
-	Program_Trim_Register(g_S_TrimRegister);
-
+	if (g_Trim_Enable_S != 0)
+	{
+		//Loading previous trimming before performing the test.
+		Program_All_TrimRegister();
+	}
 
 	//ZTMC_IRset_Trim
 	//0x00 0x60 write 0x00 0x04
-	DSM_I2C_Write('w', g_TEST_CTRL1, 0x0004);
+	DSM_I2C_Write('w', g_TEST_CTRL1, 0x0400);
 
 	wait.delay_10_us(100);
 
 	IRSET_pt_S = -1*(IS_dvi2k->measure_average(25));
 
+	g_IRSET_Pre = IRSET_pt_S;
 
+if (g_Trim_Enable_S)
+{
 	// IRSET_S_Code //
 	// Find which trim code will make IRSET_Pre closest to target //
 	smallest_diff_val = 999999.9;
@@ -303,7 +270,6 @@ Pulse pulse;
 	//Manual forcing:
 	//smallest_diff_idx = 14;
 
-	IRSET_TrCode_S = smallest_diff_idx;
 	IRSET_TrCode_S = IRSET_S_code[smallest_diff_idx];
 	IRSET_ExpChg   = IRSET_S_TrimWt[smallest_diff_idx];
 
@@ -322,31 +288,11 @@ Pulse pulse;
 	else if(IRSET_TrCode_S == 9)  IRSET_BitCode_S = 7;
 	else if(IRSET_TrCode_S == 8)  IRSET_BitCode_S = 8;
 
-	//Update WordArray.
-	WordArray[12]        = g_S_TrimRegisterTemp[76]; //EEtr76_ZTLnt0_S
-	WordArray[13]        = g_S_TrimRegisterTemp[77]; //EEtr77_ZTLnt1_S
-	WordArray[14]        = g_S_TrimRegisterTemp[78]; //EEtr78_ZTLnt2_S
-	WordArray[15]        = g_S_TrimRegisterTemp[79]; //EEtr79_ZTLnt3_S
+	EEpr_Array[4] = EEpr_Array[4] | (IRSET_TrCode_S<<(76-startbit));
 
-	//Update secondary trim register array for programming later.
-	g_S_TrimRegister[76] = g_S_TrimRegisterTemp[76]; //EEtr76_ZTLnt0_S
-	g_S_TrimRegister[77] = g_S_TrimRegisterTemp[77]; //EEtr77_ZTLnt1_S
-	g_S_TrimRegister[78] = g_S_TrimRegisterTemp[78]; //EEtr78_ZTLnt2_S
-	g_S_TrimRegister[79] = g_S_TrimRegisterTemp[79]; //EEtr79_ZTLnt3_S
+	Program_Single_TrimRegister(g_EEP_W_E8);
 
-	//Convert from binary to decimal.
-	converted_dec1 = Convert_BIN_2_Dec(WordArray);
-	converted_dec2 = Convert_BIN_2_Dec(WordArray);
-
-
-	//Program Trim Register with new calculated bit combination.
-	Program_Trim_Register(g_S_TrimRegister);
-
-	int TrimBank[5];
-
-	Read_Trim_Register(TrimBank);
-
-
+}
 	wait.delay_10_us(100);
 
 	IRSET_prg_S = -1*(IS_dvi2k->measure_average(25));
@@ -390,17 +336,26 @@ Pulse pulse;
 
 
 	PiDatalog(func, A_IRSET_pt_S, IRSET_pt_S,              26, POWER_MICRO);
-	PiDatalog(func, A_IRSET_target_S,     IRSET_Target_S,          26, POWER_MICRO);
-	PiDatalog(func, A_IRSET_TrCode_S,     IRSET_TrCode_S,          26, POWER_UNIT);
-	PiDatalog(func, A_IRSET_BitCode_S,  IRSET_BitCode_S,         26, POWER_UNIT);
-	PiDatalog(func, A_IRSET_ExpChg_S,     IRSET_ExpChg,            26, POWER_UNIT);
-	PiDatalog(func, A_Eetr76_ZTLnt0_S,    g_S_TrimRegister[76],    26, POWER_UNIT);
-	PiDatalog(func, A_Eetr77_ZTLnt1_S,    g_S_TrimRegister[77],    26, POWER_UNIT);
-	PiDatalog(func, A_Eetr78_ZTLnt2_S,    g_S_TrimRegister[78],    26, POWER_UNIT);
-	PiDatalog(func, A_Eetr79_ZTLnt3_S,    g_S_TrimRegister[79],    26, POWER_UNIT);
-	PiDatalog(func, A_Bin2Dec1_S,         converted_dec1,          26, POWER_UNIT);
-	PiDatalog(func, A_IRSET_prg_S,        IRSET_prg_S,             26, POWER_MICRO);
-	PiDatalog(func, A_IRSET_prgchg_S,     IRSET_PrgChg,            26, POWER_UNIT);
+	
+	if (g_Trim_Enable_S)
+	{
+		PiDatalog(func, A_IRSET_target_S,     IRSET_Target_S,          26, POWER_MICRO);
+		PiDatalog(func, A_IRSET_TrCode_S,     IRSET_TrCode_S,          26, POWER_UNIT);
+		PiDatalog(func, A_IRSET_BitCode_S,  IRSET_BitCode_S,         26, POWER_UNIT);
+		PiDatalog(func, A_IRSET_ExpChg_S,     IRSET_ExpChg,            26, POWER_UNIT);
+		PiDatalog(func, A_Eetr76_ZTLnt0_S,    g_S_TrimRegisterTemp[76],    26, POWER_UNIT);
+		PiDatalog(func, A_Eetr77_ZTLnt1_S,    g_S_TrimRegisterTemp[77],    26, POWER_UNIT);
+		PiDatalog(func, A_Eetr78_ZTLnt2_S,    g_S_TrimRegisterTemp[78],    26, POWER_UNIT);
+		PiDatalog(func, A_Eetr79_ZTLnt3_S,    g_S_TrimRegisterTemp[79],    26, POWER_UNIT);
+		PiDatalog(func, A_Bin2Dec1_S,         EEpr_Array[4],          26, POWER_UNIT);
+		PiDatalog(func, A_IRSET_prg_S,        IRSET_prg_S,             26, POWER_MICRO);
+		PiDatalog(func, A_IRSET_prgchg_S,     IRSET_PrgChg,            26, POWER_UNIT);
+	}
+	else
+	{
+		PiDatalog(func, A_IRSET_Pst,        IRSET_prg_S,             26, POWER_MICRO);
+
+	}
 
 
 

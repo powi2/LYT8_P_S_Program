@@ -214,7 +214,7 @@ void ILIM_Pre_P(test_function& func)
 
 		Load_100Khz_Pulses_TS();
 		wait.delay_10_us(50);
-	Gage_Start_Capture(  );
+	Gage_Start_Capture(0);
 		Run_100Khz_Pulses_TS();	//DE want 50ns high duty cycle ideally.
 		wait.delay_10_us(50);
 	Gage_Wait_For_Capture_Complete();
@@ -289,7 +289,7 @@ g_Debug=0;
 			delay(4);
 			TS_ovi3->set_voltage(TSovi3_ch, 3.3, VOLT_10_RANGE); // OVI_3_0
 			wait.delay_10_us(10);
-		Program_Single_TrimRegister(g_EEP_W_E2);
+		Program_Single_TrimRegister_P(g_EEP_W_E2);
 
 
 
@@ -305,7 +305,7 @@ g_Debug=0;
 			TS_ovi3->set_voltage(TSovi3_ch, 3.3, VOLT_10_RANGE); // OVI_3_0
 			wait.delay_10_us(10);
 
-			Program_Single_TrimRegister(g_EEP_W_E2);
+			Program_Single_TrimRegister_P(g_EEP_W_E2);
 			wait.delay_10_us(1);
 
 			TS_ovi3->set_voltage(TSovi3_ch, 0.0, VOLT_10_RANGE); // OVI_3_0
@@ -325,7 +325,7 @@ g_Debug=0;
 
 				Load_100Khz_Pulses_TS();
 				wait.delay_10_us(50);
-			Gage_Start_Capture(  );
+			Gage_Start_Capture(0);
 				Run_100Khz_Pulses_TS();	//DE want 50ns high duty cycle ideally.
 				wait.delay_10_us(50);
 			Gage_Wait_For_Capture_Complete();
@@ -399,7 +399,7 @@ g_Debug=0;
 			TS_ovi3->set_voltage(TSovi3_ch, 3.3, VOLT_10_RANGE); // OVI_3_0
 			wait.delay_10_us(10);
 
-			Program_Single_TrimRegister(g_EEP_W_E2);
+			Program_Single_TrimRegister_P(g_EEP_W_E2);
 			wait.delay_10_us(1);
 
 			//EEPROM_Read_Enable_P();
@@ -427,7 +427,7 @@ g_Debug=0;
 
 				Load_100Khz_Pulses_TS();
 				wait.delay_10_us(50);
-			Gage_Start_Capture(  );
+			Gage_Start_Capture(0);
 				Run_100Khz_Pulses_TS();	//DE want 50ns high duty cycle ideally.
 				wait.delay_10_us(50);
 			Gage_Wait_For_Capture_Complete();

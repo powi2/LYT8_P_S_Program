@@ -47,9 +47,12 @@ void VDDA_Pre(test_function& func)
 	if (AbortTest)
 		return;
 
-	// Skip trimming if g_Sim_Enable_P set //
-	//if (g_Sim_Enable_P == 0)
+	// Skip trimming if g_Burn_Enable_P set //
+	//if (g_Burn_Enable_P == 0)
 //		return;
+
+	if (g_Trim_Enable_S == 0 && g_GRR == 0)
+		return;
 
 	//if (g_Fn_CV_Pre == 0 )  return;
 
@@ -89,6 +92,7 @@ Pulse pulse;
 	float   smallest_diff_val = 999999.9;
 	int     smallest_diff_idx = 0;
 	float   temp_1            = 0;
+	int     startbit          = 16;
 
 	i = 0;
 	VDDA_S_code[i] = 0; VDDA_S_TrimWt[i] =    0;    i++;     //0 (0 link trimmed)
@@ -96,26 +100,6 @@ Pulse pulse;
 	VDDA_S_code[i] = 2; VDDA_S_TrimWt[i] =  0.2;    i++;    //0 (1 link trimmed-->  200mV)
 	VDDA_S_code[i] = 3; VDDA_S_TrimWt[i] = -0.1;    i++;    //0 (2 link trimmed--> -100mV)
 	
-	// Load WordArray[] with contents of g_Sec_TrimRegister[] array!  This includes trim bit from other tests & trim options 
-    // This is important for proper trimming! //
-	// E2 Trim register.
-	WordArray[0]  = g_S_TrimRegister[16];
-	WordArray[1]  = g_S_TrimRegister[17];
-	WordArray[2]  = g_S_TrimRegister[18];
-	WordArray[3]  = g_S_TrimRegister[19];
-	WordArray[4]  = g_S_TrimRegister[20];
-	WordArray[5]  = g_S_TrimRegister[21];
-	WordArray[6]  = g_S_TrimRegister[22]; 
-	WordArray[7]  = g_S_TrimRegister[23]; 
-	WordArray[8]  = g_S_TrimRegister[24]; 
-	WordArray[9]  = g_S_TrimRegister[25]; 
-	WordArray[10] = g_S_TrimRegister[26];
-	WordArray[11] = g_S_TrimRegister[27];//EEtr27_ZTML0_S
-	WordArray[12] = g_S_TrimRegister[28];//EEtr28_ZTML1_S
-	WordArray[13] = g_S_TrimRegister[29]; 
-	WordArray[14] = g_S_TrimRegister[30]; 
-	WordArray[15] = g_S_TrimRegister[31];
-
 	// Open all relays //
 	Initialize_Relays();
 
@@ -225,23 +209,8 @@ Pulse pulse;
 
 	//Enter TM
 	Analog_TM_Enable_Secondary();
-	//For TEST only..  Manually raise vFB above 2.5V or 3V here to observe HBP will go low and then lower to 1.25V for HSG to go High
-	//Below to to make sure the FB controlling HBP is working properly before Disabling it.
-	if(0)
-	{
-		FB_ovi3->set_voltage(FB_ch, 2.00, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-		FB_ovi3->set_voltage(FB_ch, 2.25, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-		FB_ovi3->set_voltage(FB_ch, 2.50, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-		FB_ovi3->set_voltage(FB_ch, 2.75, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-		FB_ovi3->set_voltage(FB_ch, 3.00, VOLT_5_RANGE); // DVI_11_0	//1uF on HBP.  The drop is slow if it's only 3ms.  Manual observe drop to ~1.7V
-		delay(3);              
-		FB_ovi3->set_voltage(FB_ch, 1.25, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-	}
+
+	TestMode_Check(0); //Set 1 to step into loop.  Set 0 to skip Test Mode check.
 
 	//ZTMC_Drivers_en and ZTMC_Dsbl_FBshrt  (The FBshrt -> FB to HBP short fault protection function.)
 	//											  (This Test Mode disable 
@@ -255,9 +224,11 @@ Pulse pulse;
 	//0x00 0x44 write 0x08 0x00  ==> ZTMC_VDDA_en
 	DSM_I2C_Write('w', g_ANA_CTRL_0, 0x0008);
  
-	//Loading previous trimming before performing the test.
-	Program_Trim_Register(g_S_TrimRegister);
-
+	if (g_Trim_Enable_S != 0)
+	{
+		//Loading previous trimming before performing the test.
+		Program_All_TrimRegister();
+	}
 
 	FB_ovi3->set_meas_mode(FB_ch, OVI_MEASURE_VOLTAGE);
 	FB_ovi3->set_current(FB_ch, 0.0e-6, RANGE_3_UA);
@@ -266,7 +237,11 @@ Pulse pulse;
 	
 	VDDA_pt_S = FB_ovi3->measure_average(25);
 
+	g_VDDA_Pre = VDDA_pt_S;
 
+if (g_Trim_Enable_S)
+{
+	
 	// VDDA_S_Code //
 	// Find which trim code will make CV_Pre closest to target //
 	smallest_diff_val = 999999.9;
@@ -286,31 +261,18 @@ Pulse pulse;
 	//Manual Forcing
 	//smallest_diff_idx = 8;
 
-	VDDA_TrCode_S = smallest_diff_idx;
 	VDDA_TrCode_S = VDDA_S_code[smallest_diff_idx];
 	VDDA_ExpChg   = VDDA_S_TrimWt[smallest_diff_idx];
 
 	TrimCode_To_TrimBit(VDDA_TrCode_S, "VDDA_S", 's');
 
-	//Update WordArray.
-	WordArray[11]        = g_S_TrimRegisterTemp[27]; //EEtr27_ZTML0_S
-	WordArray[12]        = g_S_TrimRegisterTemp[28]; //EEtr28_ZTML1_s
+	EEpr_Array[1] = EEpr_Array[1] | (VDDA_TrCode_S<<(27-startbit));
 
-	//Update secondary trim register array for programming later.
-	g_S_TrimRegister[27] = g_S_TrimRegisterTemp[27]; //EEtr27_ZTML0_S
-	g_S_TrimRegister[28] = g_S_TrimRegisterTemp[28]; //EEtr28_ZTML1_s
-	
-	//Convert from binary to decimal.
-	converted_dec1 = Convert_BIN_2_Dec(WordArray);
-	
 	//Program Trim Register with new calculated bit combination.
-	Program_Trim_Register(g_S_TrimRegister);
+	Program_Single_TrimRegister(g_EEP_W_E2);
 
-	int TrimBank[5];
-
-	Read_Trim_Register(TrimBank);
-
-
+	
+}
 	wait.delay_10_us(100);
 	VDDA_prg_S = FB_ovi3->measure_average(25);
 
@@ -352,14 +314,22 @@ Pulse pulse;
 // Datalog //
 	//PiDatalog(func, A_Func_Num_CV_Pre, fNum_CV_Pre, 26, POWER_UNIT);
 	PiDatalog(func, A_VDDA_pt_S,      VDDA_pt_S,              26, POWER_UNIT);
-	PiDatalog(func, A_VDDA_target_S,  VDDA_Target_S,          26, POWER_UNIT);
-	PiDatalog(func, A_VDDA_TrCode_S,  VDDA_TrCode_S,          26, POWER_UNIT);
-	//PiDatalog(func, A_VDDA_BitCode_S, VDDA_BitCode_S,         26, POWER_UNIT);
-	PiDatalog(func, A_VDDA_ExpChg_S,  VDDA_ExpChg,         26, POWER_UNIT);
-	PiDatalog(func, A_Eetr27_ZTML0_S, g_S_TrimRegister[27], 26, POWER_UNIT);
-	PiDatalog(func, A_Eetr28_ZTML1_S, g_S_TrimRegister[28], 26, POWER_UNIT);
-	PiDatalog(func, A_Bin2Dec1_S,   converted_dec1,        26, POWER_UNIT);
-	PiDatalog(func, A_VDDA_prg_S,     VDDA_prg_S,             26, POWER_UNIT);
-	PiDatalog(func, A_VDDA_prgchg_S,  VDDA_PrgChg,         26, POWER_UNIT);
+	
+	if (g_Trim_Enable_S)
+	{
+		PiDatalog(func, A_VDDA_target_S,  VDDA_Target_S,          26, POWER_UNIT);
+		PiDatalog(func, A_VDDA_TrCode_S,  VDDA_TrCode_S,          26, POWER_UNIT);
+		//PiDatalog(func, A_VDDA_BitCode_S, VDDA_BitCode_S,         26, POWER_UNIT);
+		PiDatalog(func, A_VDDA_ExpChg_S,  VDDA_ExpChg,         26, POWER_UNIT);
+		PiDatalog(func, A_Eetr27_ZTML0_S, g_S_TrimRegisterTemp[27], 26, POWER_UNIT);
+		PiDatalog(func, A_Eetr28_ZTML1_S, g_S_TrimRegisterTemp[28], 26, POWER_UNIT);
+		PiDatalog(func, A_Bin2Dec1_S,   EEpr_Array[1],        26, POWER_UNIT);
+		PiDatalog(func, A_VDDA_prg_S,     VDDA_prg_S,             26, POWER_UNIT);
+		PiDatalog(func, A_VDDA_prgchg_S,  VDDA_PrgChg,         26, POWER_UNIT);
+	}
+	else
+	{	
+		PiDatalog(func, A_VDDA_Pst,     VDDA_prg_S,             26, POWER_UNIT);
+	}
 
 }

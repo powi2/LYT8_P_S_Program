@@ -9,6 +9,7 @@
 #include "asl.h"
 // Disable warning C4244 "conversion from 'const double' to 'float', possible loss of data"
 #pragma warning (disable : 4244)
+#pragma warning (disable :4305)
 
 #include "VccRef_Pre_S.h"
 
@@ -47,7 +48,7 @@ void VccRef_Pre_S(test_function& func)
 		return;
 
 	// Skip trimming if g_Trim_Enable_S is not set //
-	if (g_Trim_Enable_S == 0)
+	if (g_Trim_Enable_S == 0 && g_GRR == 0)
 		return;
 
 	//if (g_Fn_VccRef_Pre == 0 )  return;
@@ -66,7 +67,16 @@ void VccRef_Pre_S(test_function& func)
 	// Test Names //
 	float VccRef_pt_S     =0;
 	float VccRef_prg_S    = 0;
-	float VccRef_Target_S = 200e-3; 
+	float VccRef_Target_S = 0;
+	if(g_Device_ID_S == 6160||g_Device_ID_S == 6159||g_Device_ID_S==6155)
+	{
+		VccRef_Target_S = 335e-3; 
+	}
+	else
+	{
+		VccRef_Target_S = 200e-3; 
+	}
+	
 	int VccRef_TrCode_S   = 0;
 	int VccRef_BitCode_S  = 0;
 	int Eetr52_DacTr0_S   = 0;
@@ -92,6 +102,7 @@ Pulse pulse;
 	float   smallest_diff_val = 999999.9;
 	int     smallest_diff_idx = 0;
 	float   temp_1            = 0;
+	int     startbit          = 0;
 
 	
 	i = 0;
@@ -128,28 +139,8 @@ Pulse pulse;
 	VccRef_S_code[i] = 30; VccRef_S_TrimWt[i] =  -11.50; i++;     
 	VccRef_S_code[i] = 31; VccRef_S_TrimWt[i] =  -12.20; i++;    
 
-
+	startbit = 48;
 	
-	// Load WordArray[] with contents of g_Sec_TrimRegister[] array!  This includes trim bit from other tests & trim options 
-    // This is important for proper trimming! //
-	// E6 Trim register.
-	WordArray[0]  = g_S_TrimRegister[48]; 
-	WordArray[1]  = g_S_TrimRegister[49]; 
-	WordArray[2]  = g_S_TrimRegister[50]; 
-	WordArray[3]  = g_S_TrimRegister[51]; 
-	WordArray[4]  = g_S_TrimRegister[52]; //Eetr52_DacTr0_S
-	WordArray[5]  = g_S_TrimRegister[53]; //Eetr53_DacTr1_S
-	WordArray[6]  = g_S_TrimRegister[54]; //Eetr54_DacTr2_S
-	WordArray[7]  = g_S_TrimRegister[55]; //Eetr55_DacTr3_S
-	WordArray[8]  = g_S_TrimRegister[56]; //Eetr56_DacTr4_S
-	WordArray[9]  = g_S_TrimRegister[57]; 
-	WordArray[10] = g_S_TrimRegister[58];
-	WordArray[11] = g_S_TrimRegister[59];
-	WordArray[12] = g_S_TrimRegister[60];
-	WordArray[13] = g_S_TrimRegister[61];
-	WordArray[14] = g_S_TrimRegister[62];
-	WordArray[15] = g_S_TrimRegister[63];
-
 	// Open all relays //
 	Initialize_Relays();
 
@@ -258,25 +249,8 @@ Pulse pulse;
 
 	//Enter TM
 	Analog_TM_Enable_Secondary();
-	//For TEST only..  Manually raise vFB above 2.5V or 3V here to observe HBP will go low and then lower to 1.25V for HSG to go High
-	//Below to to make sure the FB controlling HBP is working properly before Disabling it.
-	if(0)
-	{
-		FB_ovi3->set_voltage(FB_ch, 2.00, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-		FB_ovi3->set_voltage(FB_ch, 2.25, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-		FB_ovi3->set_voltage(FB_ch, 2.50, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-		FB_ovi3->set_voltage(FB_ch, 2.75, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-		FB_ovi3->set_voltage(FB_ch, 3.00, VOLT_5_RANGE); // DVI_11_0	//1uF on HBP.  The drop is slow if it's only 3ms.  Manual observe drop to ~1.7V
-		delay(3);              
-		FB_ovi3->set_voltage(FB_ch, 1.25, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-	}
 
-//////////pulse.do_pulse();
+	TestMode_Check(0); //Set 1 to step into loop.  Set 0 to skip Test Mode check.
 
 	//ZTMC_Dsbl_FBshrt  (The FBshrt -> FB to HBP short fault protection function.)								  
 	//0x00 0x62 write 0x80 0x00
@@ -290,8 +264,7 @@ Pulse pulse;
 	//0x00 0x60 write 0x00 0x01
 	//DSM_I2C_Write('w', g_S_TEST_CTRL1, 0x0002);
 
-	//Loading previous trimming before performing the test.
-	Program_Trim_Register(g_S_TrimRegister);
+	
 
 	//CORE_CTRL0 
 	//0x00 0x10 write FF
@@ -302,11 +275,18 @@ Pulse pulse;
 	FB_ovi3->set_voltage(FB_ch, 0.0, VOLT_1_RANGE); 	
 	wait.delay_10_us(500);
 
-	Program_Trim_Register(g_S_TrimRegister);
+	if (g_Trim_Enable_S != 0)
+	{	
+		Program_All_TrimRegister();
+	}
 
 	VccRef_pt_S = FB_ovi3->measure_average(100);
-	//delay(1);
 
+	g_VccRef_Pre = VccRef_pt_S;
+	
+
+if (g_Trim_Enable_S)
+{
 	// VccRef can be either trimmed up or down only.  
 	// VccRef_S_Code //
 	// Find which trim code will make VccRef_Pre closest to target //
@@ -327,9 +307,8 @@ Pulse pulse;
 
 	//if(smallest_diff_idx == 3) smallest_diff_idx = 0;
 	//Manual forcing:
-	//smallest_diff_idx = 31;
+	//smallest_diff_idx = 17;
 
-	VccRef_TrCode_S = smallest_diff_idx;
 	VccRef_TrCode_S = VccRef_S_code[smallest_diff_idx];
 	VccRef_ExpChg   = VccRef_S_TrimWt[smallest_diff_idx];
 
@@ -337,44 +316,15 @@ Pulse pulse;
 
 	TrimCode_To_TrimBit(VccRef_TrCode_S, "VccRef_S", 's');
 
+	//Convert Trimcode to readable datalog file.
+	///*if(VccRef_S_code[smallest_diff_idx]>=0 && VccRef_S_code[smallest_diff_idx] <= 2)
+	//{
+	//	CCOffset_BitCode_S = -1*CCOffset_TrCode_S; 
+	//}*/
 
-////////	//Convert Trimcode to readable datalog file.
-////////	if(VccRef_S_code[smallest_diff_idx]>=0 && VccRef_S_code[smallest_diff_idx] <= 2)
-////////	{
-////////		CCOffset_BitCode_S = -1*CCOffset_TrCode_S; 
-////////	}
-////////
-//g_S_TrimRegisterTemp[32] = 0;
-//g_S_TrimRegisterTemp[33] = 0;
-//g_S_TrimRegisterTemp[34] = 1;
-
-	//Update WordArray.
-	WordArray[4]        = g_S_TrimRegisterTemp[52]; //Eetr52_DacTr0_S
-	WordArray[5]        = g_S_TrimRegisterTemp[53]; //Eetr53_DacTr1_S
-	WordArray[6]        = g_S_TrimRegisterTemp[54]; //Eetr54_DacTr2_S
-	WordArray[7]        = g_S_TrimRegisterTemp[55]; //Eetr55_DacTr3_S
-	WordArray[8]        = g_S_TrimRegisterTemp[56]; //Eetr56_DacTr4_S
-
-	//Update secondary trim register array for programming later.
-	g_S_TrimRegister[52] = g_S_TrimRegisterTemp[52]; //Eetr52_DacTr0_S
-	g_S_TrimRegister[53] = g_S_TrimRegisterTemp[53]; //Eetr53_DacTr1_S
-	g_S_TrimRegister[54] = g_S_TrimRegisterTemp[54]; //Eetr54_DacTr2_S
-	g_S_TrimRegister[55] = g_S_TrimRegisterTemp[55]; //Eetr54_DacTr3_S
-	g_S_TrimRegister[56] = g_S_TrimRegisterTemp[56]; //Eetr54_DacTr4_S
-
-	//Convert from binary to decimal.
-	converted_dec1 = Convert_BIN_2_Dec(WordArray);
-	converted_dec2 = Convert_BIN_2_Dec(WordArray);
-
-//DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
-	//Program Trim Register with new calculated bit combination.
-	Program_Trim_Register(g_S_TrimRegister);
-//DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
-	int TrimBank[5];
-
-	//Read_Trim_Register(TrimBank);
-//DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
-
+	EEpr_Array[3] = EEpr_Array[3] | (VccRef_TrCode_S<<(52-startbit));
+	Program_Single_TrimRegister(g_EEP_W_E6);
+}
 	wait.delay_10_us(500);
 
 	VccRef_prg_S = FB_ovi3->measure_average(25);
@@ -422,20 +372,28 @@ Pulse pulse;
 
 
 	PiDatalog(func, A_VccRef_pt_S,			VccRef_pt_S,            26, POWER_MILLI);
-	PiDatalog(func, A_VccRef_target_S,      VccRef_Target_S,        26, POWER_MILLI);
-	PiDatalog(func, A_VccRef_TrCode_S,      VccRef_TrCode_S,        26, POWER_UNIT);
-	PiDatalog(func, A_VccRef_BitCode_S,     VccRef_BitCode_S,       26, POWER_UNIT);
-	PiDatalog(func, A_VccRef_ExpChg_S,      VccRef_ExpChg,          26, POWER_UNIT);
-	PiDatalog(func, A_VccRef_Exp_Value,     VccRef_ExpValue,        26, POWER_MILLI);
-	PiDatalog(func, A_Eetr52_DacTr0_S,      g_S_TrimRegister[52],	26, POWER_UNIT);
-	PiDatalog(func, A_Eetr53_DacTr1_S,      g_S_TrimRegister[53],	26, POWER_UNIT);
-	PiDatalog(func, A_Eetr54_DacTr2_S,      g_S_TrimRegister[54],	26, POWER_UNIT);
-	PiDatalog(func, A_Eetr55_DacTr3_S,      g_S_TrimRegister[55],	26, POWER_UNIT);
-	PiDatalog(func, A_Eetr56_DacTr4_S,      g_S_TrimRegister[56],	26, POWER_UNIT);
+	
+	if (g_Trim_Enable_S)
+	{
+		PiDatalog(func, A_VccRef_target_S,      VccRef_Target_S,        26, POWER_MILLI);
+		PiDatalog(func, A_VccRef_TrCode_S,      VccRef_TrCode_S,        26, POWER_UNIT);
+		PiDatalog(func, A_VccRef_BitCode_S,     VccRef_BitCode_S,       26, POWER_UNIT);
+		PiDatalog(func, A_VccRef_ExpChg_S,      VccRef_ExpChg,          26, POWER_UNIT);
+		PiDatalog(func, A_VccRef_Exp_Value,     VccRef_ExpValue,        26, POWER_MILLI);
+		PiDatalog(func, A_Eetr52_DacTr0_S,      g_S_TrimRegisterTemp[52],	26, POWER_UNIT);
+		PiDatalog(func, A_Eetr53_DacTr1_S,      g_S_TrimRegisterTemp[53],	26, POWER_UNIT);
+		PiDatalog(func, A_Eetr54_DacTr2_S,      g_S_TrimRegisterTemp[54],	26, POWER_UNIT);
+		PiDatalog(func, A_Eetr55_DacTr3_S,      g_S_TrimRegisterTemp[55],	26, POWER_UNIT);
+		PiDatalog(func, A_Eetr56_DacTr4_S,      g_S_TrimRegisterTemp[56],	26, POWER_UNIT);
+		PiDatalog(func, A_Bin2Dec1_S,			  EEpr_Array[3],				26, POWER_UNIT);
+		PiDatalog(func, A_VccRef_prg_S,          VccRef_prg_S,              26, POWER_MILLI);
+		PiDatalog(func, A_VccRef_prgchg_S,       VccRef_PrgChg,             26, POWER_UNIT);
+	}
+	else
+	{
+		PiDatalog(func, A_VccRef_Pst,          VccRef_prg_S,              26, POWER_MILLI);
 
-	PiDatalog(func, A_Bin2Dec1_S,			  converted_dec1,				26, POWER_UNIT);
-	PiDatalog(func, A_VccRef_prg_S,          VccRef_prg_S,              26, POWER_MILLI);
-	PiDatalog(func, A_VccRef_prgchg_S,       VccRef_PrgChg,             26, POWER_UNIT);
+	}
 
 
 }

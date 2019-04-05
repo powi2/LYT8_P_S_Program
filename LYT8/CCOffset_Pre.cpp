@@ -48,10 +48,11 @@ void CCOffset_Pre(test_function& func)
 	if (AbortTest)
 		return;
 
-	// Skip trimming if g_Sim_Enable_P set //
-	//if (g_Sim_Enable_P == 0)
+	// Skip trimming if g_Burn_Enable_P set //
+	//if (g_Burn_Enable_P == 0)
 //		return;
-
+if (g_Trim_Enable_S == 0 && g_GRR == 0)
+		return;
 	//if (g_Fn_CCOffset_Pre == 0 )  return;
 
 	// Test Time Begin //
@@ -92,6 +93,7 @@ Pulse pulse;
 	float   smallest_diff_val = 999999.9;
 	int     smallest_diff_idx = 0;
 	float   temp_1            = 0;
+	int     startbit          = 0;
 
 	
 	i = 0;
@@ -101,28 +103,8 @@ Pulse pulse;
 	CCOffset_S_code[i] =  3; CCOffset_S_TrimWt[i] =  0.0;			i++;     //0 (2 link trimmed--> +18mV,VIN+)
 	CCOffset_S_code[i] =  4; CCOffset_S_TrimWt[i] =  +0.877;    i++;     //0 (2 link trimmed--> +18mV,VIN+)
 
-
+	startbit          = 32;
 	
-	// Load WordArray[] with contents of g_Sec_TrimRegister[] array!  This includes trim bit from other tests & trim options 
-    // This is important for proper trimming! //
-	// E4 Trim register.
-	WordArray[0]  = g_S_TrimRegister[32]; //EEtr32_Zoffset0_S
-	WordArray[1]  = g_S_TrimRegister[33]; //EEtr33_Zoffset1_S
-	WordArray[2]  = g_S_TrimRegister[34]; //EEtr34_Zoffset2_S
-	WordArray[3]  = g_S_TrimRegister[35]; 
-	WordArray[4]  = g_S_TrimRegister[36];
-	WordArray[5]  = g_S_TrimRegister[37];
-	WordArray[6]  = g_S_TrimRegister[38]; 
-	WordArray[7]  = g_S_TrimRegister[39]; 
-	WordArray[8]  = g_S_TrimRegister[40]; 
-	WordArray[9]  = g_S_TrimRegister[41]; 
-	WordArray[10] = g_S_TrimRegister[42];
-	WordArray[11] = g_S_TrimRegister[43];
-	WordArray[12] = g_S_TrimRegister[44];
-	WordArray[13] = g_S_TrimRegister[45];
-	WordArray[14] = g_S_TrimRegister[46];
-	WordArray[15] = g_S_TrimRegister[47];
-
 	// Open all relays //
 	Initialize_Relays();
 
@@ -177,7 +159,7 @@ DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
 
 	//Secondary I2C to ready Secondary Die ID.
 	//Disconnect HBP & BPs and use VR to powerup 2ndary.
-	HBP_dvi2k->open_relay(CONN_FORCE0);
+	//HBP_dvi2k->open_relay(CONN_FORCE0);
 	BPS_dvi->open_relay(CONN_FORCE0);
 
 	Close_relay(K2_HSG_SPI_TB);      //Disconect OVI_1_0 from HSG.
@@ -229,25 +211,8 @@ DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
 
 	//Enter TM
 	Analog_TM_Enable_Secondary();
-	//For TEST only..  Manually raise vFB above 2.5V or 3V here to observe HBP will go low and then lower to 1.25V for HSG to go High
-	//Below to to make sure the FB controlling HBP is working properly before Disabling it.
-	if(0)
-	{
-		FB_ovi3->set_voltage(FB_ch, 2.00, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-		FB_ovi3->set_voltage(FB_ch, 2.25, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-		FB_ovi3->set_voltage(FB_ch, 2.50, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-		FB_ovi3->set_voltage(FB_ch, 2.75, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-		FB_ovi3->set_voltage(FB_ch, 3.00, VOLT_5_RANGE); // DVI_11_0	//1uF on HBP.  The drop is slow if it's only 3ms.  Manual observe drop to ~1.7V
-		delay(3);              
-		FB_ovi3->set_voltage(FB_ch, 1.25, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-	}
 
-//pulse.do_pulse();
+	TestMode_Check(0); //Set 1 to step into loop.  Set 0 to skip Test Mode check.
 
 	//ZTMC_Dsbl_FBshrt  (The FBshrt -> FB to HBP short fault protection function.)								  
 	//0x00 0x62 write 0x80 0x00
@@ -262,11 +227,18 @@ DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
 	FB_ovi3->set_voltage(FB_ch, 0.0, VOLT_2_RANGE); 	
 	wait.delay_10_us(100);
 
-	//Loading previous trimming before performing the test.
-	Program_Trim_Register(g_S_TrimRegister);
+	if (g_Trim_Enable_S != 0)
+	{
+		//Loading previous trimming before performing the test.
+		Program_All_TrimRegister();
+	}
 
 	CCOffset_pt_S = FB_ovi3->measure_average(25);
-	delay(1);
+	
+	g_CCOffset_Pre = CCOffset_pt_S;
+
+if (g_Trim_Enable_S)
+{
 
 	// CCOffset can be either trimmed up or down only.  
 	// CCOffset_S_Code //
@@ -290,7 +262,6 @@ DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
 	//Manual forcing:
 	//smallest_diff_idx = 0;
 
-	CCOffset_TrCode_S = smallest_diff_idx;
 	CCOffset_TrCode_S = CCOffset_S_code[smallest_diff_idx];
 	CCOffset_ExpChg   = CCOffset_S_TrimWt[smallest_diff_idx];
 
@@ -305,33 +276,10 @@ DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
 		CCOffset_BitCode_S = -1*CCOffset_TrCode_S; 
 	}
 
-//g_S_TrimRegisterTemp[32] = 0;
-//g_S_TrimRegisterTemp[33] = 0;
-//g_S_TrimRegisterTemp[34] = 1;
+	EEpr_Array[2] = EEpr_Array[2] | (CCOffset_TrCode_S<<(32-startbit));
 
-	//Update WordArray.
-	WordArray[0]        = g_S_TrimRegisterTemp[32]; //EEtr32_Zoffset0_S
-	WordArray[1]        = g_S_TrimRegisterTemp[33]; //EEtr33_Zoffset1_S
-	WordArray[2]        = g_S_TrimRegisterTemp[34]; //EEtr34_Zoffset2_S
-
-	//Update secondary trim register array for programming later.
-	g_S_TrimRegister[32] = g_S_TrimRegisterTemp[32]; //EEtr32_Zoffset0_S
-	g_S_TrimRegister[33] = g_S_TrimRegisterTemp[33]; //EEtr33_Zoffset1_S
-	g_S_TrimRegister[34] = g_S_TrimRegisterTemp[34]; //EEtr33_Zoffset2_S
-
-	//Convert from binary to decimal.
-	converted_dec1 = Convert_BIN_2_Dec(WordArray);
-	converted_dec2 = Convert_BIN_2_Dec(WordArray);
-
-DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
-	//Program Trim Register with new calculated bit combination.
-	Program_Trim_Register(g_S_TrimRegister);
-DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
-	int TrimBank[5];
-
-	Read_Trim_Register(TrimBank);
-DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
-
+	Program_Single_TrimRegister(g_EEP_W_E4);
+}
 	wait.delay_10_us(100);
 
 	CCOffset_prg_S = FB_ovi3->measure_average(25);
@@ -377,17 +325,26 @@ DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
 
 
 	PiDatalog(func, A_CCOffset_pt_S,		  CCOffset_pt_S,               26, POWER_UNIT);
-	PiDatalog(func, A_CCOffset_target_S,      CCOffset_Target_S,           26, POWER_UNIT);
-	PiDatalog(func, A_CCOffset_TrCode_S,      CCOffset_TrCode_S,           26, POWER_UNIT);
-	PiDatalog(func, A_CCOffset_BitCode_S,     CCOffset_BitCode_S,           26, POWER_UNIT);
-	PiDatalog(func, A_CCOffset_ExpChg_S,      CCOffset_ExpChg,             26, POWER_UNIT);
-	PiDatalog(func, A_CCOffset_Exp_Value,     CCOffset_ExpValue,           26, POWER_UNIT);
-	PiDatalog(func, A_Eetr32_Zoffset0_S,      g_S_TrimRegister[32],			26, POWER_UNIT);
-	PiDatalog(func, A_Eetr33_Zoffset1_S,      g_S_TrimRegister[33],			26, POWER_UNIT);
-	PiDatalog(func, A_Eetr34_Zoffset2_S,      g_S_TrimRegister[34],			26, POWER_UNIT);
-	PiDatalog(func, A_Bin2Dec1_S,			  converted_dec1,				26, POWER_UNIT);
-	PiDatalog(func, A_CCOffset_prg_S,         CCOffset_prg_S,              26, POWER_UNIT);
-	PiDatalog(func, A_CCOffset_prgchg_S,      CCOffset_PrgChg,             26, POWER_UNIT);
+	
+	if (g_Trim_Enable_S)
+	{
+		PiDatalog(func, A_CCOffset_target_S,      CCOffset_Target_S,           26, POWER_UNIT);
+		PiDatalog(func, A_CCOffset_TrCode_S,      CCOffset_TrCode_S,           26, POWER_UNIT);
+		PiDatalog(func, A_CCOffset_BitCode_S,     CCOffset_BitCode_S,           26, POWER_UNIT);
+		PiDatalog(func, A_CCOffset_ExpChg_S,      CCOffset_ExpChg,             26, POWER_UNIT);
+		PiDatalog(func, A_CCOffset_Exp_Value,     CCOffset_ExpValue,           26, POWER_UNIT);
+		PiDatalog(func, A_Eetr32_Zoffset0_S,      g_S_TrimRegisterTemp[32],			26, POWER_UNIT);
+		PiDatalog(func, A_Eetr33_Zoffset1_S,      g_S_TrimRegisterTemp[33],			26, POWER_UNIT);
+		PiDatalog(func, A_Eetr34_Zoffset2_S,      g_S_TrimRegisterTemp[34],			26, POWER_UNIT);
+		PiDatalog(func, A_Bin2Dec1_S,			  EEpr_Array[2],				26, POWER_UNIT);	
+		PiDatalog(func, A_CCOffset_prg_S,         CCOffset_prg_S,              26, POWER_UNIT);
+		PiDatalog(func, A_CCOffset_prgchg_S,      CCOffset_PrgChg,             26, POWER_UNIT);
+	}
+	else
+	{
+		PiDatalog(func, A_CCOffset_Pst,         CCOffset_prg_S,              26, POWER_UNIT);
+
+	}
 
 
 }

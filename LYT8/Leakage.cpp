@@ -230,7 +230,7 @@ Pulse pulse;
 	//Start of Secondary Leakage.
 	//---------------------------------------------------------------------------------------------------------------
 	//Unable to measure leakage on HBP & BPS because these 2 pins are supply pins.
-
+	DSM_init_LYT8();
 	//Set current & voltage ranges first.
 	//Secondary.
 	HSG_ovi->set_current(HSG_ch, 300e-6, RANGE_300_UA);
@@ -254,6 +254,9 @@ Pulse pulse;
 	VR_dvi->set_current(VR_ch, 300e-3, RANGE_300_MA);	
 	VR_dvi->set_voltage(VR_ch, 0.0, VOLT_50_RANGE); 
 	wait.delay_10_us(100);
+
+
+//------------------------------------------------------------------------------------------------------------------
 
 	//Secondary I2C to ready Secondary Die ID.
 	//Disconnect HBP & BPs and use VR to powerup 2ndary.
@@ -290,6 +293,7 @@ Pulse pulse;
 	//1) 0x00 0x5E write 0x16 0x20
 	DSM_I2C_Write('w', 0x5E, 0x2016);	
 
+	DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
 	//2.0x00 0x5E write 0x34 0x12  ==> access test mode.
 	DSM_I2C_Write('w', 0x5E, 0x1234);	
 
@@ -395,6 +399,8 @@ Pulse pulse;
 	//------------------------------------------------------------------------------------------------------
 	//Boost
 	//------------------------------------------------------------------------------------------------------
+	
+
 	B_ovi3->set_meas_mode(B_ch1, OVI_MEASURE_CURRENT);
 	B_ovi3->set_current(B_ch1, 300e-6, RANGE_300_UA);
 	B_ovi3->set_voltage(B_ch1, 5.0, VOLT_10_RANGE); 

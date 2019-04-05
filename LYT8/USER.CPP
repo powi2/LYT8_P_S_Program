@@ -63,6 +63,50 @@
 04/02/19 CX v0.46cxL  - added EEPROM_P_Burn function and merge EEPROM_Pre function. Work on postTrim funcs next
 04/03/19 CX v0.46cxM  - add postTrim functions
 04/04/19 CX v0.46cxN  - update program to take pass parameter from First function to reflect flow change of program.
+02/11/19 HL v0.0046 - Add ccPFOFF pre trim test.
+02/13/19 HL v0.0047 - Modified TB for ccPFOFF trim - Cut trace: Pin 5 to GND on K1_IS_BUFF relay.
+                    - Used spare relay K* to add connection of 1K to GND on IS pin.
+					- Added 20V & 10V range to Gage_input_control_xp function. 
+					- Added Gage_ChanAB_Setup_S & Gage_Find_ccPFOFF functions.
+02/19/19 HL v0.0048 - Fixed ccPFOff noise issues. However, this test still has repeatability issue.
+                    - Will need to fix it later.  Design requested moving on to other trims.
+02/20/19 HL v0.0049 - Fixed repeatability issue of Bfreq test.
+					- Fixed ccPFOff failure when running ZTtimer function due to Load_10Khz_Pattern function.
+02/25/19 HL v0.0050 - Added CP_Pre and improved repeatability for ccPFOff trim.
+03/01/19 HL v0.0051 - Added Boost Ilim Threshold Trim.
+                    - Temporarily added trim option in the First function.  Need to remove when trimops table is finalized and implemented.
+				    - Added Primary blind trim Vx=10110 & Driver Size=0010.
+					- Updated trim routine.
+03/02/19 HL v0.0052 - Added post trim measurements in the pretrim functions.
+03/03/19 HL v0.0053 - Added pass parameter in the EEprom_ID function to allow "Manual Erase" & "Trim" for both primary & secondary.
+                    - Added function to trim individual trim bank for secondary.
+03/04/19 HL v0.0054 - Fixed primart trimming problem.  
+                    - Added Eeprom Pre function for both primary and secondary.
+03/05/19 HL v0.0055 - Added HBP_S function. 
+03/07/19 HL v0.0056 - Added feature trim for secondary function.
+03/08/19 HL v0.0057 - Added CV Postrim function for FB related tests (CV_Pst_S function)
+03/11/19 HL v0.0058 - Added VDDA & BPS related tests (VDDA_Pst_S function)
+					- Added IRSET post trim function.
+					- Added ZTtimer post trim function==> Still need to debug 3us & 30us/60us tests.
+03/12/19 HL v0.0059 - Added VADC & CLK1M post trim functions.
+03/13/19 HL v0.0060 - Adjusted test programs for sample trimming.
+03/14/19 HL v0.0061 - Changed Boost Frequency Target to 225Khz and change boost Freq option to 1 instead of 0
+03/18/19 HL v0.0062 - Modified RS TB to add TMU_CHANA_DUT1 to HSG pin for the measurement of handshake window.
+03/19/19 HL v0.0063 - Added postrim functions in create for ccPFOFF, Fosc, BFreq, CP, VBIlimit & EEprom post.
+                    - Worked on ccPFOFF, Fosc & BFreq post trim functions.
+03/20/19 HL v0.0063 - Added post trim functions of CP 
+03/20/19 HL v0.0064 - Added EEprom Post test.
+03/20/19 HL v0.0065 - Added VR_Dali & VR_tDeglitch functions in Create.
+03/25/19 HL v0.0066 - Worked on VR Option Measurement.
+03/27/19 HL v0.0067 - Adjusted VR_tDeglitch & added ccTH functions.
+03/29/19 HL v0.0068 - Improved pass parameter name in the Feature Trim Secondary function.
+04/01/19 HL v0.0069	- Added VR_ExtHBP option 00 & 01.
+                    - Modified VR Deglitch time for VR ExHBP option 01.
+					- If blind-trim primary DOPL, need to set "First Function" :Pass parameter ExtraParam1 = 1 (look for g_DOPL_Primary)
+04/03/19 HL v0.0070 - Added FOSC-FeedForward tests in the FOSC posttrim functions.
+                    - Added Fosc Min functions.
+04/04/19 HL v0.0071	- Added Fosc Jitter measurements to the FOSC_PST functions.
+04/04/19 CX v0.01CXa- Merge Primary/Secondary program and Compile pass.   
 
 History Revisions (Above)
 */
@@ -246,8 +290,22 @@ int g_Setup_OK = 0;  //HL added.
 //HL---------------------------------------------------------------------------------
 //Secondary Variables.
 //-----------------------------------------------------------------------------------
-float g_HBP_Pre_S = 0;
-
+int   g_GRR          = 0;
+float g_HBP_P_S      = 0;
+float g_HBP_Pre_S    = 0;
+float g_CV_Pre       = 0;
+float g_VDDA_Pre     = 0;
+float g_IRSET_Pre    = 0;
+float g_ZTtimer_Pre  = 0;
+float g_VADC_Pre     = 0;
+float g_CLK1M_Pre    = 0;
+float g_CCOffset_Pre = 0;
+float g_VccRef_Pre   = 0;
+float g_ccPFOFF_Pre  = 0;
+float g_Fosc_Pre     = 0;
+float g_BFreq_Pre    = 0;
+float g_CP_IS_Pre    = 0;
+float g_VbIlim_Pre   = 0;
 /* ======================  Trim Option Table variable  =============================*/
 STRING Table_Rev_Trimops = 0;
 
@@ -281,7 +339,7 @@ int		g_BV_Trimops									=0,
 bool  g_Require_PartID = true;
 int	  AbortTest =0; 
 int	  g_Sim_Enable_P =0;
-int	  g_Trim_Enable_P = 0;
+int	  g_Burn_Enable_P = 0;
 int   g_Trim_Enable_S = 0;
 int	  g_Erase_Enable_P =0;
 int   g_Erase_Enable_S = 0;
@@ -299,7 +357,26 @@ int  g_OPCODE_RTR	= 0;
 int  g_Rel_Enable_P = 0;
 //int  Golden_Unit_Prg =0;
 int	 g_Char_Enable_P=0;
+int	 g_Char_Enable_S=0;
 int g_Debug = 0;
+int g_FeedFoward = 0;
+// Secondary Trim Options.
+int g_tsstart_B8_9_S     = 0;			//Softstart time    
+int g_tfbOption_B10_11_S = 0;			//Boost Frequency Options
+int g_DOPL_B15_S         = 0;			//DOPL Option Bit
+int g_TvrOption_B16_17_S = 0;			//VR Option Selection.
+int g_TenCP_B18_S		 = 0;			//Enable CP in Non I2C Mode
+int g_ZffOption_B19_20_S = 0;			//Feedforward Option.
+int g_DsblJitDim_B21_S   = 0;			//Disable Jitter in Dimming.
+int g_JitterOff_B22_S    = 0;			//Turn off Jitter.
+int g_ZTMBStr_B29_30_S   = 0;			//Enable 1 segment Boost Driver.
+int g_DsblFlBck_B31_S    = 0;			//Disable Foldback.
+int g_Dimth_B47_S        = 0;			//Select Deep Dim Threshold
+int g_tHrtBtOpt_B61_S    = 0;			//Heat beat time option.
+int g_CPNonI2C_B62_S     = 0;			//Disable CP
+int g_ZEE_50KStr_B63_S   = 0;			//Set softstart start up freq
+int g_FlBck_Ccopt_B74_S  = 0;			//To change rate of change in CC reference.
+int g_FlBck_Sel_B75_S    = 0;			//Trim to disable thermal foldback and line induced foldback.
 
 // ======================  Debug Parameters ============================ //
 char *g_Func_name;
@@ -364,77 +441,84 @@ float	g_vDrain_Burn_th_P = 0;
 bool	g_Load_previous_RegBits = true;
 
 //HL added for the 2ndary variables.
-int   g_DDD_10Khz_Pulses_StopAddr = 0;
+int   g_DDD_10Khz_Pulses_StopAddr  = 0;
 int   g_DDD_100Khz_Pulses_StopAddr = 0;
+int   g_DDD_FW_1_Pulse_StartAddr   = 0;
+int   g_DDD_FW_1_Pulse_StopAddr    = 0;
+int   g_VbIlim_Pulses_StopAddr     = 0;
 float g_DDD_Period = 0;
 
 int First_address; 
 int g_NextAddrFixed = 0;
 int g_NextAddr;
-int Low_pat_start, Low_pat_stop, 
-	Low_XXX_pat_start, Low_XXX_pat_stop,
-	High_pat_start, High_pat_stop,
-	High_pat_FB_start, High_pat_FB_stop,
-	//High_pat_FW_start, High_pat_FW_stop,
-	HIZ_SDA_SCL_start,HIZ_SDA_SCL_stop,
-	SDA_SCL_HIZ_FW_High_start, SDA_SCL_HIZ_FW_High_stop,
-	//FWhi_FBhi_Vlow_start, FWhi_FBhi_Vlow_stop,
-	//FWhi_FBlow_Vhi_start, FWhi_FBlow_Vhi_stop,
-	FW_Neg_1st_pulse_start, FW_Neg_1st_pulse_stop,
-	FW_Neg_2nd_pulse_start, FW_Neg_2nd_pulse_stop,
-	FW_Neg_3rd_pulse_start, FW_Neg_3rd_pulse_stop,
-	FWneg_FBhi_Vlo_1st_pulse_start, FWneg_FBhi_Vlo_1st_pulse_stop,
-	FWneg_FBhi_Vlo_2nd_pulse_start, FWneg_FBhi_Vlo_2nd_pulse_stop,
-	FWneg_FBhi_Vlo_3rd_pulse_start, FWneg_FBhi_Vlo_3rd_pulse_stop,
-	//FW_Neg_4th_pulse_start, FW_Neg_4th_pulse_stop,
-	//FW_Neg_5th_pulse_start, FW_Neg_5th_pulse_stop,
-	FWPK_300kHz_Ring_start, FWPK_300kHz_Ring_stop,
-	FWPK_1MHz_Ring_start, FWPK_1MHz_Ring_stop,
-	FWPK_Max_Ring_start, FWPK_Max_Ring_stop,
-	FWPK_Min_Ring_start, FWPK_Min_Ring_stop,
-	FWPK_test_pulses_start1, FWPK_test_pulses_stop1,
-	FWPK_test_pulses_start1_single, FWPK_test_pulses_stop1_single,
-	FWPK_test_pulses_start2_single, FWPK_test_pulses_stop2_single,
-	FWPK_test_pulses_start3_single, FWPK_test_pulses_stop3_single,
-	FWPK_test_pulses_start4_single, FWPK_test_pulses_stop4_single,
-	FWPK_test_pulses_start5_single, FWPK_test_pulses_stop5_single,
-	HIZallChannels_start, HIZallChannels_stop,
-	Vout_loop_pulse_start, Vout_loop_pulse_stop,
-	FW_Neg_loop_pulse_start, FW_Neg_loop_pulse_stop,
-	Vpin_loop_pulse_start, Vpin_loop_pulse_stop,
-	FB_100kHz_loop_pulse_start, FB_100kHz_loop_pulse_stop, 
-	FB_100kHz_100_pulses_start, FB_100kHz_100_pulses_stop,
-	FB_tOVL_start, FB_tOVL_stop,
-	AF_Vpin_Clk_pulse_start, AF_Vpin_Clk_pulse_stop,
-	AF_Vpin_Clk_pulse_start_132kHz, AF_Vpin_Clk_pulse_stop_132kHz,
-	AF_Vpin_Data_pulse_start,AF_Vpin_Data_pulse_stop;
-
-	int Vpin_100kHz_ILIM_pulse_start;
-	int Vpin_100kHz_ILIM_pulse_stop;
-
-	int FB_18kHz_pulse_start;
-	int FB_18kHz_pulse_stop;
-	int FB_125kHz_pulse_start;
-	int FB_125kHz_pulse_stop;
-
-	int Vpin_125kHz_pulse_start_X;
-	int Vpin_125kHz_pulse_stop_X;
-	int Vpin_100kHz_ILIM_pulse_start_X;
-	int Vpin_100kHz_ILIM_pulse_stop_X;
-	int Vpin_6clocks_start;
-	int Vpin_6clocks_stop;
-	int Vpin_4clocks_start;
-	int Vpin_4clocks_stop;
-	int Vpin_2clocks_start;
-	int Vpin_2clocks_stop;
-	int Vpin_3NegClocks_start;
-	int Vpin_3NegClocks_stop;
-	int Vpin_30usec_start;
-	int Vpin_30usec_stop;
-	int Vpin_one_30us_clock_start;
-	int Vpin_one_30us_clock_stop;
-	int FB_100kHz_pulse_start_5X;
-	int FB_100kHz_pulse_stop_5X;
+////////int Low_pat_start, Low_pat_stop, 
+////////	Low_XXX_pat_start, Low_XXX_pat_stop,
+////////	High_pat_start, High_pat_stop,
+////////	High_pat_FB_start, High_pat_FB_stop,
+////////	//High_pat_FW_start, High_pat_FW_stop,
+////////	HIZ_SDA_SCL_start,HIZ_SDA_SCL_stop,
+////////	SDA_SCL_HIZ_FW_High_start, SDA_SCL_HIZ_FW_High_stop,
+////////	//FWhi_FBhi_Vlow_start, FWhi_FBhi_Vlow_stop,
+////////	//FWhi_FBlow_Vhi_start, FWhi_FBlow_Vhi_stop,
+////////	FW_Neg_1st_pulse_start, FW_Neg_1st_pulse_stop,
+////////	FW_Neg_2nd_pulse_start, FW_Neg_2nd_pulse_stop,
+////////	FW_Neg_3rd_pulse_start, FW_Neg_3rd_pulse_stop,
+////////	FWneg_FBhi_Vlo_1st_pulse_start, FWneg_FBhi_Vlo_1st_pulse_stop,
+////////	FWneg_FBhi_Vlo_2nd_pulse_start, FWneg_FBhi_Vlo_2nd_pulse_stop,
+////////	FWneg_FBhi_Vlo_3rd_pulse_start, FWneg_FBhi_Vlo_3rd_pulse_stop,
+////////	//FW_Neg_4th_pulse_start, FW_Neg_4th_pulse_stop,
+////////	//FW_Neg_5th_pulse_start, FW_Neg_5th_pulse_stop,
+////////	FWPK_300kHz_Ring_start, FWPK_300kHz_Ring_stop,
+////////	FWPK_1MHz_Ring_start, FWPK_1MHz_Ring_stop,
+////////	FWPK_Max_Ring_start, FWPK_Max_Ring_stop,
+////////	FWPK_Min_Ring_start, FWPK_Min_Ring_stop,
+////////	FWPK_test_pulses_start1, FWPK_test_pulses_stop1,
+////////	FWPK_test_pulses_start1_single, FWPK_test_pulses_stop1_single,
+////////	FWPK_test_pulses_start2_single, FWPK_test_pulses_stop2_single,
+////////	FWPK_test_pulses_start3_single, FWPK_test_pulses_stop3_single,
+////////	FWPK_test_pulses_start4_single, FWPK_test_pulses_stop4_single,
+////////	FWPK_test_pulses_start5_single, FWPK_test_pulses_stop5_single,
+////////
+////////	HIZallChannels_start, HIZallChannels_stop,
+////////	Vout_loop_pulse_start, Vout_loop_pulse_stop,
+////////	FW_Neg_loop_pulse_start, FW_Neg_loop_pulse_stop,
+////////	Vpin_loop_pulse_start, Vpin_loop_pulse_stop,
+////////	FB_100kHz_loop_pulse_start, FB_100kHz_loop_pulse_stop, 
+////////	FB_100kHz_100_pulses_start, FB_100kHz_100_pulses_stop,
+////////	/*FB_100kHz_ILIM_pulse_start, FB_100kHz_ILIM_pulse_stop,*/
+////////	/*FB_100kHz_ILIM_18_pulse_stop,*/
+////////	FB_tOVL_start, FB_tOVL_stop,
+////////	AF_Vpin_Clk_pulse_start, AF_Vpin_Clk_pulse_stop,
+////////	AF_Vpin_Clk_pulse_start_132kHz, AF_Vpin_Clk_pulse_stop_132kHz,
+////////	AF_Vpin_Data_pulse_start,AF_Vpin_Data_pulse_stop;
+////////	//AF_Vout_pulse_start, AF_Vout_pulse_stop;
+////////
+////////	int Vpin_100kHz_ILIM_pulse_start;
+////////	int Vpin_100kHz_ILIM_pulse_stop;
+////////
+////////	int FB_18kHz_pulse_start;
+////////	int FB_18kHz_pulse_stop;
+////////	int FB_125kHz_pulse_start;
+////////	int FB_125kHz_pulse_stop;
+////////
+////////	int Vpin_125kHz_pulse_start_X;
+////////	int Vpin_125kHz_pulse_stop_X;
+////////	int Vpin_100kHz_ILIM_pulse_start_X;
+////////	int Vpin_100kHz_ILIM_pulse_stop_X;
+////////	int Vpin_6clocks_start;
+////////	int Vpin_6clocks_stop;
+////////	int Vpin_4clocks_start;
+////////	int Vpin_4clocks_stop;
+////////	int Vpin_2clocks_start;
+////////	int Vpin_2clocks_stop;
+////////	int Vpin_3NegClocks_start;
+////////	int Vpin_3NegClocks_stop;
+////////	int Vpin_30usec_start;
+////////	int Vpin_30usec_stop;
+////////	int Vpin_one_30us_clock_start;
+////////	int Vpin_one_30us_clock_stop;
+////////	int FB_100kHz_pulse_start_5X;
+////////	int FB_100kHz_pulse_stop_5X;
 
 /*=======================    Internal Registers   ===============================*/
 int gVpin_Internal_Signal[16]	={0};	//Primary Internal Registers
@@ -686,7 +770,15 @@ int g_SiliconRev_Pri = 1; // Primary silicon revision //
 int g_SiliconRev_Sec = 1; // Secondary silicon revision //
 
 uint16_t EEpr_Bank_P[5] = {0};
-uint16_t EEpr_Array_S[5] = {0};
+uint16_t EEpr_Array_S[5] = {0};  //replace EEpr_Array with additional _S for secondary  --> to do later by HL
+uint16_t EEpr_Array[5] = {0};
+
+//HL added
+uint16_t EEpr_E0 = 0x0000;   
+uint16_t EEpr_E2 = 0x0000;
+uint16_t EEpr_E4 = 0x0000;   
+uint16_t EEpr_E6 = 0x0000;
+uint16_t EEpr_E8 = 0x0000;
 
 int	g_Pre_E0_data_P = 0;
 int	g_Pre_E2_data_P = 0;
@@ -699,6 +791,15 @@ int g_Pre_E2_data_S = 0;
 int	g_Pre_E4_data_S = 0;
 int g_Pre_E6_data_S = 0;
 int	g_Pre_E8_data_S = 0;
+
+//HL added 04/01/19
+float g_B2_MaxSate    = 0.0;
+float g_B1_FastUpdate = 0.0;
+float g_A3_Target_VR  = 0.0;
+float g_A2_FastUpdate = 0.0;
+float g_A1_MinState   = 0.0;
+float g_A_Skipping    = 0.0;
+
 
 /*=======================    IzPre Function Variables    ===============================*/
 float	gIzpt_NoZ_s=0.0, gIZ_NoZ_s=0.0;
@@ -749,6 +850,9 @@ float	gCV_S =0.0, gCV_post_S=0;
 float	gCV_FB_S=0, gCV_FB_post_S=0;
 float	gCV_VO_S=0,	gCV_VO_post_S=0;
 float   gVclamp_2pct_S =0.0, gVclamp_10pct_S =0.0;
+//HL added.
+float g_CV_Prg = 0;
+int g_Device_ID_S = 0;
 
 /*======================    CC Variables    ====================================*/
 float 	gCC_pt_S =0.0;
@@ -873,7 +977,9 @@ int		g_DigitizerType		= 0;
 //#define	GAGE_WAVEFORM_BUFFER_SIZE			GAGE_POST_32K		// 640us
 //#define	GAGE_WAVEFORM_BUFFER_SIZE			GAGE_POST_64K		// 1280us or 1.28ms 
 //#define	GAGE_WAVEFORM_BUFFER_SIZE			GAGE_POST_128K		// 2560us or 2.56ms
-#define	GAGE_WAVEFORM_BUFFER_SIZE			GAGE_POST_1M		// 2560us or 2.56ms
+#define	GAGE_WAVEFORM_BUFFER_SIZE			GAGE_POST_256K		// 2560us or 2.56ms
+
+//#define	GAGE_WAVEFORM_BUFFER_SIZE			GAGE_POST_1M		// 2560us or 2.56ms
 #define GAGE_WAVEFORM_BUFFER_SIZE_18kHz		GAGE_POST_256K		// 5.12ms to cover 18kHz tests. // DPG added //
 #define GAGE_WAVEFORM_BUFFER_PAD	10	
 
@@ -2122,7 +2228,7 @@ void user_load(void)
 	theLimitSetName >> Part_ID_LimitSet  >> g_OperCode >> dummy >> dummy;
 
 	// Test Program Rev //
-	PrgRev = "0.46cxN"; // This should be identical to PiSetProgramName() function call. //
+	PrgRev = "0.01CXa"; // This should be identical to PiSetProgramName() function call. //
 	FamilyName = "LYT8"; // This should be identical to PiSetProgramName() function call. //
 
 	// Modify AutoCorrReport file to share one golden unit for multiple devices of same family. //
@@ -2178,7 +2284,7 @@ void user_load(void)
 	PiEnableGoldenUnit();
 
 	// Test Program Rev //
-	PiSetProgramName("LYT8 0.46cxN");
+	PiSetProgramName("LYT8 0.01CXa");
 
 	// Setup //
 	PiUserLoad( );
@@ -3239,7 +3345,7 @@ void Close_relay(int Relay)
 	else if (//SPI Relay Bank 5
              Relay == K_HPM_SPI_TB   || //K_HPM_SPI_TB   = SPI5_OUT1, //SPI controlled.  
              Relay == K7_VR_SPI_IB   || //K7_VR_SPI_IB   = SPI5_OUT2, //SPI controlled. 
-             Relay == K_BANK5_SP1_TB || //K_BANK5_SP1_TB = SPI5_OUT3, //SPI controlled.   
+             Relay == K7_IS_SPI_TB	 || //K_BANK5_SP1_TB = SPI5_OUT3, //SPI controlled.   
 	         Relay == K_BANK5_SP2_TB || //K_BANK5_SP2_TB = SPI5_OUT4, //SPI controlled.    
 	         Relay == K_BANK5_SP3_TB || //K_BANK5_SP3_TB = SPI5_OUT5, //SPI controlled.   
 	         Relay == K_BANK5_SP4_TB || //K_BANK5_SP4_TB = SPI5_OUT6, //SPI controlled.
@@ -3248,7 +3354,7 @@ void Close_relay(int Relay)
 	{
 		if(Relay == K_HPM_SPI_TB)		relays.close_relay_spi(1, 0);
 		if(Relay == K7_VR_SPI_IB)		relays.close_relay_spi(1, 1);
-		if(Relay == K_BANK5_SP1_TB)		relays.close_relay_spi(1, 2);
+		if(Relay == K7_IS_SPI_TB)		relays.close_relay_spi(1, 2);
 		if(Relay == K_BANK5_SP2_TB)		relays.close_relay_spi(1, 3);
 		if(Relay == K_BANK5_SP3_TB)		relays.close_relay_spi(1, 4);
 		if(Relay == K_BANK5_SP4_TB)		relays.close_relay_spi(1, 5);
@@ -3412,7 +3518,7 @@ void Open_relay(int Relay)
 	else if (//SPI Relay Bank 5
              Relay == K_HPM_SPI_TB   || //K_HPM_SPI_TB   = SPI5_OUT1, //SPI controlled.  
              Relay == K7_VR_SPI_IB   || //K7_VR_SPI_IB   = SPI5_OUT2, //SPI controlled. 
-             Relay == K_BANK5_SP1_TB || //K_BANK5_SP1_TB = SPI5_OUT3, //SPI controlled.   
+             Relay == K7_IS_SPI_TB   || //K_BANK5_SP1_TB = SPI5_OUT3, //SPI controlled.   
 	         Relay == K_BANK5_SP2_TB || //K_BANK5_SP2_TB = SPI5_OUT4, //SPI controlled.    
 	         Relay == K_BANK5_SP3_TB || //K_BANK5_SP3_TB = SPI5_OUT5, //SPI controlled.   
 	         Relay == K_BANK5_SP4_TB || //K_BANK5_SP4_TB = SPI5_OUT6, //SPI controlled.
@@ -3421,7 +3527,7 @@ void Open_relay(int Relay)
 	{
 		if(Relay == K_HPM_SPI_TB)		relays.open_relay_spi(1, 0);
 		if(Relay == K7_VR_SPI_IB)		relays.open_relay_spi(1, 1);
-		if(Relay == K_BANK5_SP1_TB)		relays.open_relay_spi(1, 2);
+		if(Relay == K7_IS_SPI_TB)		relays.open_relay_spi(1, 2);
 		if(Relay == K_BANK5_SP2_TB)		relays.open_relay_spi(1, 3);
 		if(Relay == K_BANK5_SP3_TB)		relays.open_relay_spi(1, 4);
 		if(Relay == K_BANK5_SP4_TB)		relays.open_relay_spi(1, 5);
@@ -6388,11 +6494,11 @@ void Power_Down_Primary()
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
 void DDD_Clock_UV_Antifuse(int pulse_num)
 {
-	for(int i=0; i<pulse_num; i++)
-	{
-		ddd_7->ddd_run_pattern(AF_Vpin_Clk_pulse_start,AF_Vpin_Clk_pulse_stop);	
-		wait.delay_10_us(5);
-	}
+	/////*for(int i=0; i<pulse_num; i++)
+	////{
+	////	ddd_7->ddd_run_pattern(AF_Vpin_Clk_pulse_start,AF_Vpin_Clk_pulse_stop);	
+	////	wait.delay_10_us(5);
+	////}*/
 }
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
@@ -6411,63 +6517,63 @@ void Trim_Anti_fuse_primary(float *iAF)
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
 void Force_Neg_Pulses_FW_DDD (float High_lev, float Low_lev)
 {
-	int i=0;
-//	int pulse_num = 3;	// If the pulse_num is changed, BPS:Reset-S search will be affected and won't work properly. 
-//	From 1.6-9G silicon forward, FW pin will use 3 pulses to  trigger test mode. The first pulse 
-//  is to get out of test mode in order to read anti-fuses, 
-//	the 2nd and 3rd poulses are to provide the two negative edges to switch the secondary 
-//  For normal mode  
-//NOTE:   For most power up, the first pulse is applied during BPS power up in Power_Up_Secondary_Normal_Mode
-//		  or Power_up_Secondary_Test_Mode functions. This function only applies the two pulses to turn on secondary
-//		  to mimic two handshake pulses.
-
-	int start_vec=0, stop_vec=0;	
-	int dly=0;
-
-	// DDD level //
-	g_DDD_Low = Low_lev; // Save current value //
-	g_DDD_High = High_lev; // Save current value //
-	wait.delay_10_us(g_DDDwait);
-	ddd_7->ddd_set_lo_level(g_DDD_Low); // Will immediately change to this level upon execution 
-	ddd_7->ddd_set_hi_level(g_DDD_High); // Will immediately change to this level upon execution
-	wait.delay_10_us(g_DDDwait);
-
-	start_vec = FW_Neg_1st_pulse_start;
-	stop_vec  = FW_Neg_3rd_pulse_stop-1;
-
-	ddd_7->ddd_run_pattern(start_vec,stop_vec);
-	wait.delay_10_us(10);
+////////	int i=0;
+//////////	int pulse_num = 3;	// If the pulse_num is changed, BPS:Reset-S search will be affected and won't work properly. 
+//////////	From 1.6-9G silicon forward, FW pin will use 3 pulses to  trigger test mode. The first pulse 
+//////////  is to get out of test mode in order to read anti-fuses, 
+//////////	the 2nd and 3rd poulses are to provide the two negative edges to switch the secondary 
+//////////  For normal mode  
+//////////NOTE:   For most power up, the first pulse is applied during BPS power up in Power_Up_Secondary_Normal_Mode
+//////////		  or Power_up_Secondary_Test_Mode functions. This function only applies the two pulses to turn on secondary
+//////////		  to mimic two handshake pulses.
+////////
+////////	int start_vec=0, stop_vec=0;	
+////////	int dly=0;
+////////
+////////	// DDD level //
+////////	g_DDD_Low = Low_lev; // Save current value //
+////////	g_DDD_High = High_lev; // Save current value //
+////////	wait.delay_10_us(g_DDDwait);
+////////	ddd_7->ddd_set_lo_level(g_DDD_Low); // Will immediately change to this level upon execution 
+////////	ddd_7->ddd_set_hi_level(g_DDD_High); // Will immediately change to this level upon execution
+////////	wait.delay_10_us(g_DDDwait);
+////////
+////////	start_vec = FW_Neg_1st_pulse_start;
+////////	stop_vec  = FW_Neg_3rd_pulse_stop-1;
+////////
+////////	ddd_7->ddd_run_pattern(start_vec,stop_vec);
+////////	wait.delay_10_us(10);
 }
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
 void Force_Neg_Pulses_FW_DDD_x (float High_lev, float Low_lev)
 {
-	int i=0;
-//	int pulse_num = 3;	// If the pulse_num is changed, BPS:Reset-S search will be affected and won't work properly. 
-//	From 1.6-9G silicon forward, FW pin will use 3 pulses to  trigger test mode. The first pulse 
-//  is to get out of test mode in order to read anti-fuses, 
-//	the 2nd and 3rd poulses are to provide the two negative edges to switch the secondary 
-//  For normal mode  
-//NOTE:   For most power up, the first pulse is applied during BPS power up in Power_Up_Secondary_Normal_Mode
-//		  or Power_up_Secondary_Test_Mode functions. This function only applies the two pulses to turn on secondary
-//		  to mimic two handshake pulses.
-
-	int start_vec=0, stop_vec=0;	
-	int dly=0;
-
-	// DDD level //
-	g_DDD_Low = Low_lev; // Save current value //
-	g_DDD_High = High_lev; // Save current value //
-	wait.delay_10_us(g_DDDwait);
-	ddd_7->ddd_set_lo_level(g_DDD_Low); // Will immediately change to this level upon execution 
-	ddd_7->ddd_set_hi_level(g_DDD_High); // Will immediately change to this level upon execution
-	wait.delay_10_us(g_DDDwait);
-
-	start_vec = FWneg_FBhi_Vlo_1st_pulse_start;
-	stop_vec  = FWneg_FBhi_Vlo_3rd_pulse_stop-1;
-
-	ddd_7->ddd_run_pattern(start_vec,stop_vec);
-	wait.delay_10_us(10);
+////////	int i=0;
+//////////	int pulse_num = 3;	// If the pulse_num is changed, BPS:Reset-S search will be affected and won't work properly. 
+//////////	From 1.6-9G silicon forward, FW pin will use 3 pulses to  trigger test mode. The first pulse 
+//////////  is to get out of test mode in order to read anti-fuses, 
+//////////	the 2nd and 3rd poulses are to provide the two negative edges to switch the secondary 
+//////////  For normal mode  
+//////////NOTE:   For most power up, the first pulse is applied during BPS power up in Power_Up_Secondary_Normal_Mode
+//////////		  or Power_up_Secondary_Test_Mode functions. This function only applies the two pulses to turn on secondary
+//////////		  to mimic two handshake pulses.
+////////
+////////	int start_vec=0, stop_vec=0;	
+////////	int dly=0;
+////////
+////////	// DDD level //
+////////	g_DDD_Low = Low_lev; // Save current value //
+////////	g_DDD_High = High_lev; // Save current value //
+////////	wait.delay_10_us(g_DDDwait);
+////////	ddd_7->ddd_set_lo_level(g_DDD_Low); // Will immediately change to this level upon execution 
+////////	ddd_7->ddd_set_hi_level(g_DDD_High); // Will immediately change to this level upon execution
+////////	wait.delay_10_us(g_DDDwait);
+////////
+////////	start_vec = FWneg_FBhi_Vlo_1st_pulse_start;
+////////	stop_vec  = FWneg_FBhi_Vlo_3rd_pulse_stop-1;
+////////
+////////	ddd_7->ddd_run_pattern(start_vec,stop_vec);
+////////	wait.delay_10_us(10);
 }
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
@@ -6475,37 +6581,37 @@ void Force_Vpin_Pulses_nTimes (int pulse_num)
 {
 	int i=0;
 
-	int start_vec=0, stop_vec=0;	
-	int dly=0;
+	//////int start_vec=0, stop_vec=0;	
+	//////int dly=0;
 
-	start_vec = AF_Vpin_Clk_pulse_start;
-	stop_vec  = AF_Vpin_Clk_pulse_stop;
-	for( i = 0; i< pulse_num; i++)
-	{
-		ddd_7->ddd_run_pattern(start_vec,stop_vec);
-		wait.delay_10_us(5);
-	}
+	//////start_vec = AF_Vpin_Clk_pulse_start;
+	//////stop_vec  = AF_Vpin_Clk_pulse_stop;
+	//////for( i = 0; i< pulse_num; i++)
+	//////{
+	//////	ddd_7->ddd_run_pattern(start_vec,stop_vec);
+	//////	wait.delay_10_us(5);
+	//////}
 }
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
 void Force_Vpin_Pulses_5_Times (float High_lev, float Low_lev)
 {
 
-	int start_vec=0, stop_vec=0;	
-	int dly=0;
+	////////int start_vec=0, stop_vec=0;	
+	////////int dly=0;
 
-	// DDD level //
-	g_DDD_Low = Low_lev; // Save current value //
-	g_DDD_High = High_lev; // Save current value //
-	wait.delay_10_us(g_DDDwait);
-	ddd_7->ddd_set_lo_level(g_DDD_Low); // Will immediately change to this level upon execution 
-	ddd_7->ddd_set_hi_level(g_DDD_High); // Will immediately change to this level upon execution
-	wait.delay_10_us(g_DDDwait);
+	////////// DDD level //
+	////////g_DDD_Low = Low_lev; // Save current value //
+	////////g_DDD_High = High_lev; // Save current value //
+	////////wait.delay_10_us(g_DDDwait);
+	////////ddd_7->ddd_set_lo_level(g_DDD_Low); // Will immediately change to this level upon execution 
+	////////ddd_7->ddd_set_hi_level(g_DDD_High); // Will immediately change to this level upon execution
+	////////wait.delay_10_us(g_DDDwait);
 
-	start_vec = AF_Vpin_Clk_pulse_start_132kHz;
-	stop_vec  = AF_Vpin_Clk_pulse_stop_132kHz;
-	ddd_7->ddd_run_pattern(start_vec,stop_vec);
-	wait.delay_10_us(50);	//Need to wait at least 3*35us for DDD to finish running the pattern
+	////////start_vec = AF_Vpin_Clk_pulse_start_132kHz;
+	////////stop_vec  = AF_Vpin_Clk_pulse_stop_132kHz;
+	////////ddd_7->ddd_run_pattern(start_vec,stop_vec);
+	////////wait.delay_10_us(50);	//Need to wait at least 3*35us for DDD to finish running the pattern
 }
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
@@ -10310,6 +10416,10 @@ int gage_input_control_xp (int16 channel, int16 enable, int16 coupling, int16 ga
 	////Fixed DC coupling
 	CsChanCfg.u32Term = CS_COUPLING_DC;           //GAGE_DC
 	//Set range
+	if (gain == GAGE_PM_20_V)
+		CsChanCfg.u32InputRange = 40000 ; //Example: 40000 = 20Vp-p
+	if (gain == GAGE_PM_10_V)
+		CsChanCfg.u32InputRange = 20000 ; //Example: 20000 = 10Vp-p
 	if (gain == GAGE_PM_5_V)
 		CsChanCfg.u32InputRange = 10000 ; //Example: 10000 = 5Vp-p
 	if (gain == GAGE_PM_2_V)
@@ -10355,7 +10465,9 @@ int gage_trigger_control_xp (int16 source, int16 ext_coupling, int16 ext_gain, i
 		CsTrigCfg.u32ExtCoupling     = CS_COUPLING_DC;	       //GAGE_DC
 
 	//ext trig range
-	if ( ext_gain == GAGE_PM_10_V )
+	if ( ext_gain == GAGE_PM_20_V )
+		CsTrigCfg.u32ExtTriggerRange = 40000;  //pk_pk_range_in_mV 
+	else if ( ext_gain == GAGE_PM_10_V )
 		CsTrigCfg.u32ExtTriggerRange = 20000;  //pk_pk_range_in_mV 
 	else if ( ext_gain == GAGE_PM_5_V )
 		CsTrigCfg.u32ExtTriggerRange = 10000;  //pk_pk_range_in_mV 
@@ -10426,9 +10538,18 @@ void Gage_Commit ( void )	//Send to hardware
 }
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
-void Gage_Start_Capture( void )
+void Gage_Start_Capture( int force_capture = 0)
 {	//Begin Data Capture
-	i32Status = CsDo(hSystem, ACTION_START);
+	if(force_capture > 0)
+	{
+		i32Status = CsDo(hSystem, ACTION_START);
+		i32Status = CsDo(hSystem, ACTION_FORCE);
+	}
+	else
+	{
+		i32Status = CsDo(hSystem, ACTION_START);
+
+	}
 
 }
 
@@ -10444,7 +10565,7 @@ void Gage_Wait_For_Capture_Complete( void )
 	//Retrieve initial Capture Status.
 	i32Status = CsGetStatus(hSystem);
 	Sleep(0);
-	//if (i32Status==0)printf("initial i32Status=0\n");
+	if (i32Status==0)printf("initial i32Status=0\n");
 
    	//Wait until ACQ_STATUS_READY is true
 
@@ -11160,6 +11281,22 @@ void Gage_cal_table_setup_xp()
 	i32Status = CsDo(hSystem,ACTION_CALIB);		//force calibration
 	Delay(250);
 	if (i32Status<0) Gage_print_error("Gage Cal Error");
+
+	//Set input voltage range, +/-10V
+	Gage_Setup_Chan_B (20000);					//pk_pk_range_in_mV (int)
+	CsDo(hSystem, ACTION_COMMIT);				//Send settings to Hardware.
+	Delay(100);
+	i32Status = CsDo(hSystem,ACTION_CALIB);		//force calibration
+	Delay(250);
+	if (i32Status<0) Gage_print_error("Gage Cal Error-10V Range");
+
+	//Set input voltage range, +/-10V
+	Gage_Setup_Chan_B (40000);					//pk_pk_range_in_mV (int)
+	CsDo(hSystem, ACTION_COMMIT);				//Send settings to Hardware.
+	Delay(100);
+	i32Status = CsDo(hSystem,ACTION_CALIB);		//force calibration
+	Delay(250);
+	if (i32Status<0) Gage_print_error("Gage Cal Error-20V Range");
 
 	debug_test_time=0;
 	if (debug_test_time)
@@ -15637,7 +15774,7 @@ void Program_All_TrimRegister()
 
 	for(i=0;i<5;i++)
 	{
-		DSM_I2C_Write('w', g_EEP_W_Array[i], EEpr_Bank_P[i]);
+		DSM_I2C_Write('w', g_EEP_W_Array[i], EEpr_Array[i]);
 		DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
 	}
 }
@@ -15657,6 +15794,40 @@ void Program_All_TrimRegister_P()
 }
 
 void Program_Single_TrimRegister(int TrimLocation)
+{
+	////g_EEP_W_E0     = 0xE0;       //WR_Word
+	////g_EEP_W_E2     = 0xE2;       //WR_Word
+	////g_EEP_W_E4     = 0xE4;       //WR_Word
+	////g_EEP_W_E6     = 0xE6;       //WR_Word
+	////g_EEP_W_E8     = 0xE8;       //WR_Word
+	if(TrimLocation == 0xE0)
+	{
+		DSM_I2C_Write('w', g_EEP_W_E0, EEpr_Array[0]);
+		DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
+	}
+	if(TrimLocation == 0xE2)
+	{
+		DSM_I2C_Write('w', g_EEP_W_E2, EEpr_Array[1]);
+		DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
+	}
+	if(TrimLocation == 0xE4)
+	{
+		DSM_I2C_Write('w', g_EEP_W_E4, EEpr_Array[2]);
+		DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
+	}
+	if(TrimLocation == 0xE6)
+	{
+		DSM_I2C_Write('w', g_EEP_W_E6, EEpr_Array[3]);
+		DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
+	}
+	if(TrimLocation == 0xE8)
+	{
+		DSM_I2C_Write('w', g_EEP_W_E8, EEpr_Array[4]);
+		DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
+	}
+}
+
+void Program_Single_TrimRegister_P(int TrimLocation)
 {
 	////g_EEP_W_E0     = 0xE0;       //WR_Word
 	////g_EEP_W_E2     = 0xE2;       //WR_Word
@@ -16771,12 +16942,12 @@ void EEprcode_2_EEprArray(int TrimCode, int *EEpr, int Startbit)
 
 }
 
-void TrimCode_To_TrimBit(short TrimCode, char TrimParam[30], char p_or_s)
+void TrimCode_To_TrimBit(int TrimCode, char TrimParam[30], char p_or_s)
 {
 	//This function updates the trimcode to the correct global register bits and store it for use through out entire program.
 
 	int k;
-	short TrimCode_Binary;
+	int TrimCode_Binary;
 	int   TrimRange;
 	
 	int   StartingBit = 0;
@@ -16953,8 +17124,8 @@ void TrimCode_To_TrimBit(short TrimCode, char TrimParam[30], char p_or_s)
 			else
 				TrimCode_Binary = TrimCode;	
 
-			short weight;
-			short TRIM_IT;
+			int weight;
+			int TRIM_IT;
 			weight = 1;
 			for (k =0; k < NumberTrimBits; k++)
 			{		
@@ -17126,8 +17297,8 @@ void TrimCode_To_TrimBit(short TrimCode, char TrimParam[30], char p_or_s)
 			else
 				TrimCode_Binary = TrimCode;	
 
-			short weight;
-			short TRIM_IT;
+			int weight = 0;
+			int TRIM_IT = 0;
 			weight = 1;
 			for (k =0; k < NumberTrimBits; k++)
 			{		
@@ -17192,20 +17363,20 @@ void Load_10Khz_Pulses()
 {
 
 	Dclk_period = 1e-6;
-	g_DDD_Low = 0.1; 
+	g_DDD_Low = 0.01; 
 	g_DDD_High = 2.5; 
 	
-	//ddd_7->init();
+	ddd_7->init();
 
-	//ddd_7->ddd_set_clock_period(Dclk_period);		
+	ddd_7->ddd_set_clock_period(Dclk_period);		
 	
 
 	ddd_7->ddd_set_lo_level(g_DDD_Low);
 	ddd_7->ddd_set_hi_level(g_DDD_High);	
 	wait.delay_10_us(100);
-	//ddd_7->ddd_connect_drivers();	
-	//ddd_7->ddd_set_voltage_ref(1.5);
-	//ddd_7->ddd_set_no_delay();
+	ddd_7->ddd_connect_drivers();	
+	ddd_7->ddd_set_voltage_ref(1.5);
+	ddd_7->ddd_set_no_delay();
 
 
 	int i, ddd_addr_start;
@@ -17253,7 +17424,7 @@ void Load_100Khz_Pulses()
 
 	Dclk_period = 0.1e-6;
 	g_DDD_Low = 0.01; 
-	g_DDD_High = 2.0; 
+	g_DDD_High = 2.5; 
 	
 	ddd_7->init();
 
@@ -17501,6 +17672,88 @@ void Load_100Khz_Pulses_TS()
 
 
 }
+
+void Load_FW_DDD_1_Pulse(int StartAddr)
+{
+
+	float g_DDD_Low = 0.01; 
+	float g_DDD_High = 2.5; 
+	int   i = 0;
+	
+	ddd_7->ddd_set_clock_period(1e-6);
+	wait.delay_10_us(10);
+	ddd_7->ddd_set_lo_level(g_DDD_Low);
+	ddd_7->ddd_set_hi_level(g_DDD_High);	
+	wait.delay_10_us(10);
+	ddd_7->ddd_connect_drivers();	
+	ddd_7->ddd_set_voltage_ref(1.0);
+	ddd_7->ddd_set_no_delay();
+
+	//StartAddr = 500;
+	
+	for(i = StartAddr; i < StartAddr+100; i++)	
+	{
+		ddd_7->ddd_load_pattern(i, "X0XXXXXX");		
+	}
+	for(i = StartAddr+50; i < StartAddr+100; i++)	
+	{
+		ddd_7->ddd_load_pattern(i, "X1XXXXXX");		
+	}
+	for(i = StartAddr+100; i < StartAddr+200; i++)	
+	{
+		ddd_7->ddd_load_pattern(i, "X0XXXXXX");		
+	}
+}
+
+void Run_FW_DDD_1_Pulse(int StartAddr)
+{
+	ddd_7->ddd_run_pattern(StartAddr, StartAddr+200);
+}
+
+
+void Load_VR_DDD_Step_Pulse(int StartAddr)
+{
+
+float g_DDD_Low = 0.01; 
+	float g_DDD_High = 2.5; 
+	int   i = 0;
+	
+
+	ddd_7->ddd_set_clock_period(0.1e-6);
+	wait.delay_10_us(10);
+	ddd_7->ddd_set_lo_level(g_DDD_Low);
+	ddd_7->ddd_set_hi_level(g_DDD_High);	
+	wait.delay_10_us(10);
+	ddd_7->ddd_connect_drivers();	
+	ddd_7->ddd_set_voltage_ref(1.0);
+	ddd_7->ddd_set_no_delay();
+
+	//StartAddr = 800;
+	//For the VR deglitch filter time test, the VR Step Insert Module is required.
+	//Need to use DDD7_2 to clock a short pulse to the base of the BJT Q1.
+	
+	for(i = StartAddr; i < StartAddr+50; i++)	
+	{
+		ddd_7->ddd_load_pattern(i, "XXXXX0XX");		
+	}
+	for(i = StartAddr+50; i < StartAddr+100; i++)	
+	{
+		ddd_7->ddd_load_pattern(i, "XXXXX1XX");		
+	}
+	for(i = StartAddr+100; i < StartAddr+200; i++)	
+	{
+		ddd_7->ddd_load_pattern(i, "XXXXX0XX");		
+	}	
+
+}
+
+void Run_VR_DDD_Step_Pulse(int StartAddr)
+{
+	ddd_7->ddd_run_pattern(StartAddr, StartAddr+100);
+}
+
+
+
 
 void Stop_10Khz_Pulses()
 {
@@ -17783,33 +18036,6 @@ void DSM_init_LYT8()
 	DSM_enable_outputs(DSM_CONTEXT, NONE_CH);       //Disable outputs
 	DSM_enable_open_drain(DSM_CONTEXT, NONE_CH);    //Disable Open Drain
 	DSM_set_no_delay(DSM_CONTEXT);            //Set 0 second delay	
-}
-
-float Average_Value(float *Meas_Array)
-{
-	int i = 0;
-	float tmeas = 0;
-
-	//Eliminate invalid measurements (less than 1e-6 due to noise or greater 2e-6 due missing second positive edge)
-	for(i=0; i<15;i++)
-	{
-		if(Meas_Array[i] < 1e-6 || Meas_Array[i] > 2e-6)
-		{
-			Meas_Array[i] = 0;
-		}
-	}
-
-	//Calculate average from valid data points.
-	for(i=0;i<15;i++)
-	{
-		if(Meas_Array[i] > 0)
-		{
-			tmeas = 0.5*(tmeas + Meas_Array[i]);
-		}
-	}
-
-	return(tmeas);
-	
 }
 
 void Setup_Resources_for_I2C_P()
@@ -18658,4 +18884,1328 @@ void Disable_n_Disconnect_DSMI2C_via(int release_pin)
 		////Open_relay(K1_TS_RB);
 		delay(1);
 	}
+}
+
+float Average_Value(float *Meas_Array, float min_limit, float max_limit)
+{
+	int i = 0;
+	float tmeas = 0;
+
+	//Eliminate invalid measurements (less than 1e-6 due to noise or greater 2e-6 due missing second positive edge)
+	for(i=0; i<15;i++)
+	{
+		if(Meas_Array[i] < min_limit || Meas_Array[i] > max_limit)
+		{
+			Meas_Array[i] = 0;
+		}
+	}
+
+	//Calculate average from valid data points.
+	for(i=0;i<15;i++)
+	{
+		if(Meas_Array[i] > 0)
+		{
+			tmeas = 0.5*(tmeas + Meas_Array[i]);
+		}
+	}
+
+	return(tmeas);
+	
+}
+
+void Gage_ChanAB_Setup_S(float pin_trig_level, int16 chanA_gain, int chanB_gain)
+{
+
+	int vrng_a=0, vrng_b=0;
+
+	if(g_SAMPLE_SIZE > GAGE_WAVEFORM_BUFFER_SIZE)
+	{ 
+		return;
+	}
+
+	vrng_a = chanA_gain;
+	vrng_b = chanB_gain;
+	
+	
+	g_SAMPLE_SIZE = GAGE_POST_256K;
+	
+	Gage_Setup_Acquisition_xp(50000000,g_SAMPLE_SIZE); 
+
+	gage_input_control_xp (GAGE_CHAN_A,			// channel
+			GAGE_INPUT_ENABLE,					// enable / disable
+			GAGE_DC,							// coupling
+			vrng_a|GAGE_1_MOHM_INPUT);			// range, impedance
+
+	gage_input_control_xp (GAGE_CHAN_B,			// channel
+			GAGE_INPUT_ENABLE,					// enable / disable
+			GAGE_DC,							// coupling
+			vrng_b|GAGE_1_MOHM_INPUT);			// range, impedance
+
+	gage_trigger_control_xp (GAGE_CHAN_A,		// trigger source
+			GAGE_DC,							// coupling for ext trig
+			vrng_a,								// range for CHA trigger
+			GAGE_POSITIVE,						// slope
+			pin_trig_level,						// Tigger level in Volt
+	   		g_SAMPLE_SIZE);						// 20ns * GAGE_WAVEFORM_BUFFER_SIZE
+
+	i32Status = CsDo(hSystem, ACTION_COMMIT); //Necessary to send settings to Hardware.
+
+}
+
+void Gage_ChanAB_Setup_S2(float pin_trig_level, int16 chanA_gain, int chanB_gain, int sample_rate_in_Hz)
+{
+
+	int vrng_a=0, vrng_b=0;
+
+	if(g_SAMPLE_SIZE > GAGE_WAVEFORM_BUFFER_SIZE)
+	{ 
+		return;
+	}
+
+	vrng_a = chanA_gain;
+	vrng_b = chanB_gain;
+	
+	
+	g_SAMPLE_SIZE = GAGE_POST_128K;
+	
+	Gage_Setup_Acquisition_xp(sample_rate_in_Hz,g_SAMPLE_SIZE); 
+
+	gage_input_control_xp (GAGE_CHAN_A,			// channel
+			GAGE_INPUT_ENABLE,					// enable / disable
+			GAGE_DC,							// coupling
+			vrng_a|GAGE_1_MOHM_INPUT);			// range, impedance
+
+	gage_input_control_xp (GAGE_CHAN_B,			// channel
+			GAGE_INPUT_ENABLE,					// enable / disable
+			GAGE_DC,							// coupling
+			vrng_b|GAGE_1_MOHM_INPUT);			// range, impedance
+
+	gage_trigger_control_xp (GAGE_CHAN_A,		// trigger source
+			GAGE_DC,							// coupling for ext trig
+			vrng_a,								// range for CHA trigger
+			GAGE_POSITIVE,						// slope
+			pin_trig_level,						// Tigger level in Volt
+	   		g_SAMPLE_SIZE);						// 20ns * GAGE_WAVEFORM_BUFFER_SIZE
+
+	i32Status = CsDo(hSystem, ACTION_COMMIT); //Necessary to send settings to Hardware.
+
+}
+
+
+void Gage_init_S() {	
+	
+	//	CsFreeSystem(hSystem);	//Call only once at end of program
+	//	InitBoard();	//Call only once at program load
+
+	float gain = 1.00;		// start with 1.00 56X
+	trig_ok = true;
+	data_ok = true;
+
+	CsAcqCfg.i64TriggerHoldoff=Gage_pretrig_samples;
+
+	//Set Dual Mode.
+ 	//CSACQUISITIONCONFIG CsAcqCfg;
+	CsAcqCfg.u32Size = sizeof(CSACQUISITIONCONFIG);
+	CsAcqCfg.u32Mode = CS_MODE_DUAL;     //Dual Mode.
+	CsAcqCfg.i64SampleRate = 50000000;    //50Mhz
+	CsAcqCfg.i64Depth = 8192-CsAcqCfg.i64TriggerHoldoff;             //8K  4K
+	CsAcqCfg.i64SegmentSize = CsAcqCfg.i64Depth+CsAcqCfg.i64TriggerHoldoff;
+	CsAcqCfg.u32SegmentCount = 1;
+	CsAcqCfg.i64TriggerTimeout = 100; //Definition: 100ns units.
+	CsAcqCfg.u32ExtClk = 0;
+
+	CsSet(hSystem, CS_ACQUISITION, &CsAcqCfg);
+
+
+//Set CHANA to 500mV Range with 1Mohm Impedance.
+	//CSCHANNELCONFIG CsChanCfg;
+	CsChanCfg.u32Size = sizeof(CSCHANNELCONFIG);
+	CsChanCfg.u32ChannelIndex = 1;      //Channel A
+	CsChanCfg.u32Term = CS_COUPLING_DC; //GAGE_DC
+	CsChanCfg.u32InputRange = CS_GAIN_500_MV	;     //400<==>200mVp-p, 4000==>2V
+	CsChanCfg.u32Impedance = CS_REAL_IMP_1M_OHM	;   //1 MOhm impedance
+	CsChanCfg.i32DcOffset = 0;
+	CsSet(hSystem, CS_CHANNEL, &CsChanCfg);
+
+
+	//Set CHANB to 20V Range with 1Mohm Impedance.
+	//CSCHANNELCONFIG CsChanCfg;
+	CsChanCfg.u32Size = sizeof(CSCHANNELCONFIG);
+	CsChanCfg.u32ChannelIndex = 2;      //Channel B
+	CsChanCfg.u32Term = CS_COUPLING_DC; //GAGE_DC
+	CsChanCfg.u32InputRange = 40000;     //20Vp-p
+	CsChanCfg.u32Impedance = 1000000;   //1 MOhm impedance
+	CsChanCfg.i32DcOffset = 0;
+	CsSet(hSystem, CS_CHANNEL, &CsChanCfg);
+
+
+	//CSTRIGGERCONFIG CsTrigCfg;
+	CsTrigCfg.u32Size = sizeof(CSTRIGGERCONFIG);
+	CsTrigCfg.u32TriggerIndex		= 1;	//should always be 1
+	CsTrigCfg.i32Source = CS_TRIG_SOURCE_CHAN_2;     //Channel B
+	CsTrigCfg.u32ExtCoupling = CS_COUPLING_DC;		//GAGE_DC
+	CsTrigCfg.u32ExtTriggerRange = 2000; //2000;             //GAGE_PM_1_V
+    CsTrigCfg.u32Condition = CS_TRIG_COND_POS_SLOPE; //GAGE_POSITIVE
+	CsTrigCfg.i32Level = 0;							//Trigger Level 0V
+	CsTrigCfg.u32ExtImpedance = 10000000;           //Impedance = 10Mhz;
+	CsSet(hSystem, CS_TRIGGER, &CsTrigCfg);
+
+	i32Status = CsDo(hSystem, ACTION_COMMIT); //Necessary to send settings to Hardware.
+
+	//Get the current sample size, resolution and offset parameters from the driver
+	//by calling CsGet for the ACQUISTIONCONFIG structure. These values are used
+	//when saving the file.
+
+	CsAcqCfg.u32Size = sizeof(CSACQUISITIONCONFIG);
+	i32Status = CsGet(hSystem, CS_ACQUISITION, CS_ACQUISITION_CONFIGURATION, &CsAcqCfg);
+	if (CS_FAILED(i32Status))
+	{
+		
+		CsFreeSystem(hSystem);
+		
+	}
+
+    CsAppData.i64TransferLength = GAGE_WAVEFORM_BUFFER_SIZE;
+	CsAppData.u32TransferSegmentCount = 1;
+	CsAppData.u32TransferSegmentStart = 1;
+	CsAppData.u32PageSize = 32768;
+	CsAppData.i32SaveFormat = 2;
+}
+
+void Gage_Find_ccPFOFF(double *ccPassFEToff_TH, double *ccBoostOff_TH, double *Dcc_TH)
+{
+	int i           = 0;
+	int j           = 0;
+	int   Valid_Count  = 0;
+	int   max_addr1[30] = {0};
+	int   max_addr2[30] = {0};
+	//int   vmax_addr[30];
+	//int   vmin_addr[30];
+
+	float boostoff_th[30] = {0};
+	float ccPFoff_th[30] = {0};
+
+
+	for(i = 0; i<5;i++)
+	{
+		Gage_Start_Capture(1);
+
+		for(i=0;i<10;i++)
+		{
+			IS_dvi2k->set_current(IS_ch, 10e-3, RANGE_20_MA);
+			IS_dvi2k->set_voltage(IS_ch, 0.0, VOLT_2_RANGE);
+			wait.delay_10_us(50);
+			IS_dvi2k->set_current(IS_ch, 2e-3, RANGE_20_MA);
+			IS_dvi2k->set_voltage(IS_ch, 0.8, VOLT_2_RANGE);
+			wait.delay_10_us(50);
+		}
+		
+		IS_dvi2k->set_voltage(IS_ch, 0.8, VOLT_2_RANGE);
+		wait.delay_10_us(10);
+	
+	}
+
+	
+	//clear array values
+	for(i=0; i<GAGE_WAVEFORM_BUFFER_SIZE-1; i++) 
+	{
+		chan_a_16_raw[i] = 0;
+		chan_b_16_raw[i] = 0;
+	}
+	
+	////////// XP ////
+	////////transfer data to PC (XP)
+	Gage_Transfer_Data (GAGE_CHAN_A);	//transfer data to Gage_chan_a_voltage array
+	Gage_Transfer_Data (GAGE_CHAN_B);	//transfer data to Gage_chan_a_voltage array
+
+// Save captured data as .awav file. //
+	if(g_Debug)
+	{
+		double *capture_data = (double *)malloc((GAGE_WAVEFORM_BUFFER_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
+		double *capture_data2 = (double *)malloc((GAGE_WAVEFORM_BUFFER_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
+
+		for( i = 0; i < (GAGE_WAVEFORM_BUFFER_SIZE-10); i++)
+		{	
+			capture_data[i] = (double)(Gage_chan_a_voltage[i]); // XP //
+			capture_data2[i] = (double)(Gage_chan_b_voltage[i]); // XP //	
+
+		}
+
+		
+		CreateAwav(	capture_data, // Data array //
+					GAGE_WAVEFORM_BUFFER_SIZE-10, // Size of array //
+					20.0e-9, // Sampling period //				 
+					"e:\\dl4\\IS_CCPFOFF.awav"); // Output file and path //
+		CreateAwav(	capture_data2, // Data array //
+					GAGE_WAVEFORM_BUFFER_SIZE-10, // Size of array //
+					20.0e-9, // Sampling period //				 
+					"e:\\dl4\\HSG_CCPFOFF.awav"); // Output file and path //
+	
+
+
+		free (capture_data);
+		free (capture_data2);
+
+	}
+
+	double *capture_data = (double *)malloc((GAGE_WAVEFORM_BUFFER_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
+	double *capture_data2 = (double *)malloc((GAGE_WAVEFORM_BUFFER_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
+
+	for( i = 0; i < (GAGE_WAVEFORM_BUFFER_SIZE-10); i++)
+	{	
+			capture_data[i] = (double)(Gage_chan_a_voltage[i]); // XP //
+			capture_data2[i] = (double)(Gage_chan_b_voltage[i]); // XP //	
+
+	}
+
+	int ccBoost_cond = 0;
+	int ccD_cond     = 0;
+	int ccPassFET_cond = 0;
+	int start_point = 0;
+	int end_point = 40000;
+
+for(j = 0; j < 1; j++)
+{
+	for( i = start_point; i < (GAGE_WAVEFORM_BUFFER_SIZE-10); i++)
+	{
+		if(capture_data2[i] > 0.7 && ccBoost_cond < 1 && ccD_cond < 1 && ccPassFET_cond < 1)
+		{
+			
+			boostoff_th[j] = capture_data[i];
+			max_addr1[j]   = i;
+			ccBoost_cond = 1;
+			i = i + 700;
+		}
+
+
+		if(capture_data2[i] > 0.60 && ccBoost_cond > 0 && ccPassFET_cond < 1)
+		{
+			//*ccPassFEToff_TH = capture_data[i];
+			ccPFoff_th[j] = capture_data[i];
+			max_addr2[j] = i;
+			ccPassFET_cond = 1;
+			
+		}
+		
+	}
+
+	start_point = i;
+	end_point = i+40000;
+	ccBoost_cond = 0;
+	ccPassFET_cond = 0;
+}
+
+
+    for(i=0;i<5;i++)
+	{
+		if(ccPFoff_th[i] >0 && boostoff_th[i] > 0)
+		{
+			*ccPassFEToff_TH = *ccPassFEToff_TH + ccPFoff_th[i];
+			*ccBoostOff_TH   = *ccBoostOff_TH + boostoff_th[i];
+			Valid_Count++;
+		}
+	}
+
+	if(Valid_Count != 0)
+	{
+		*ccPassFEToff_TH = *ccPassFEToff_TH / Valid_Count;
+		*ccBoostOff_TH   = *ccBoostOff_TH /Valid_Count;
+	}
+
+
+	free (capture_data);
+		free (capture_data2);
+
+
+}
+
+void Gage_Find_CP(double *CP_IS_TH, double *CP_BOFF_TH, double *CP_PFOFF_TH)
+{
+	int i = 0;
+	int j = 0;
+
+	for(i = 0; i<1;i++)
+	{
+		Gage_Start_Capture(1);
+
+		for(i=0;i<10;i++)
+		{
+			IS_dvi2k->set_current(IS_ch, 20e-3, RANGE_20_MA);
+			IS_dvi2k->set_voltage(IS_ch, 0.1, VOLT_2_RANGE);
+			wait.delay_10_us(20);  //Timing is critical.  Do not change without observing the signal on scope!!!!!!
+			IS_dvi2k->set_current(IS_ch, 2e-3, RANGE_20_MA);
+			IS_dvi2k->set_voltage(IS_ch, 0.8, VOLT_2_RANGE);
+			wait.delay_10_us(50); //Timing is critical.  Do not change without observing the signal on scope!!!!!!
+		}
+		
+		IS_dvi2k->set_voltage(IS_ch, 0.0, VOLT_2_RANGE);
+		wait.delay_10_us(10);
+	}
+
+	//clear array values
+	for(i=0; i<GAGE_WAVEFORM_BUFFER_SIZE-1; i++) 
+	{
+		chan_a_16_raw[i] = 0;
+		chan_b_16_raw[i] = 0;
+	}
+	
+	////////// XP ////
+	////////transfer data to PC (XP)
+	Gage_Transfer_Data (GAGE_CHAN_A);	//transfer data to Gage_chan_a_voltage array
+	Gage_Transfer_Data (GAGE_CHAN_B);	//transfer data to Gage_chan_a_voltage array
+
+// Save captured data as .awav file. //
+	if(g_Debug)
+	{
+		double *capture_data = (double *)malloc((GAGE_WAVEFORM_BUFFER_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
+		double *capture_data2 = (double *)malloc((GAGE_WAVEFORM_BUFFER_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
+
+		for( i = 0; i < (GAGE_WAVEFORM_BUFFER_SIZE-10); i++)
+		{	
+			capture_data[i] = (double)(Gage_chan_a_voltage[i]); // XP //
+			capture_data2[i] = (double)(Gage_chan_b_voltage[i]); // XP //	
+
+		}
+
+		
+		CreateAwav(	capture_data, // Data array //
+					GAGE_WAVEFORM_BUFFER_SIZE-10, // Size of array //
+					20.0e-9, // Sampling period //				 
+					"e:\\dl4\\IS_CP.awav"); // Output file and path //
+		CreateAwav(	capture_data2, // Data array //
+					GAGE_WAVEFORM_BUFFER_SIZE-10, // Size of array //
+					20.0e-9, // Sampling period //				 
+					"e:\\dl4\\HSG_CP.awav"); // Output file and path //
+	
+
+
+		free (capture_data);
+		free (capture_data2);
+
+	}
+
+	double *capture_data = (double *)malloc((GAGE_WAVEFORM_BUFFER_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
+	double *capture_data2 = (double *)malloc((GAGE_WAVEFORM_BUFFER_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
+
+	for( i = 0; i < (GAGE_WAVEFORM_BUFFER_SIZE-10); i++)
+	{	
+			capture_data[i] = (double)(Gage_chan_a_voltage[i]); // XP //
+			capture_data2[i] = (double)(Gage_chan_b_voltage[i]); // XP //	
+
+	}
+
+
+	int CP_IS_cond = 0;
+	int First_Pos_Edge = 0;
+	int start_point = 0;
+
+	int MaxAddress     = 0;
+	int CurrentAddress = 0;
+	int NextAddress    = 0;
+	float vtemp_1      = 0;
+	float vtemp_2      = 0;
+	float vtemp_3      = 0;
+	int   temp_addr    = 0;
+	int   temp_addr2   = 0;
+	int   temp_addr3   = 0;
+	float CurrentV     = 0;
+	float DeltaV       = 0;
+	float LowV         = 0;
+	float HighV        = 0;
+	float deltaV       = 0;
+	int   Valid_Count  = 0;
+	int   Exit_loop    = 0;
+
+	float vmax[30];
+	float vmax2[30];
+	float vmax_value[30];
+	float vmax_value2[30];
+	float vmin[30];
+	float IS_rslt1[30];
+	float CP_BOFF[30];
+	float CP_PFOFF[30];
+	//float IS_rslt2[30];
+
+	int   vmax_addr[30];
+	int   vmax_addr2[30];
+	int   vmin_addr[30];
+	//int end_point = 45000;
+
+	for(i=0;i<30;i++)
+	{
+		vmax[i]      = 0;
+		vmax2[i]     = 0;
+		vmin[i]      = 0;
+		vmax_value[i] = 0;
+		vmax_value2[i]= 0;
+		vmax_addr[i] = 0;
+		vmax_addr2[i] = 0;
+		vmin_addr[i] = 0;
+		IS_rslt1[i]  = 0;
+		CP_BOFF[i] = 0;
+		CP_PFOFF[i] = 0;
+	}
+
+	
+
+	for(j = 0; j < 6; j++)
+	{
+			//Finding CP_BoostOFF Threshold
+			vmax[j] = -100;
+			for( i = temp_addr; i < temp_addr+40000; i++)//40000
+			{
+				CurrentV = capture_data2[i];
+				
+				
+				if(CurrentV > vmax[j])
+				{
+					vmax[j] = CurrentV;
+					if(vmax[j] > .7)
+					{
+						vmax_addr[j] = i;
+						vmax_value[j] = capture_data2[i];
+						CP_BOFF[j] = capture_data[i];
+						
+					}
+				}
+						
+			}
+			
+			temp_addr = vmax_addr[j] +1000;
+
+			//Finding CP Threshold.
+			//From the maximum peak, find the minimu
+			temp_addr2 = temp_addr + 1500;
+
+			vmin[j] = 100;
+			for( i = vmax_addr[j]; i< temp_addr2; i++)
+			{
+					CurrentV = capture_data2[i];
+
+					if(CurrentV < vmin[j])
+					{
+						vmin[j] = CurrentV;
+						if(vmin[j] < 0.42)
+						{
+							vmin_addr[j] = i;
+							temp_addr3   = i;
+						}
+					}
+			}
+
+			IS_rslt1[j] = capture_data[temp_addr3];
+
+			//Finding CP_PassFetOff Threshold.
+			vmax[j] = -100;
+			
+			for( i = temp_addr3; i < temp_addr3+1000; i++)
+			{
+				CurrentV = capture_data2[i];
+				
+				
+				if(CurrentV > vmax[j])
+				{
+					vmax[j] = CurrentV;
+					if(vmax[j] > .7)
+					{
+						vmax_addr2[j] = i;
+						vmax_value2[j] = capture_data2[i];
+						CP_PFOFF[j] = capture_data[i];
+						
+					}
+				}
+						
+			}
+
+	delay(1);
+		  
+	}
+	int valid_count = 0;
+	int valid_count1 = 0;
+	int valid_count2 = 0;
+	for(i = 0;i < 5; i++)
+	{
+		if(vmin_addr[i] > 0)
+		{
+			*CP_IS_TH = *CP_IS_TH + IS_rslt1[i];
+			valid_count++;
+		}
+		
+		if(vmax_addr[i] > 0)
+		{
+			*CP_BOFF_TH = *CP_BOFF_TH + CP_BOFF[i];
+			valid_count1++;
+		}
+		
+		if(vmax_addr2[i] > 0)
+		{
+			*CP_PFOFF_TH = *CP_PFOFF_TH + CP_PFOFF[i];
+			valid_count2++;
+		}
+	}
+
+	if(valid_count != 0)
+	{
+		*CP_IS_TH = *CP_IS_TH / valid_count;
+		*CP_BOFF_TH = *CP_BOFF_TH / valid_count1;
+		*CP_PFOFF_TH = *CP_PFOFF_TH / valid_count2;
+
+	}
+	else
+	{
+		*CP_IS_TH = 0;
+	}
+
+
+	free (capture_data);
+	free (capture_data2);
+
+
+}
+
+
+float search_direction(int up)
+{
+
+	int i = 0;
+	float find_threshold = 0.0;
+
+	
+	//clear array values
+	for(i=0; i<GAGE_WAVEFORM_BUFFER_SIZE-1; i++) 
+	{
+		chan_a_16_raw[i] = 0;
+		chan_b_16_raw[i] = 0;
+	}
+	
+	////////// XP ////
+	////////transfer data to PC (XP)
+	Gage_Transfer_Data (GAGE_CHAN_A);	//transfer data to Gage_chan_a_voltage array
+	Gage_Transfer_Data (GAGE_CHAN_B);	//transfer data to Gage_chan_a_voltage array
+
+// Save captured data as .awav file. //
+	if(1)
+	{
+		double *capture_data = (double *)malloc((GAGE_WAVEFORM_BUFFER_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
+		double *capture_data2 = (double *)malloc((GAGE_WAVEFORM_BUFFER_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
+
+		for( i = 0; i < (GAGE_WAVEFORM_BUFFER_SIZE-10); i++)
+		{	
+			capture_data[i] = (double)(Gage_chan_a_voltage[i]); // XP //
+			capture_data2[i] = (double)(Gage_chan_b_voltage[i]); // XP //	
+
+		}
+
+		
+		CreateAwav(	capture_data, // Data array //
+					GAGE_WAVEFORM_BUFFER_SIZE-10, // Size of array //
+					20.0e-9, // Sampling period //				 
+					"e:\\dl4\\IS.awav"); // Output file and path //
+		CreateAwav(	capture_data2, // Data array //
+					GAGE_WAVEFORM_BUFFER_SIZE-10, // Size of array //
+					20.0e-9, // Sampling period //				 
+					"e:\\dl4\\HSG.awav"); // Output file and path //
+	
+		free (capture_data);
+		free (capture_data2);
+	}
+
+	double *capture_data = (double *)malloc((GAGE_WAVEFORM_BUFFER_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
+	double *capture_data2 = (double *)malloc((GAGE_WAVEFORM_BUFFER_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
+
+	for( i = 0; i < (GAGE_WAVEFORM_BUFFER_SIZE-10); i++)
+	{	
+			capture_data[i] = (double)(Gage_chan_a_voltage[i]); // XP //
+			capture_data2[i] = (double)(Gage_chan_b_voltage[i]); // XP //	
+
+	}
+
+	int ccBoost_cond = 0;
+	int ccD_cond     = 0;
+	int ccPassFET_cond = 0;
+
+	if(up > 0) //search up
+	{
+
+			for( i = 0; i < (GAGE_WAVEFORM_BUFFER_SIZE-10); i++)
+			{
+				if(capture_data2[i] > 5 && ccBoost_cond < 1)
+				{
+					find_threshold = capture_data[i];
+					ccBoost_cond = 1;
+					
+				}
+
+			}
+	}
+	else
+	{
+
+
+			for( i = 0; i < (GAGE_WAVEFORM_BUFFER_SIZE-10); i++)
+			{
+				if(capture_data2[i] > 5 && ccPassFET_cond < 1)
+				{
+					find_threshold = capture_data[i];
+					ccPassFET_cond = 1;
+					
+				}
+
+			}
+	}
+
+	
+
+	free (capture_data);
+	free (capture_data2);
+
+
+
+	return(find_threshold);
+
+
+	
+
+
+}
+
+void WordArray_Assigned(int *WordArray, int startbit)
+{
+	int i = 0;
+	for(i=0;i<16;i++)
+	{
+		WordArray[i] = g_S_TrimRegister[i + startbit];
+	}
+}
+
+
+float tmu_meas(int hold_off = 0, int arm_delay = 15, float timeout_delay = 150e-6)
+{
+
+	float tmeas = 0;
+
+	if(hold_off != 0)
+	{
+		tmu_6->start_holdoff(hold_off,TRUE);
+		tmu_6->stop_holdoff(hold_off,TRUE);
+		wait.delay_10_us(10);
+	}
+	tmu_6->arm();						// Device doing auto-restart
+	wait.delay_10_us(arm_delay);				// Wait for TMU to trigger and to capture 10 cycles 
+	tmeas = tmu_6->read(timeout_delay);	 
+	if(hold_off != 0)
+	{
+		tmeas/=hold_off;
+	}
+	
+	return(tmeas);
+
+}
+
+
+void min_value(float *meas_value, int &array_index, int num_loop)
+{
+	float min_value;
+	int i=0, exit_loop = 0;
+	while (i < num_loop && exit_loop < 1)
+	{
+		if(meas_value[i] > 0) 
+		{ 
+			min_value = meas_value[i];
+			exit_loop = 1;
+		}
+		i++;
+	}
+	
+
+	//Eliminate minimum.
+	for(i=0;i<num_loop;i++)
+	{
+		if(meas_value[i] > 0 && meas_value[i] < min_value)
+		{
+			min_value = meas_value[i];
+			array_index = i;
+		}
+	}
+
+	
+}
+
+
+void max_value(float *meas_value, int &array_index, int num_loop)
+{
+	float max_value = -999;
+	int i = 0, exit_loop = 0;
+
+	while (i < num_loop && exit_loop < 1)
+	{
+		if(meas_value[i] > 0) 
+		{ 
+			max_value = meas_value[i];
+			exit_loop = 1;
+		}
+		i++;
+	}
+
+	//Eliminate maximum.
+	for(i=0;i<num_loop;i++)
+	{
+		if(meas_value[i] > 0 && meas_value[i] >= max_value)
+		{
+			max_value = meas_value[i];
+			array_index = i;
+		}
+	}
+	
+
+}
+
+
+float BFreq_Meas(int num_loop)
+{
+	int hold_off      = 0;
+	int arm_delay     = 15;
+	float timeout_delay = 150e-6;
+	int i             = 0;
+	int tmu_again     = 0;
+	int array_index   = 0;
+	int valid_number = 0;
+	float   meas_value[100]      = {0.0};
+	float   ret_val    = 0;
+	
+
+	for(i=0;i<num_loop;i++)
+	{
+		meas_value[i] = tmu_meas(hold_off, arm_delay, timeout_delay);
+		//Need to measure again.
+		if(meas_value[i] < 1e-6) tmu_again = 1;  
+		//Convert to Frequency
+		if(meas_value[i] > 0 &&  meas_value[i] <  20e-6)
+		{
+			meas_value[i] = 1/meas_value[i];
+		}
+		else
+		{
+			meas_value[i] = 0;
+		}
+	}
+
+	
+	if(tmu_again > 0)
+	{
+		for(i=0;i<num_loop;i++)
+		{
+			meas_value[i] = tmu_meas(hold_off, arm_delay, timeout_delay);
+
+			if(meas_value[i] > 0 &&  meas_value[i] <  20e-6)
+			{
+				meas_value[i] = 1/meas_value[i];
+			}
+			else
+			{
+				meas_value[i] = 0;
+			}
+		}
+	}
+
+	array_index = 0;
+
+	//Eliminate 7 min and 7 max values.  After that, pre trim = average of the remaining values.
+	for(i=0;i<8;i++)
+	{
+		min_value(meas_value, array_index, num_loop); meas_value[array_index] = 0;array_index = 0;
+		max_value(meas_value, array_index, num_loop); meas_value[array_index] = 0;array_index = 0;
+	}
+	
+
+	valid_number = 0;
+	for(i=0;i<num_loop;i++)
+	{
+		if(meas_value[i] > 0)
+		{
+			ret_val = ret_val + meas_value[i];
+			valid_number++;
+		}
+	}
+
+	if(valid_number != 0)	ret_val = ret_val/valid_number;
+
+	return(ret_val);
+
+}
+
+
+
+void Load_VbIlim_Pattern()
+{
+
+	Dclk_period = 0.1e-6;
+	g_DDD_Low = 0.01; 
+	g_DDD_High = 5.0; 
+	
+	ddd_7->init();
+
+	ddd_7->ddd_set_clock_period(Dclk_period);		
+	
+
+	ddd_7->ddd_set_lo_level(g_DDD_Low);
+	ddd_7->ddd_set_hi_level(g_DDD_High);	
+	wait.delay_10_us(100);
+	ddd_7->ddd_connect_drivers();	
+	ddd_7->ddd_set_voltage_ref(1.0);
+	ddd_7->ddd_set_no_delay();
+
+
+	int i, ddd_addr_start;
+	float ddd_addr_length;
+
+	//DDD_7_1 is to control analog switch to short out CAP of integrator.
+	//DDD_7_2 is to control Mosfet to allow or stop IS voltage ramp.
+	
+	//Setup LOW for the signal 5us.
+	//5us to be low.
+	//5us to be high.
+	//DDD clock is set to 0.1us period//
+	
+	//Number of address required for 5us time (50% duty cycle).
+	ddd_addr_length = 15e-6/Dclk_period;  //==>5us/0.1us => 50
+
+	//Signal Low first. 
+	//Start from address 0 to address 50
+	ddd_addr_start = 0;
+	for(i = ddd_addr_start; i < ddd_addr_length; i++)	
+	{
+		ddd_7->ddd_load_pattern(i, "XXXXXX00");		
+	}
+
+	//Signal High follows. 
+	//Start from address 51 to address 100.
+	ddd_addr_start = i;
+
+	//Setup HIGH for signal///////
+	for(i = ddd_addr_start; i < ddd_addr_start+ddd_addr_length;i++)		
+	{													
+		ddd_7->ddd_load_pattern(i, "XXXXXX11");
+	}
+
+	//Update start address to be used for stopping the pattern.
+	ddd_addr_start = i;
+	
+	
+	g_VbIlim_Pulses_StopAddr = ddd_addr_start;  
+
+}
+
+
+void Run_VbIlim_Pattern()
+{
+
+	ddd_7->ddd_end_pattern(g_VbIlim_Pulses_StopAddr);//Basically where the low pattern ends
+	wait.delay_10_us(10);
+	ddd_7->ddd_run_pattern();  
+	//wait.delay_10_us(50);
+
+}
+
+
+void Stop_VbIlim_Pattern()
+{
+	ddd_7->ddd_stop_pattern();
+}
+
+
+void Gage_Find_VbIlim_TH(double *VbIlim_TH)
+{
+	int i = 0;
+    int j = 0;
+
+	Run_VbIlim_Pattern();
+	Gage_Start_Capture(1);
+
+	//clear array values
+	for(i=0; i<GAGE_WAVEFORM_BUFFER_SIZE-1; i++) 
+	{
+		chan_a_16_raw[i] = 0;
+		chan_b_16_raw[i] = 0;
+	}
+	
+	////////// XP ////
+	////////transfer data to PC (XP)
+	Gage_Transfer_Data (GAGE_CHAN_A);	//transfer data to Gage_chan_a_voltage array
+	Gage_Transfer_Data (GAGE_CHAN_B);	//transfer data to Gage_chan_a_voltage array
+Stop_VbIlim_Pattern();
+// Save captured data as .awav file. //
+
+	double *capture_data = (double *)malloc((GAGE_WAVEFORM_BUFFER_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
+	double *capture_data2 = (double *)malloc((GAGE_WAVEFORM_BUFFER_SIZE + GAGE_WAVEFORM_BUFFER_PAD)*sizeof(double));
+
+	
+
+		for( i = 0; i < (GAGE_WAVEFORM_BUFFER_SIZE-10); i++)
+		{	
+			capture_data[i] = (double)(Gage_chan_a_voltage[i]); // XP //
+			capture_data2[i] = (double)(Gage_chan_b_voltage[i]); // XP //	
+
+		}
+
+	if(g_Debug)
+	{	
+		CreateAwav(	capture_data, // Data array //
+					GAGE_WAVEFORM_BUFFER_SIZE-10, // Size of array //
+					20.0e-9, // Sampling period //				 
+					"e:\\dl4\\IS_VbIlim.awav"); // Output file and path //
+		CreateAwav(	capture_data2, // Data array //
+					GAGE_WAVEFORM_BUFFER_SIZE-10, // Size of array //
+					20.0e-9, // Sampling period //				 
+					"e:\\dl4\\B_VbIlim.awav"); // Output file and path //
+	
+	}
+
+	int first_edge = 0;
+	int start_point= 0;
+	int valid_count = 0;
+	float vmax     = 0;
+	float v_temp   = 0;
+	float v_temp1  = 0;
+	float v_temp3  = 0;
+	float vis_temp1= 0;
+	float vis_temp2= 0;
+	float voffset_temp = 0;
+	float v_Is[50] = {0};
+	float v_offset[50] = {0};
+	float v_Is_Final[50] = {0};
+	int   vmax_index[50] = {0};
+	int index_point[50] = {0};
+
+ 
+	
+
+	start_point = 0;
+
+	for(j=0;j<15;j++)
+	{
+		vmax = -100;
+		for(i = start_point; i < start_point+5000; i++)
+		{
+			
+			vis_temp1 = capture_data[i];
+			if(vis_temp1 > vmax)
+			{
+				vmax = capture_data[i];
+				if(vmax > 0.10)
+				{
+					vmax_index[j] = i;
+				}
+			}
+		}
+		start_point = i+2000;
+	}
+
+	
+		
+
+
+
+	start_point = 0;
+	//From VIS_Max goes back by 4000 point and search for thresholds.
+	for(j=1;j<15;j++)
+	{
+		if(vmax_index[j] > 0)
+		{
+			start_point = vmax_index[j] - 4000;
+			vis_temp2 = capture_data[start_point];
+			v_temp3 = capture_data2[start_point];
+			for(i=start_point;i<start_point+5000;i++)
+			{
+				v_temp3 = capture_data2[i];
+				if(v_temp3 > 0.1)
+				{
+					v_Is[j] = capture_data[i - 15];
+					index_point[j] = i - 15;
+					break;
+				}
+			}
+			
+		}
+		
+	}
+
+
+	valid_count = 0;
+	start_point = 0;
+	//Find offset voltage.
+	for(j=1;j<15;j++)
+	{
+		if(index_point[j] > 0)
+		{
+			valid_count++;
+			start_point = index_point[j] - 2500;//1500;
+			voffset_temp = capture_data[start_point];
+			for(i=start_point;i<start_point+100;i++)
+			{
+				voffset_temp = capture_data[i];
+				if(voffset_temp < 0.1)
+				{
+					v_offset[j] = v_offset[j]+ capture_data[i];
+					
+				}
+			}
+
+			v_offset[j] = v_offset[j] / 100;
+
+		}
+	}
+	
+	v_temp3 = 0;
+	valid_count=0;
+
+	for(j=0;j<15;j++)
+	{
+
+		if(v_Is[j] > 0) 
+		{
+			v_Is_Final[j] = v_Is[j]- v_offset[j];
+			v_temp3 = v_temp3 + v_Is[j]- v_offset[j] ;
+			valid_count++;
+		}	
+	}
+
+	
+
+	int array_index = 0;
+	int num_loop = 15;
+	//Eliminate 2 min and 2 max values.  After that, pre trim = average of the remaining values.
+	for(i=0;i<2;i++)
+	{
+		min_value(v_Is_Final, array_index, num_loop); v_Is_Final[array_index] = 0;array_index = 0;
+		max_value(v_Is_Final, array_index, num_loop); v_Is_Final[array_index] = 0;array_index = 0;
+	}
+
+
+	v_temp3 = 0;
+	valid_count = 0;
+
+	for(j=0;j<15;j++)
+	{
+
+		if(v_Is_Final[j] > 0) 
+		{
+			v_temp3 = v_temp3 + v_Is_Final[j] ;
+			valid_count++;
+		}	
+	}
+
+	if(valid_count != 0)
+	{
+		*VbIlim_TH = v_temp3 / valid_count;
+	}
+
+
+	free (capture_data);
+	free (capture_data2);
+
+}
+
+void Set_EEprBit(uint16_t &EEpr_Bank, int bit, int bit_state)
+{
+	if(bit_state == 1)
+	{
+		EEpr_Bank = EEpr_Bank | 1 << bit;
+	}
+	else
+	{
+		EEpr_Bank = EEpr_Bank & ~(1 << bit);
+	}
+}
+
+void TestMode_Check(int TM_Chk)
+{
+	//For TEST only..  Manually raise vFB above 2.5V or 3V here to observe HBP will go low and then lower to 1.25V for HSG to go High
+	//Below to to make sure the FB controlling HBP is working properly before Disabling it.
+	if(TM_Chk)
+	{
+		FB_ovi3->set_voltage(FB_ch, 2.00, VOLT_5_RANGE); // DVI_11_0
+		delay(1);
+		FB_ovi3->set_voltage(FB_ch, 2.25, VOLT_5_RANGE); // DVI_11_0
+		delay(1);
+		FB_ovi3->set_voltage(FB_ch, 2.50, VOLT_5_RANGE); // DVI_11_0
+		delay(1);
+		FB_ovi3->set_voltage(FB_ch, 2.75, VOLT_5_RANGE); // DVI_11_0
+		delay(1);
+		FB_ovi3->set_voltage(FB_ch, 3.00, VOLT_5_RANGE); // DVI_11_0	//1uF on HBP.  The drop is slow if it's only 3ms.  Manual observe drop to ~1.7V
+		delay(3);              
+		FB_ovi3->set_voltage(FB_ch, 1.25, VOLT_5_RANGE); // DVI_11_0
+		delay(1);
+	}
+
+}
+
+
+void VR_Detect_B_Search(float &VB, float &VBSkip, float &VStart, float &Vstop, float &Vstep, char B_or_HSG, char Up_or_Dn)
+{
+
+	int   Exit_loop  = 0;
+	int   Exit_loop1 = 0;
+	int   Exit_loop2 = 0;
+	float I_HSG[1000] = {0.0};
+	float V_VR[1000]  = {0.0};
+	float VStart_B   = VStart;
+	float VSet_B     = Vstop;
+	float VstepSize  = Vstep;
+
+	int   i    = 0;
+	float j    = 0.0;
+	float temp = 0.0;
+
+	if(Up_or_Dn == 'D')
+	{
+		i          = 0;
+		j          = VStart_B;
+		temp       = 0.0;
+		
+		while(j >= VSet_B && Exit_loop < 1)
+		{
+			VR_dvi->set_voltage(VRstep_ch, j-VstepSize, VOLT_50_RANGE);
+			wait.delay_10_us(50);
+			if(B_or_HSG == 'H')
+			
+				temp = HSG_ovi->measure_average(5);	
+			else
+				temp = B_ovi3->measure_average(5);	
+
+			I_HSG[i] = temp;
+			V_VR[i] = j-VstepSize;
+			if(temp < 1e-3 && Exit_loop1 < 1)
+			{		
+				VBSkip = VR_dvi->measure_average(25);
+				Exit_loop1 = 1;
+			}
+			else if(temp > 5e-3 && Exit_loop1 > 0 && Exit_loop2 < 1)
+			{
+				VB = VR_dvi->measure_average(25);
+				Exit_loop2 = 1;
+
+				if(Exit_loop1 == 1 && Exit_loop2 == 1) Exit_loop = 1;
+			}
+			else
+			{
+				j=j-VstepSize;
+				i = i+1;
+			}	
+			
+		}
+	}
+	else
+	{
+		
+	
+		i = 0;
+		j = VStart_B;
+		while(j < VSet_B && Exit_loop < 1)
+		{	
+			VR_dvi->set_voltage(VRstep_ch, j+VstepSize, VOLT_50_RANGE);
+			wait.delay_10_us(20);	
+			if(B_or_HSG == 'H')
+				temp = HSG_ovi->measure_average(5);	
+			else
+				temp = B_ovi3->measure_average(5);	
+			I_HSG[i] = temp;
+			V_VR[i] = j+VstepSize;
+			if(temp < 1e-3 && Exit_loop1 < 1)
+			{		
+				VB = VR_dvi->measure_average(25);
+				Exit_loop1 = 1;
+				j = j + 0.5; //Skip 0.5V ahead to reduce test time.
+			}
+			else if(temp > 5e-3 && Exit_loop1 > 0 && Exit_loop2 < 1)
+			{
+				VBSkip = VR_dvi->measure_average(25);
+				Exit_loop2 = 1;
+
+				if(Exit_loop1 == 1 && Exit_loop2 == 1) Exit_loop = 1;
+			}
+			else
+			{
+				j=j+VstepSize;
+				i = i+1;
+			}
+		}
+	}
+
+}
+
+//------------------
+void VR_Detect_A_Search(float &VB1, float &VB2, float &VA0, float &VA1, float &VA2, float &VA3, float &VStart, float &Vstop, float &Vstep)
+{
+	float j = VStart;
+
+	float I_B[1000] = {0.0};
+	float V_VR[1000] = {0.0};
+	float VstepSize  = Vstep;
+	float V_Set = Vstop;
+	float temp     = 0.0;
+	int i          = 0;
+	int Exit_loop  = 0;
+	int Exit_loop1 = 0;  //for B2 MaxState
+	int Exit_loop2 = 0;  //for B1 fast Update.
+	int Exit_loop3 = 0;  //for A3 target VR
+	int Exit_loop4 = 0;  //for A2 fast update.
+	int Exit_loop5 = 0;  //for A1 min state
+	int Exit_loop6 = 0;  //for skipping
+	while(j < V_Set && Exit_loop < 1)
+	{	
+			VR_dvi->set_voltage(VRstep_ch, j+VstepSize, VOLT_50_RANGE);
+			wait.delay_10_us(20);	
+			temp = B_ovi3->measure_average(5);	
+			I_B[i] = temp;
+			V_VR[i] = j+VstepSize;
+			if(temp < 1e-3 && Exit_loop1<1)
+			{		
+				VB2 = VR_dvi->measure_average(25);
+				Exit_loop1 = 1;
+				j = j + 0.5; //Skip 0.5V ahead to reduce test time.
+			}
+			else if(temp > 1e-3 && Exit_loop1 > 0 && Exit_loop2 < 1)
+			{
+				VB1 = VR_dvi->measure_average(25);
+				Exit_loop2 = 1;
+				j = j + 0.5; //Skip 0.5V ahead to reduce test time.
+
+				//if(Exit_loop1 == 1 && Exit_loop2 == 1) Exit_loop = 1;
+			}
+			if(temp < 1e-3 && Exit_loop1 > 0 && Exit_loop2 > 0&& Exit_loop3 < 1)
+			{		
+				VA3 = VR_dvi->measure_average(25);
+				Exit_loop3 = 1;
+				j = j + 0.5; //Skip 0.5V ahead to reduce test time.
+			}
+			if(temp > 1e-3 && Exit_loop1 > 0 && Exit_loop2 >0 && Exit_loop3 > 0 && Exit_loop4 < 1)
+			{		
+				VA2 = VR_dvi->measure_average(25);
+				Exit_loop4 = 1;
+				j = j + 0.5; //Skip 0.5V ahead to reduce test time.
+			}
+			if(temp < 1e-3 && Exit_loop1 > 0 && Exit_loop2 >0 && Exit_loop3 > 0 && Exit_loop4 > 0 && Exit_loop5 < 1)
+			{		
+				VA1 = VR_dvi->measure_average(25);
+				Exit_loop5 = 1;
+				j = j + 0.5; //Skip 0.5V ahead to reduce test time.
+			}
+			if(temp > 1e-3 && Exit_loop1 > 0 && Exit_loop2 >0 && Exit_loop3 > 0 && Exit_loop4 > 0 && Exit_loop5 > 0 && Exit_loop6 < 1)
+			{		
+				VA0 = VR_dvi->measure_average(25);
+				Exit_loop6 = 1;
+				j = j + 0.5; //Skip 0.5V ahead to reduce test time.
+
+				if(Exit_loop1==1&&Exit_loop2==1&&Exit_loop3==1&&Exit_loop4==1&&Exit_loop5==1&&Exit_loop5==1) Exit_loop = 1;
+			}
+			else
+			{
+				j=j+VstepSize;
+				i = i+1;
+			}
+	}
+
+
+
 }

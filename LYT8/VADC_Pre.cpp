@@ -47,9 +47,9 @@ void VADC_Pre(test_function& func)
 	if (AbortTest)
 		return;
 
-	// Skip trimming if g_Sim_Enable_P set //
-	//if (g_Sim_Enable_P == 0)
-//		return;
+	// Skip trimming if g_Trim_Enable_S is not set //
+	if (g_Trim_Enable_S == 0 && g_GRR == 0)
+		return;
 
 	//if (g_Fn_VADC_Pre == 0 )  return;
 
@@ -91,6 +91,7 @@ Pulse pulse;
 	float   smallest_diff_val = 999999.9;
 	int     smallest_diff_idx = 0;
 	float   temp_1            = 0;
+	int     startbit          = 0;
 
 	
 	i = 0;
@@ -111,27 +112,8 @@ Pulse pulse;
 	VADC_S_code[i] = 14; VADC_S_TrimWt[i] =   6.53;    i++;     //0 (3 link trimmed-->  7%)
 	VADC_S_code[i] = 15; VADC_S_TrimWt[i] =   7.52;    i++;     //0 (4 link trimmed-->  8%)
 
+	startbit = 48;
 	
-	// Load WordArray[] with contents of g_Sec_TrimRegister[] array!  This includes trim bit from other tests & trim options 
-    // This is important for proper trimming! //
-	// E6 Trim register.
-	WordArray[0]  = g_S_TrimRegister[48]; //EEtr48_ZTMFS0_S
-	WordArray[1]  = g_S_TrimRegister[49]; //EEtr49_ZTMFS1_S
-	WordArray[2]  = g_S_TrimRegister[50]; //EEtr50_ZTMFS2_S
-	WordArray[3]  = g_S_TrimRegister[51]; //EEtr51_ZTMFS3_S
-	WordArray[4]  = g_S_TrimRegister[52];
-	WordArray[5]  = g_S_TrimRegister[53];
-	WordArray[6]  = g_S_TrimRegister[54]; 
-	WordArray[7]  = g_S_TrimRegister[55]; 
-	WordArray[8]  = g_S_TrimRegister[56]; 
-	WordArray[9]  = g_S_TrimRegister[57]; 
-	WordArray[10] = g_S_TrimRegister[58];
-	WordArray[11] = g_S_TrimRegister[59];
-	WordArray[12] = g_S_TrimRegister[60];
-	WordArray[13] = g_S_TrimRegister[61];
-	WordArray[14] = g_S_TrimRegister[62];
-	WordArray[15] = g_S_TrimRegister[63];
-
 	// Open all relays //
 	Initialize_Relays();
 
@@ -238,25 +220,8 @@ Pulse pulse;
 
 	//Enter TM
 	Analog_TM_Enable_Secondary();
-	//For TEST only..  Manually raise vFB above 2.5V or 3V here to observe HBP will go low and then lower to 1.25V for HSG to go High
-	//Below to to make sure the FB controlling HBP is working properly before Disabling it.
-	if(0)
-	{
-		FB_ovi3->set_voltage(FB_ch, 2.00, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-		FB_ovi3->set_voltage(FB_ch, 2.25, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-		FB_ovi3->set_voltage(FB_ch, 2.50, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-		FB_ovi3->set_voltage(FB_ch, 2.75, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-		FB_ovi3->set_voltage(FB_ch, 3.00, VOLT_5_RANGE); // DVI_11_0	//1uF on HBP.  The drop is slow if it's only 3ms.  Manual observe drop to ~1.7V
-		delay(3);              
-		FB_ovi3->set_voltage(FB_ch, 1.25, VOLT_5_RANGE); // DVI_11_0
-		delay(1);
-	}
 
-//pulse.do_pulse();
+	TestMode_Check(0); //Set 1 to step into loop.  Set 0 to skip Test Mode check.
 
 	//ZTMC_Dsbl_FBshrt  (The FBshrt -> FB to HBP short fault protection function.)								  
 	//0x00 0x62 write 0x80 0x00
@@ -268,8 +233,11 @@ Pulse pulse;
 
 	DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
 
-	//Loading previous trimming before performing the test.
-	Program_Trim_Register(g_S_TrimRegister);
+	if (g_Trim_Enable_S != 0)
+	{
+		//Loading previous trimming before performing the test.
+		Program_All_TrimRegister();
+	}
 
 	//ZTMC_ADC_ref
 	//0x00 0x44 write 0x20 0x00
@@ -283,7 +251,10 @@ Pulse pulse;
 
 	VADC_pt_S = FB_ovi3->measure_average(25);
 
+	g_VADC_Pre = VADC_pt_S;
 
+if (g_Trim_Enable_S != 0)
+{
 	// IRSET_S_Code //
 	// Find which trim code will make IRSET_Pre closest to target //
 	smallest_diff_val = 999999.9;
@@ -304,7 +275,6 @@ Pulse pulse;
 	//Manual forcing:
 //	smallest_diff_idx = 15;
 
-	VADC_TrCode_S = smallest_diff_idx;
 	VADC_TrCode_S = VADC_S_code[smallest_diff_idx];
 	VADC_ExpChg   = VADC_S_TrimWt[smallest_diff_idx];
 
@@ -323,31 +293,12 @@ Pulse pulse;
 		VADC_BitCode_S = VADC_TrCode_S - 7;
 	}
 
-	//Update WordArray.
-	WordArray[0]        = g_S_TrimRegisterTemp[48]; //EEtr76_ZTLnt0_S
-	WordArray[1]        = g_S_TrimRegisterTemp[49]; //EEtr77_ZTLnt1_S
-	WordArray[2]        = g_S_TrimRegisterTemp[50]; //EEtr78_ZTLnt2_S
-	WordArray[3]        = g_S_TrimRegisterTemp[51]; //EEtr79_ZTLnt3_S
+	EEpr_Array[3] = EEpr_Array[3] | (VADC_TrCode_S<<(48-startbit));
 
-	//Update secondary trim register array for programming later.
-	g_S_TrimRegister[48] = g_S_TrimRegisterTemp[48]; //EEtr76_ZTLnt0_S
-	g_S_TrimRegister[49] = g_S_TrimRegisterTemp[49]; //EEtr77_ZTLnt1_S
-	g_S_TrimRegister[50] = g_S_TrimRegisterTemp[50]; //EEtr78_ZTLnt2_S
-	g_S_TrimRegister[51] = g_S_TrimRegisterTemp[51]; //EEtr79_ZTLnt3_S
+	Program_Single_TrimRegister(g_EEP_W_E6);
 
-	//Convert from binary to decimal.
-	converted_dec1 = Convert_BIN_2_Dec(WordArray);
-	converted_dec2 = Convert_BIN_2_Dec(WordArray);
 
-DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
-	//Program Trim Register with new calculated bit combination.
-	Program_Trim_Register(g_S_TrimRegister);
-DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
-	int TrimBank[5];
-
-	Read_Trim_Register(TrimBank);
-DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
-
+}
 	wait.delay_10_us(100);
 
 	VADC_prg_S = FB_ovi3->measure_average(25);
@@ -391,17 +342,26 @@ DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
 
 
 	PiDatalog(func, A_VADC_pt_S,		  VADC_pt_S,               26, POWER_UNIT);
-	PiDatalog(func, A_VADC_target_S,      VADC_Target_S,           26, POWER_UNIT);
-	PiDatalog(func, A_VADC_TrCode_S,      VADC_TrCode_S,           26, POWER_UNIT);
-	PiDatalog(func, A_VADC_BitCode_S,     VADC_BitCode_S,           26, POWER_UNIT);
-	PiDatalog(func, A_VADC_ExpChg_S,      VADC_ExpChg,             26, POWER_UNIT);
-	PiDatalog(func, A_VADC_Exp_Value,     VADC_ExpValue,           26, POWER_UNIT);
-	PiDatalog(func, A_Eetr48_ZTMFS0_S,    g_S_TrimRegister[48],    26, POWER_UNIT);
-	PiDatalog(func, A_Eetr49_ZTMFS1_S,    g_S_TrimRegister[49],    26, POWER_UNIT);
-	PiDatalog(func, A_Eetr50_ZTMFS2_S,    g_S_TrimRegister[50],    26, POWER_UNIT);
-	PiDatalog(func, A_Eetr51_ZTMFS3_S,    g_S_TrimRegister[51],    26, POWER_UNIT);
-	PiDatalog(func, A_Bin2Dec1_S,         converted_dec1,          26, POWER_UNIT);
-	PiDatalog(func, A_VADC_prg_S,         VADC_prg_S,              26, POWER_UNIT);
-	PiDatalog(func, A_VADC_prgchg_S,      VADC_PrgChg,             26, POWER_UNIT);
+	
+	if (g_Trim_Enable_S)
+	{
+		PiDatalog(func, A_VADC_target_S,      VADC_Target_S,           26, POWER_UNIT);
+		PiDatalog(func, A_VADC_TrCode_S,      VADC_TrCode_S,           26, POWER_UNIT);
+		PiDatalog(func, A_VADC_BitCode_S,     VADC_BitCode_S,           26, POWER_UNIT);
+		PiDatalog(func, A_VADC_ExpChg_S,      VADC_ExpChg,             26, POWER_UNIT);
+		PiDatalog(func, A_VADC_Exp_Value,     VADC_ExpValue,           26, POWER_UNIT);
+		PiDatalog(func, A_Eetr48_ZTMFS0_S,    g_S_TrimRegisterTemp[48],    26, POWER_UNIT);
+		PiDatalog(func, A_Eetr49_ZTMFS1_S,    g_S_TrimRegisterTemp[49],    26, POWER_UNIT);
+		PiDatalog(func, A_Eetr50_ZTMFS2_S,    g_S_TrimRegisterTemp[50],    26, POWER_UNIT);
+		PiDatalog(func, A_Eetr51_ZTMFS3_S,    g_S_TrimRegisterTemp[51],    26, POWER_UNIT);
+		PiDatalog(func, A_Bin2Dec1_S,         EEpr_Array[3],          26, POWER_UNIT);
+		PiDatalog(func, A_VADC_prg_S,         VADC_prg_S,              26, POWER_UNIT);
+		PiDatalog(func, A_VADC_prgchg_S,      VADC_PrgChg,             26, POWER_UNIT);
+	}
+	else
+	{
+		PiDatalog(func, A_VADC_Pst,         VADC_prg_S,              26, POWER_UNIT);
+
+	}
 
 }

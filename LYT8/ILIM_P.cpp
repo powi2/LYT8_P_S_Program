@@ -147,7 +147,7 @@ void ILIM_P(test_function& func)
 
 		Load_100Khz_Pulses_TS();
 		wait.delay_10_us(50);
-	Gage_Start_Capture(  );
+	Gage_Start_Capture(0);
 		Run_100Khz_Pulses_TS();	//DE want 50ns high duty cycle ideally.
 		wait.delay_10_us(50);
 	Gage_Wait_For_Capture_Complete();

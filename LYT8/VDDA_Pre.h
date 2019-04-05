@@ -37,10 +37,10 @@ enum VDDA_Pre{
 	A_Eetr28_ZTML1_S,
 	A_Bin2Dec1_S,
 	A_Bin2Dec2_S,
-	A_VDDA_Sim_S,
-	A_VDDA_Sim_Chg_S,
 	A_VDDA_prg_S,
 	A_VDDA_prgchg_S,
+	A_VDDA_Sim_S,
+	A_VDDA_Sim_Chg_S,	
 	A_VDDA_Pst,
 	A_VDDA_Pre_TT
 };

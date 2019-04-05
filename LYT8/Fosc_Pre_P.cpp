@@ -209,7 +209,7 @@ void Fosc_Pre_P(test_function& func)
 		TrCode_shift_n_bits = gP_Reg_Start_Bit_fOSC - g_E0_start_bit;
 		EEpr_Bank_P[E0] = EEpr_Bank_P[E0] | ( Fosc_TrCode_P << TrCode_shift_n_bits );
 
-		Program_Single_TrimRegister(g_EEP_W_E0);
+		Program_Single_TrimRegister_P(g_EEP_W_E0);
 
 		//Measure simulated Fosc_P with TrimCode 
 		tmu_6->arm();				
@@ -241,7 +241,7 @@ void Fosc_Pre_P(test_function& func)
 			TrCode_shift_n_bits = gP_Reg_Start_Bit_fOSC - g_E0_start_bit;
 			EEpr_Bank_P[E0] = EEpr_Bank_P[E0] | ( Fosc_TrCode_P << TrCode_shift_n_bits );
 
-			Program_Single_TrimRegister(g_EEP_W_E0);
+			Program_Single_TrimRegister_P(g_EEP_W_E0);
 			tmu_6->arm();				
 			delay(1);					
 			tmeas = tmu_6->read(1e-3);	

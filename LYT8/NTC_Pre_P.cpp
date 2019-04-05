@@ -332,7 +332,7 @@ void NTC_Pre_P(test_function& func)
 	   			g_SAMPLE_SIZE);						// 20ns * GAGE_WAVEFORM_BUFFER_SIZE
 
 	//Capture waveform and analyze
-		Gage_Start_Capture(  );	
+		Gage_Start_Capture(0);	
 		Gage_Wait_For_Capture_Complete();
 		g_WAVE_NAME =  "Dtemp_Pre";
 		Gage_Find_Dtemp_code(&Dtemp_pt_P, &tLong_Dtemp, &dbus1_HighByte, &tShort_Dtemp, &dbus1_LowByte);
@@ -395,7 +395,7 @@ void NTC_Pre_P(test_function& func)
 
 		Regain_I2C_P(g_Vpin_Low_to_High);
 		//EEPROM_Write_Enable_P();	//Only if you need to burn, then you need to do a Write Enable
-		Program_Single_TrimRegister(g_EEP_W_E8);
+		Program_Single_TrimRegister_P(g_EEP_W_E8);
 
 		DSM_I2C_Write('b', 0x4C, 0x01);				//release TSPIN			
 		Disable_n_Disconnect_DSMI2C_via(g_release_TSpin);
@@ -405,7 +405,7 @@ void NTC_Pre_P(test_function& func)
 		delay(5);
 
 		//Capture waveform and analyze
-			Gage_Start_Capture(  );	
+			Gage_Start_Capture(0);	
 			Gage_Wait_For_Capture_Complete();
 			g_WAVE_NAME =  "Dtemp_Sim";
 			Gage_Find_Dtemp_code(&Dtemp_Sim_P, &tLong_Dtemp_Sim, &dbus1_HighByte_Sim, &tShort_Dtemp_Sim, &dbus1_LowByte_Sim);
@@ -430,7 +430,7 @@ void NTC_Pre_P(test_function& func)
 		delay(5);
 
 		//Capture waveform and analyze
-			Gage_Start_Capture(  );	
+			Gage_Start_Capture(0);	
 			Gage_Wait_For_Capture_Complete();
 			g_WAVE_NAME =  "Dtemp_VTS_stop";
 			Gage_Find_Dtemp_code(&Dtemp_VTSstop_P, &tLong_Dtemp_VTSstop, &dbus1_HighByte_VTSstop, &tShort_Dtemp_VTSstop, &dbus1_LowByte_VTSstop);

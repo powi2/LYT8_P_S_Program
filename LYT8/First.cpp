@@ -89,7 +89,46 @@ void First(test_function& func)
 	float DVI2K_ch1_Temp = 0;
 	float First_TT = 0;
 
+	g_GRR          = 0;
+	g_HBP_P_S	   = 0;
+	g_HBP_Pre_S    = 0;
+	g_CV_Pre       = 0;
+	g_VDDA_Pre     = 0;
+	g_IRSET_Pre    = 0;
+	g_ZTtimer_Pre  = 0;
+	g_VADC_Pre     = 0;
+	g_CLK1M_Pre    = 0;
+	g_CCOffset_Pre = 0;
+	g_VccRef_Pre   = 0;
+	g_ccPFOFF_Pre  = 0;
+	g_Fosc_Pre     = 0;
+	g_BFreq_Pre    = 0;
+	g_CP_IS_Pre    = 0;
+	g_VbIlim_Pre   = 0;
+	//g_DOPL_Primary = 0;
+
+	g_Pre_E0_data_P = 0;
+	g_Pre_E2_data_P = 0;
+	g_Pre_E4_data_P = 0;
+	g_Pre_E6_data_P = 0;
+	g_Pre_E8_data_P = 0;
+		
+	g_Pre_E0_data_S = 0;
+	g_Pre_E2_data_S = 0;
+	g_Pre_E4_data_S = 0;
+	g_Pre_E6_data_S = 0;
+	g_Pre_E8_data_S = 0;
+
 	// Declare Variables //
+
+	g_Char_Enable_S=0;
+
+	if(ours->CHAR_Enable == 2||ours->CHAR_Enable == 3)  g_Char_Enable_S=1;
+
+	if(ours->GRR_Enable)   g_GRR = 1;
+
+	//if(ours->ExtraParam1 > 0) g_DOPL_Primary = 1;
+
 	int BUFRes_Div_ratio =0.0;
 	float ical_frc =0.0;
 	int i = 0;
@@ -132,7 +171,7 @@ void First(test_function& func)
 	p_CP_Code_S       = ours->CP_Code_S;
 	p_VbILimit_Code_S = ours->VbILimit_Code_S;
 
-	g_Trim_Enable_P = ours->TRIM_Enable;
+	g_Burn_Enable_P = ours->BURN_Enable_P;
 	g_TstTime_Enble_P = ours->TestTime_Enable;
 	p_Rewrite_EPROM = ours->Rewrite_EPROM;
 	p_ExtraParam1 = ours->ExtraParam1;
@@ -457,7 +496,7 @@ void First(test_function& func)
 
 	// Disable trimming if not 4200 opcode. //
 	if (g_OPCODE != 4200)
-		g_Trim_Enable_P =0;
+		g_Burn_Enable_P =0;
 
 	// Check for golden unit program //
 	if (!strnicmp( g_PrgName, "LYT8375GoldenUnit", 17 ) || 
@@ -468,7 +507,7 @@ void First(test_function& func)
 		!strnicmp( g_PrgName, "LYT8369GoldenUnit", 17 ) || 
 		!strnicmp( g_PrgName, "LYT8380GoldenUnit", 17 ))
 	{
-		g_Trim_Enable_P =0;  // Do not trim golden units. //
+		g_Burn_Enable_P =0;  // Do not trim golden units. //
 	}
 
 	//if (g_DevNum_Trimops == -99)
@@ -887,6 +926,20 @@ void First(test_function& func)
 	}
 
 
+	//HL 03/01/19
+
+	g_Device_ID_S = 0;
+	g_B2_MaxSate    = 0.0;
+	g_B1_FastUpdate = 0.0;
+	g_A3_Target_VR  = 0.0;
+	g_A2_FastUpdate = 0.0;
+	g_A1_MinState   = 0.0;
+	g_A_Skipping    = 0.0;
+
+	for(i=0;i<5;i++)
+	{
+		EEpr_Array[i] = 0;
+	}
 	// Test program delay //
 	if (p_Loop_wait > 0)
 		wait.delay_10_us(p_Loop_wait*100);
@@ -909,7 +962,7 @@ void First(test_function& func)
 
 
 
-	PiDatalog(func, A_p_Trim_Enable, g_Trim_Enable_P, 31, POWER_UNIT);
+	PiDatalog(func, A_p_Trim_Enable, g_Burn_Enable_P, 31, POWER_UNIT);
 	PiDatalog(func, A_p_TstTime_Enble, p_TstTime_Enble, 31, POWER_UNIT);
 	PiDatalog(func, A_Rewrite_EPROM, p_Rewrite_EPROM, 31, POWER_UNIT);
 	PiDatalog(func, A_ExtraParam1, p_ExtraParam1, 31, POWER_UNIT);

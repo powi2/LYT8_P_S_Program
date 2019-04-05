@@ -252,7 +252,7 @@ void Continuity(test_function& func)
 	VR_dvi->set_voltage(VR_ch, 0.0, VOLT_2_RANGE); 
 	FW_ovi3->set_current(FW_ch, 100e-6, RANGE_3_MA);
 	FW_ovi3->set_voltage(FW_ch, 0.0, VOLT_2_RANGE);
-	wait.delay_10_us(100);
+	wait.delay_10_us(500);
 
 
 

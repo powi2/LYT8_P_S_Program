@@ -168,7 +168,7 @@ enum relay{
 
 	K_HPM_SPI_TB   = 132,//SPI5_OUT1, //SPI controlled.  
 	K7_VR_SPI_IB   = 133,//SPI5_OUT2, //SPI controlled.  
-	K_BANK5_SP1_TB = 134,//SPI5_OUT3, //SPI controlled. 
+	K7_IS_SPI_TB   = 134,//SPI5_OUT3, //SPI controlled. //02/13/19.  HL added to connect 1K from IS to GND.
 	K_BANK5_SP2_TB = 135,//SPI5_OUT4, //SPI controlled. 
 	K_BANK5_SP3_TB = 136,//SPI5_OUT5, //SPI controlled. 
 	K_BANK5_SP4_TB = 137,//SPI5_OUT6, //SPI controlled. 
@@ -303,7 +303,14 @@ extern int	SCL_ch;        //OVI_3_6
 extern int	FB_ch;         //OVI_3_7
 
 extern uint16_t EEpr_Bank_P[5];
-extern uint16_t EEpr_Array_S[5];
+extern uint16_t EEpr_Array_S[5];	//replace EEpr_Array with additional _S for secondary  --> to do later by HL
+extern uint16_t EEpr_Array[5];
+
+extern uint16_t EEpr_E0;   
+extern uint16_t EEpr_E2;
+extern uint16_t EEpr_E4;   
+extern uint16_t EEpr_E6;
+extern uint16_t EEpr_E8;
 
 extern int	g_Pre_E0_data_P;
 extern int	g_Pre_E2_data_P;
@@ -361,12 +368,14 @@ extern int	g_BV_Trimops									,
 			gP_Trim_Junction_TSD_Trimops					, //bit 64,65,66
 			gP_Trim_iUV_10pct_Trimops						; //but 71
 
+//to do later for HL  "move secondary to here for trimops global variables"
+
 /* ======================  Test Flow Control Parameter  ============================*/
 //extern int  g_First_Time_Run;
 extern bool g_Require_PartID;
 extern int	AbortTest; 
 extern int	g_Sim_Enable_P;
-extern int  g_Trim_Enable_P;
+extern int  g_Burn_Enable_P;
 extern int  g_Trim_Enable_S;
 extern int	g_Erase_Enable_P;
 extern int  g_Erase_Enable_S;
@@ -383,8 +392,20 @@ extern int  g_OPCODE_RTR;
 extern int  g_Rel_Enable_P;
 //extern int  Golden_Unit_Prg;
 extern int g_Char_Enable_P;
+extern int g_Char_Enable_S;
 extern int g_Debug;
 extern int g_LowerByte;
+extern int g_FeedFoward;
+extern int g_Device_ID_S;
+
+extern float g_B2_MaxSate;
+extern float g_B1_FastUpdate;
+extern float g_A3_Target_VR;
+extern float g_A2_FastUpdate;
+extern float g_A1_MinState;
+extern float g_A_Skipping;
+//extern int   g_DOPL_Primary;
+
 
 // DSM I2C error counters
 //extern uint32_t __dsm_write_fail_count;
@@ -510,6 +531,7 @@ extern bool		g_Load_previous_RegBits;
 //Secondary Variables.
 //-----------------------------------------------------------------------------------
 extern float g_HBP_Pre_S;
+extern float g_CV_Prg;
 extern int   g_TrimBank[5];
 extern int	 g_E0_start_bit;
 extern int	 g_E2_start_bit;
@@ -522,6 +544,9 @@ extern float g_DDDLoLevel;
 extern float g_DDD_Period;
 extern int   g_DDD_10Khz_Pulses_StopAddr;
 extern int   g_DDD_100Khz_Pulses_StopAddr;
+extern int   g_VbIlim_Pulses_StopAddr;
+extern int   g_DDD_FW_1_Pulse_StartAddr;
+extern int   g_DDD_FW_1_Pulse_StopAddr;
 
 /*=======================		DDD Variables		 ===============================*/
 extern float Dclk_period;		// DDD clock period
@@ -533,79 +558,93 @@ extern int g_DDD_fast;
 extern int First_address;
 extern int g_NextAddrFixed;
 extern int g_NextAddr;
-extern int Low_pat_start, Low_pat_stop,
-		Low_XXX_pat_start, Low_XXX_pat_stop,
-		High_pat_start, High_pat_stop,
-		High_pat_FB_start, High_pat_FB_stop,
-		//High_pat_FW_start, High_pat_FW_stop,
-		HIZ_SDA_SCL_start,HIZ_SDA_SCL_stop,
-		SDA_SCL_HIZ_FW_High_start, SDA_SCL_HIZ_FW_High_stop,
-		//FWhi_FBhi_Vlow_start, FWhi_FBhi_Vlow_stop,
-		//FWhi_FBlow_Vhi_start, FWhi_FBlow_Vhi_stop,
-		FW_Neg_1st_pulse_start, FW_Neg_1st_pulse_stop,
-		FW_Neg_2nd_pulse_start, FW_Neg_2nd_pulse_stop,
-		FW_Neg_3rd_pulse_start, FW_Neg_3rd_pulse_stop,
-		//FW_Neg_4th_pulse_start, FW_Neg_4th_pulse_stop,
-		//FW_Neg_5th_pulse_start, FW_Neg_5th_pulse_stop,
-		FWneg_FBhi_Vlo_1st_pulse_start, FWneg_FBhi_Vlo_1st_pulse_stop,
-		FWneg_FBhi_Vlo_2nd_pulse_start, FWneg_FBhi_Vlo_2nd_pulse_stop,
-		FWneg_FBhi_Vlo_3rd_pulse_start, FWneg_FBhi_Vlo_3rd_pulse_stop,
-		FWPK_300kHz_Ring_start, FWPK_300kHz_Ring_stop,
-		FWPK_1MHz_Ring_start, FWPK_1MHz_Ring_stop,
-		FWPK_Max_Ring_start, FWPK_Max_Ring_stop,
-		FWPK_Min_Ring_start, FWPK_Min_Ring_stop,
-		FWPK_test_pulses_start1, FWPK_test_pulses_stop1,
-		FWPK_test_pulses_start1_single, FWPK_test_pulses_stop1_single,
-		FWPK_test_pulses_start2_single, FWPK_test_pulses_stop2_single,
-		FWPK_test_pulses_start3_single, FWPK_test_pulses_stop3_single,
-		FWPK_test_pulses_start4_single, FWPK_test_pulses_stop4_single,
-		FWPK_test_pulses_start5_single, FWPK_test_pulses_stop5_single,
-		HIZallChannels_start, HIZallChannels_stop, 
-		FW_Neg_loop_pulse_start, FW_Neg_loop_pulse_stop,
-		FB_100kHz_loop_pulse_start, FB_100kHz_loop_pulse_stop, 
-		Vpin_loop_pulse_start, Vpin_loop_pulse_stop,
-		FB_100kHz_100_pulses_start, FB_100kHz_100_pulses_stop,
-		FB_100kHz_ILIM_pulse_start, FB_100kHz_ILIM_pulse_stop, 
-		FB_100kHz_ILIM_18_pulse_stop,
-		FB_tOVL_start, FB_tOVL_stop,
-		AF_Vpin_Clk_pulse_start, AF_Vpin_Clk_pulse_stop,
-		AF_Vpin_Clk_pulse_start_132kHz, AF_Vpin_Clk_pulse_stop_132kHz,
-		AF_Vpin_Data_pulse_start,AF_Vpin_Data_pulse_stop;
-		//AF_Vout_pulse_start, AF_Vout_pulse_stop;
-
-extern int Vpin_100kHz_ILIM_pulse_start;
-extern int Vpin_100kHz_ILIM_pulse_stop;
-
-extern int FB_18kHz_pulse_start;
-extern int FB_18kHz_pulse_stop;
-extern int FB_125kHz_pulse_start;
-extern int FB_125kHz_pulse_stop;
-
-extern int Vpin_125kHz_pulse_start_X;
-extern int Vpin_125kHz_pulse_stop_X;
-
-extern int Vout_125kHz_pulse_start_X;
-extern int Vout_125kHz_pulse_stop_X;
-
-extern int Vout_100kHz_ILIM_pulse_start_X;
-extern int Vout_100kHz_ILIM_pulse_stop_X;
-
-extern int Vpin_100kHz_ILIM_pulse_start_X;
-extern int Vpin_100kHz_ILIM_pulse_stop_X;
-extern int Vpin_6clocks_start;
-extern int Vpin_6clocks_stop;
-extern int Vpin_4clocks_start;
-extern int Vpin_4clocks_stop;
-extern int Vpin_2clocks_start;
-extern int Vpin_2clocks_stop;
-extern int Vpin_3NegClocks_start;
-extern int Vpin_3NegClocks_stop;
-extern int Vpin_30usec_start;
-extern int Vpin_30usec_stop;
-extern int Vpin_one_30us_clock_start;
-extern int Vpin_one_30us_clock_stop;
-extern int FB_100kHz_pulse_start_5X;
-extern int FB_100kHz_pulse_stop_5X;
+//////////extern int Low_pat_start, Low_pat_stop,
+//////////		Low_XXX_pat_start, Low_XXX_pat_stop,
+//////////		High_pat_start, High_pat_stop,
+//////////		High_pat_FB_start, High_pat_FB_stop,
+//////////		//High_pat_FW_start, High_pat_FW_stop,
+//////////		HIZ_SDA_SCL_start,HIZ_SDA_SCL_stop,
+//////////		SDA_SCL_HIZ_FW_High_start, SDA_SCL_HIZ_FW_High_stop,
+//////////		//FWhi_FBhi_Vlow_start, FWhi_FBhi_Vlow_stop,
+//////////		//FWhi_FBlow_Vhi_start, FWhi_FBlow_Vhi_stop,
+//////////		FW_Neg_1st_pulse_start, FW_Neg_1st_pulse_stop,
+//////////		FW_Neg_2nd_pulse_start, FW_Neg_2nd_pulse_stop,
+//////////		FW_Neg_3rd_pulse_start, FW_Neg_3rd_pulse_stop,
+//////////		//FW_Neg_4th_pulse_start, FW_Neg_4th_pulse_stop,
+//////////		//FW_Neg_5th_pulse_start, FW_Neg_5th_pulse_stop,
+//////////		FWneg_FBhi_Vlo_1st_pulse_start, FWneg_FBhi_Vlo_1st_pulse_stop,
+//////////		FWneg_FBhi_Vlo_2nd_pulse_start, FWneg_FBhi_Vlo_2nd_pulse_stop,
+//////////		FWneg_FBhi_Vlo_3rd_pulse_start, FWneg_FBhi_Vlo_3rd_pulse_stop,
+//////////		FWPK_300kHz_Ring_start, FWPK_300kHz_Ring_stop,
+//////////		FWPK_1MHz_Ring_start, FWPK_1MHz_Ring_stop,
+//////////		FWPK_Max_Ring_start, FWPK_Max_Ring_stop,
+//////////		FWPK_Min_Ring_start, FWPK_Min_Ring_stop,
+//////////		FWPK_test_pulses_start1, FWPK_test_pulses_stop1,
+//////////		FWPK_test_pulses_start1_single, FWPK_test_pulses_stop1_single,
+//////////		FWPK_test_pulses_start2_single, FWPK_test_pulses_stop2_single,
+//////////		FWPK_test_pulses_start3_single, FWPK_test_pulses_stop3_single,
+//////////		FWPK_test_pulses_start4_single, FWPK_test_pulses_stop4_single,
+//////////		FWPK_test_pulses_start5_single, FWPK_test_pulses_stop5_single,
+//////////		//FWPK_test_pulses_start2, FWPK_test_pulses_stop2,
+//////////		//FWPK_test_pulses_start3, FWPK_test_pulses_stop3,
+//////////		//FWPK_test_pulses_start4, FWPK_test_pulses_stop4,
+//////////		//FWPK_test_pulses_start5, FWPK_test_pulses_stop5,
+//////////		//FWPK_test_pulses_start6, FWPK_test_pulses_stop6,
+//////////		//FWPK_test_pulses_start7, FWPK_test_pulses_stop7,
+//////////		//FWPK_test_pulses_start8, FWPK_test_pulses_stop8,
+//////////		//FWPK_test_pulses_start9, FWPK_test_pulses_stop9,
+//////////		//FWPK_test_pulses_start10, FWPK_test_pulses_stop10,
+//////////		//FWPK_test_pulses_start11, FWPK_test_pulses_stop11,
+//////////		//FWPK_test_pulses_start12, FWPK_test_pulses_stop12,
+//////////		//FWPK_test_pulses_start13, FWPK_test_pulses_stop13,
+//////////		//FWPK_test_pulses_start14, FWPK_test_pulses_stop14,
+//////////		//FWPK_test_pulses_start15, FWPK_test_pulses_stop15,
+//////////		HIZallChannels_start, HIZallChannels_stop, 
+//////////		FW_Neg_loop_pulse_start, FW_Neg_loop_pulse_stop,
+//////////		FB_100kHz_loop_pulse_start, FB_100kHz_loop_pulse_stop, 
+//////////		Vpin_loop_pulse_start, Vpin_loop_pulse_stop,
+//////////		FB_100kHz_100_pulses_start, FB_100kHz_100_pulses_stop,
+//////////		FB_100kHz_ILIM_pulse_start, FB_100kHz_ILIM_pulse_stop, 
+//////////		FB_100kHz_ILIM_18_pulse_stop,
+//////////		FB_tOVL_start, FB_tOVL_stop,
+//////////		AF_Vpin_Clk_pulse_start, AF_Vpin_Clk_pulse_stop,
+//////////		AF_Vpin_Clk_pulse_start_132kHz, AF_Vpin_Clk_pulse_stop_132kHz,
+//////////		AF_Vpin_Data_pulse_start,AF_Vpin_Data_pulse_stop;
+//////////		//AF_Vout_pulse_start, AF_Vout_pulse_stop;
+//////////
+//////////extern int Vpin_100kHz_ILIM_pulse_start;
+//////////extern int Vpin_100kHz_ILIM_pulse_stop;
+//////////
+//////////extern int FB_18kHz_pulse_start;
+//////////extern int FB_18kHz_pulse_stop;
+//////////extern int FB_125kHz_pulse_start;
+//////////extern int FB_125kHz_pulse_stop;
+//////////
+//////////extern int Vpin_125kHz_pulse_start_X;
+//////////extern int Vpin_125kHz_pulse_stop_X;
+//////////
+//////////extern int Vout_125kHz_pulse_start_X;
+//////////extern int Vout_125kHz_pulse_stop_X;
+//////////
+//////////extern int Vout_100kHz_ILIM_pulse_start_X;
+//////////extern int Vout_100kHz_ILIM_pulse_stop_X;
+//////////
+//////////extern int Vpin_100kHz_ILIM_pulse_start_X;
+//////////extern int Vpin_100kHz_ILIM_pulse_stop_X;
+//////////extern int Vpin_6clocks_start;
+//////////extern int Vpin_6clocks_stop;
+//////////extern int Vpin_4clocks_start;
+//////////extern int Vpin_4clocks_stop;
+//////////extern int Vpin_2clocks_start;
+//////////extern int Vpin_2clocks_stop;
+//////////extern int Vpin_3NegClocks_start;
+//////////extern int Vpin_3NegClocks_stop;
+//////////extern int Vpin_30usec_start;
+//////////extern int Vpin_30usec_stop;
+//////////extern int Vpin_one_30us_clock_start;
+//////////extern int Vpin_one_30us_clock_stop;
+//////////extern int FB_100kHz_pulse_start_5X;
+//////////extern int FB_100kHz_pulse_stop_5X;
 
 
 /*=======================    Internal Registers   ===============================*/
@@ -735,7 +774,7 @@ extern int	g_Trim_iov_Off_P_Trimops		,
 			g_Trim_RsenseUp_P_Trimops		,
 			g_Trim_vxAdj_P_Trimops			, //5 bits
 			g_Trim_iLRatio_P_Trimops			, //4 bits
-			g__Trim_iLTC_P_Trimops			, //4 bits
+			g_Trim_iLTC_P_Trimops			, //4 bits
 			gTrim_AR_req_Trimops			;
 
 
@@ -853,8 +892,45 @@ extern int gTrim_SdwReg109_Trimops;
 extern int gTrim_SdwReg110_Trimops;
 extern int gTrim_SdwReg111_Trimops;
 
+//-------------------------------------------------------------------------------------
 extern int g_SiliconRev_Pri; // Primary silicon revision //
 extern int g_SiliconRev_Sec; // Secondary silicon revision //
+
+//HL
+// Secondary Trim Options.
+extern int g_tsstart_B8_9_S;			//Softstart time    
+extern int g_tfbOption_B10_11_S;		//Boost Frequency Options
+extern int g_DOPL_B15_S;				//DOPL Option Bit
+extern int g_TvrOption_B16_17_S;		//VR Option Selection.
+extern int g_TenCP_B18_S;				//Enable CP in Non I2C Mode
+extern int g_ZffOption_B19_20_S;		//Feedforward Option.
+extern int g_DsblJitDim_B21_S;			//Disable Jitter in Dimming.
+extern int g_JitterOff_B22_S;			//Turn off Jitter.
+extern int g_ZTMBStr_B29_30_S;			//Enable 1 segment Boost Driver.
+extern int g_DsblFlBck_B31_S;			//Disable Foldback.
+extern int g_Dimth_B47_S;				//Select Deep Dim Threshold
+extern int g_tHrtBtOpt_B61_S;			//Heat beat time option.
+extern int g_CPNonI2C_B62_S;			//Disable CP
+extern int g_ZEE_50KStr_B63_S;			//Set softstart start up freq
+extern int g_FlBck_Ccopt_B74_S;			//To change rate of change in CC reference.
+extern int g_FlBck_Sel_B75_S;			//Trim to disable thermal foldback and line induced foldback.
+
+extern int   g_GRR;
+extern float g_HBP_P_S;
+extern float g_CV_Pre;
+extern float g_VDDA_Pre;
+extern float g_IRSET_Pre;
+extern float g_ZTtimer_Pre;
+extern float g_VADC_Pre;
+extern float g_CLK1M_Pre;
+extern float g_CCOffset_Pre;
+extern float g_VccRef_Pre;
+extern float g_ccPFOFF_Pre;
+extern float g_Fosc_Pre;
+extern float g_BFreq_Pre;
+extern float g_CP_IS_Pre;
+extern float g_VbIlim_Pre;
+//-------------------------------------------------------------------------------------------------
 
 /*=======================    IzPre Function Variables    ===============================*/
 extern float	gIzpt_NoZ_s, gIZ_NoZ_s;
@@ -870,7 +946,7 @@ extern float	gP_Fosc_TARGET_Trimops, gFOSC_TARGET_S_Trimops;
 extern float    g_FOSC_exp_P,   g_FOSC_exp_S;
 //extern float    gFOSC_post_S;
 
-/*======================    TonMax Variables    ====================================*/
+/*======================    TonMin Variables    ====================================*/
 extern float   gP_TonMin_TARGET_Trimops;
 
 /*======================    Ton Slope & Offset Variables    ====================================*/
@@ -1124,6 +1200,7 @@ void Read_Trim_Register(int *TrimBank);
 void Program_All_TrimRegister();
 void Program_All_TrimRegister_P();
 void Program_Single_TrimRegister(int TrimLocation);
+void Program_Single_TrimRegister_P(int TrimLocation);
 
 //-------------------------------
 void LoadShadowRegister();
@@ -1152,6 +1229,13 @@ void Gage_Count_Cycles_CHB(float *);
 void DChUp_Gage_Find(float *);
 void Gage_Find_tOVL(float *);
 char* GetCSVPath (const char* dllpath, const char* csvname);
+
+//HL added.
+void Gage_Find_ccPFOFF(double *ccPassFEToff_TH, double *ccBoostOff_TH, double *Dcc_TH);
+void Gage_Find_CP(double *CP_IS_TH, double *CP_BOFF_TH, double *CP_PFOFF_TH);
+void Gage_Find_VbIlim_TH(double *VbIlim_TH);
+void Gage_ChanAB_Setup_S(float pin_trig_level, int16 chanA_gain, int chanB_gain);
+void Gage_ChanAB_Setup_S2(float pin_trig_level, int16 chanA_gain, int chanB_gain, int sample_rate_in_Hz);
 
 //=================== XP gage PIPULSE Definition STARTS here ===================
 
@@ -1188,7 +1272,7 @@ int		gage_input_control_xp (int16 channel, int16 enable, int16 coupling, int16 g
 //int		gage_trigger_control_xp (int16 source, int16 ext_coupling, int16 ext_gain, int16 slope, int16 level, int32 depth);
 int		gage_trigger_control_xp (int16 source, int16 ext_coupling, int16 ext_gain, int16 slope, float level, int32 depth);
 void	Gage_Commit ( void );
-void	Gage_Start_Capture( void );
+void	Gage_Start_Capture( int force_capture);
 void	Gage_Wait_For_Capture_Complete( void );
 void	Gage_Transfer_Data ( int channel_num );
 void	Gage_Transfer_DataM ( int channel_num );
@@ -1198,6 +1282,8 @@ void	Gage_print_setup(string text_str);
 int     Gage_loadtime_setup(void);
 void	Gage_cal_table_setup_xp();
 void	PrintCaptureTime(string text_str);
+
+void Gage_init_S();
 //=================== XP gage digitizer func Header ENDS here ===================
 
 // Declare register names and their addresses. //
@@ -2379,7 +2465,7 @@ void Hardware_Check_Binno();
 
 uint16_t Convert_BIN_2_Dec(int *WordArray);
 
-void TrimCode_To_TrimBit(short TrimCode, char TrimParam[99], char p_or_s);
+void TrimCode_To_TrimBit(int TrimCode, char TrimParam[99], char p_or_s);
 void EEprcode_2_EEprArray(int TrimCode, int *EEpr, int Startbit);
 void CV_Search(float &CV_minus1p5pct, float &CV_th, float &CV_plus1p5pct, float vStart, float Step_size);
 void Load_10Khz_Pulses();
@@ -2388,7 +2474,14 @@ void Run_10Khz_Pulses();
 void Load_100Khz_Pulses();
 void Stop_100Khz_Pulses();
 void Run_100Khz_Pulses();
-float Average_Value(float *Meas_Array);
+void Load_VbIlim_Pattern();
+void Run_VbIlim_Pattern();
+void Stop_VbIlim_Pattern();
+void Load_FW_DDD_1_Pulse(int StartAddr);
+void Run_FW_DDD_1_Pulse(int StartAddr);
+void Load_VR_DDD_Step_Pulse(int StartAddr);
+void Run_VR_DDD_Step_Pulse(int StartAddr);
+float Average_Value(float *Meas_Array, float min_lim, float max_lim);
 
 void Load_30Khz_Pulses_TS();
 void Load_80Khz_Pulses_TS();
@@ -2416,3 +2509,13 @@ void Search_iUVm_P(float *iUVm_th_P);
 void BPP_zigzag(float vBPP1, float vBPP2, float vBPP3);
 void Regain_I2C_P(int regain_I2C_mode);
 void Disable_n_Disconnect_DSMI2C_via(int release_pin);
+float search_direction(int up);
+void WordArray_Assigned(int *WordArray, int startbit);
+float tmu_meas(int hold_off, int arm_delay, float timeout_delay);
+void min_value(float *meas_value, int &array_index, int num_loop);
+void max_value(float *meas_value, int &array_index, int num_loop);
+float BFreq_Meas(int num_loop);
+void Set_EEprBit(uint16_t &EEpr_Bank, int bit, int bit_state);
+void TestMode_Check(int TM_Chk);
+void VR_Detect_B_Search(float &VB, float &VBSkip, float &VStart, float &Vstop, float &Vstep, char B_or_HSG, char Up_or_Dn);
+void VR_Detect_A_Search(float &VB1, float &VB2, float &VA0, float &VA1, float &VA2, float &VA3, float &VStart, float &Vstop, float &Vstep);
