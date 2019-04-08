@@ -47,7 +47,7 @@ void VBP_Init(test_function& func)
 	if (AbortTest)
 		return;
 
-	if (g_Fn_VBP_Init == 0 )  return;
+	//if (g_Fn_VBP_Init == 0 )  return;
 
 	// Test Time Begin //
 	 if (g_TstTime_Enble_P)
@@ -80,10 +80,10 @@ void VBP_Init(test_function& func)
 	float ISvolt_ovi = 0;
 	float VBP_Init_TT = 0;
 	float UpperLimit_VBPP_s = 0;
-	int k=0;
-	float bpp_current[300] = {0};
-	float vstep=5e-3;
-	float vBPP_start=0;
+	//int k=0;
+	//float bpp_current[300] = {0};
+	//float vstep=5e-3;
+	//float vBPP_start=0;
 	float VBPP_P_S_Init_S=0;
 	char STRINGarray[1024] = {'\0'};//buffer to store formatted input.
 	Pulse pulse;
@@ -95,7 +95,7 @@ void VBP_Init(test_function& func)
 	//Close_relay(K18); // FW
 
 	// Disconnect UV(Itag) pin to stop it from pulling 0.5mA from device in normal mode. 
-		UV_dvi->set_voltage(UV_ch, 0,		VOLT_2_RANGE);  
+		UV_dvi->set_voltage(UV_ch, 0,		VOLT_10_RANGE);  
 		UV_dvi->set_current(UV_ch, 10e-3,	RANGE_30_MA);		
 		delay(2);
 	//Drain 2V, BPP 1V, measure current from Drain to see how much current is traveling through from Drain to BPP.  Ideally 0A
@@ -228,7 +228,7 @@ void VBP_Init(test_function& func)
 //
 //	// Powerdown //
 //	Open_relay(K18);
-//	UV_dvi->set_voltage(UV_ch, 0.0, RANGE_10_V); // OVI_1_1 //
+//	UV_dvi->set_voltage(UV_ch, 0.0, VOLT_10_RANGE); // OVI_1_1 //
 //	UV_dvi->set_current(UV_ch, 30e-3, RANGE_30_MA); // OVI_1_1 //
 //	uVCC_ovi->set_voltage(uVCC_ch, 1.0, RANGE_10_V); // OVI_3_2 //
 //	uVCC_ovi->set_current(uVCC_ch, 30e-3, RANGE_30_MA); // OVI_3_2 //
@@ -654,5 +654,10 @@ void VBP_Init(test_function& func)
 //		g_PartFailed = 1;
 //	}
 //}
+
+	if(g_Char_vBPPth)
+	{
+		Characterize_vBPPth(); //
+	}
 
 }

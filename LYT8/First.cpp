@@ -202,9 +202,13 @@ void First(test_function& func)
 	g_Require_PartID = false;
 
 	//Global Characterization variables
-	g_Char_iOVp_XYplot = 0;
-	g_Char_iOVm_XYplot = 0;
-	g_USE_VR_600K = false;
+	g_Char_iOVp_XYplot		= 0;
+	g_Char_iOVm_XYplot		= 0;
+	//g_Char_vBPPpv_XYplot	= 0;
+	//g_Char_vBPPm_XYplot		= 0;
+	//g_Char_vBPPp_XYplot		= 0;
+	g_USE_VR_600K			= false;
+	g_Char_vBPPth			= 1;
 
 	//Global digitizer Awav and Text variables
 	g_Save_Awav_TextDebug_ALL		= 0;
@@ -398,9 +402,9 @@ void First(test_function& func)
 
 
 
-	// Get serial number //
-	//GetSerialNum(CURRENT_SERIAL_NUM);
-	//g_SERIAL_NUM= atoi(CURRENT_SERIAL_NUM);
+	 //Get serial number //
+	GetSerialNum(CURRENT_SERIAL_NUM);
+	g_SERIAL_NUM= atoi(CURRENT_SERIAL_NUM);
 
 	//if (g_First_Time_Run || g_FirstPart <2)
 	if (g_FirstPart)
