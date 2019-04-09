@@ -219,6 +219,9 @@ void EEPROM_Pre(test_function& func)
 	int EEpr_S[80] = {0};
 
 
+// Skip Test if AbortTest set 
+	if (AbortTest)
+		return;
 
 		//-----------------------------------------------------------------------------------------------------------------
 		//Primary Die ID Reading

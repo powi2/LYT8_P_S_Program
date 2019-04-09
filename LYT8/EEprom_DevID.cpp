@@ -223,12 +223,14 @@ void EEprom_DevID(test_function& func)
 			{
 				g_Erase_Enable_P = 0;
 				g_Sim_Enable_P	 = 1;
+				g_Burn_Enable_P	 = 1;
 				Pri_Untrimmed	 = 1;
 			}
 			else
 			{
-				g_Sim_Enable_P = 0;
-				Pri_Untrimmed	= 0;
+				g_Sim_Enable_P   = 0;
+				g_Burn_Enable_P	 = 0;
+				Pri_Untrimmed	 = 0;
 			}
 
 		}

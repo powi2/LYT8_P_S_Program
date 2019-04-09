@@ -336,7 +336,7 @@ Pulse pulse;
 	
 	ccPFOFF_pt_S = delta;
 
-	if (g_Burn_Enable_S)
+	if (g_Burn_Enable_S && g_OPCODE==4200)
 	{
 
 		// ccPFOff can be either trimmed up or down only.  

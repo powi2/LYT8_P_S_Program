@@ -253,7 +253,7 @@ Pulse pulse;
 
 	g_VADC_Pre = VADC_pt_S;
 
-	if (g_Burn_Enable_S)
+	if (g_Burn_Enable_S && g_OPCODE==4200)
 	{
 		// IRSET_S_Code //
 		// Find which trim code will make IRSET_Pre closest to target //

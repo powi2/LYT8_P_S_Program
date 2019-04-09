@@ -368,7 +368,7 @@ Pulse pulse;
 
 	g_VbIlim_Pre = VbIlim_pt_S;
 
-	if (g_Burn_Enable_S)
+	if (g_Burn_Enable_S && g_OPCODE==4200)
 	{
 
 		// VbIlim_Pre can be either trimmed up or down only.  

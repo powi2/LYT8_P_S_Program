@@ -291,7 +291,8 @@ Pulse pulse;
 
 	g_CLK1M_Pre = CLK1M_pt_S;
 
-	if (g_Burn_Enable_S)
+	if (g_Burn_Enable_S && g_OPCODE==4200)
+
 	{
 
 		// CLK1M_S_Code //

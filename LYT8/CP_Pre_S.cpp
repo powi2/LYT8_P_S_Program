@@ -333,7 +333,7 @@ Pulse pulse;
 
 	g_CP_IS_Pre = CP_IS_pt_S;
 
-	if (g_Burn_Enable_S)
+	if (g_Burn_Enable_S && g_OPCODE==4200)
 	{
 
 		// CP_Pre can be either trimmed up or down only.  

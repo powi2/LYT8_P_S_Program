@@ -237,7 +237,7 @@ DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
 	
 	g_CCOffset_Pre = CCOffset_pt_S;
 
-	if (g_Burn_Enable_S)
+	if (g_Burn_Enable_S && g_OPCODE==4200)
 	{
 
 		// CCOffset can be either trimmed up or down only.  

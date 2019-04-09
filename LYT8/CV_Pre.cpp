@@ -310,7 +310,7 @@ Pulse pulse;
 	// Find which trim code will make CV_Pre closest to target //
 
 
-if (g_Burn_Enable_S)
+if (g_Burn_Enable_S && g_OPCODE==4200)
 {
 	
 	

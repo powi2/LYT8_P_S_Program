@@ -371,7 +371,7 @@ Pulse pulse;
 
 	g_Fosc_Pre = Fosc_pt_S;
 
-	if (g_Burn_Enable_S)
+	if (g_Burn_Enable_S && g_OPCODE==4200)
 	{
 
 		// Fosc_S_Code //

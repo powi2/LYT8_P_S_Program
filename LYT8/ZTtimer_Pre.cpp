@@ -301,7 +301,8 @@ Pulse pulse;
 
 	g_ZTtimer_Pre = ZTtimer_pt_S;
 
-	if (g_Burn_Enable_S)
+	if (g_Burn_Enable_S && g_OPCODE==4200)
+
 	{
 
 

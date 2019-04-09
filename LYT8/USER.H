@@ -487,7 +487,8 @@ enum Vd_Input_Mode {High_Vd_Input, Low_Vd_Input, High_Temp_Vd_Input, Low_Load_Vd
 extern float gTrim_Voltage;
 
 /* ======================  Setup Variable  ============================*/
-//extern STRING CURRENT_SERIAL_NUM; 
+extern STRING CURRENT_SERIAL_NUM; 
+extern int g_SERIAL_NUM;
 extern int g_FirstPart;
 extern int gFuncNum;
 extern int gDisplay_FuncNum;
@@ -512,6 +513,7 @@ extern bool	g_Char_iOVp_XYplot;
 extern bool	g_Char_iOVm_XYplot;
 extern bool	g_Char_iUVp_XYplot;
 extern bool	g_Char_iUVm_XYplot;
+extern bool g_Char_vBPPth;
 
 //iOV function global variables
 extern bool g_USE_VR_600K;
@@ -2514,6 +2516,8 @@ void PowerUp_I2C_S();
 void DSM_init_LYT8();
 void Setup_Resources_for_I2C_P();
 void Power_Down_I2C_P();
+void Characterize_vBPPth();
+
 
 void EEPROM_ERASE_P(float *vErase_th_P);
 void EEPROM_BURN_P(float *vBurn_th_P);

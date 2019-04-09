@@ -48,8 +48,9 @@ void IOV_Pre_P(test_function& func)
 		return;
 
 	// Skip trimming if g_Sim_Enable_P set //
-	if (g_Sim_Enable_P == 0)
+	if (g_Sim_Enable_P == 0&& g_GRR_Enable == 0)
 		return;
+
 
 	// Test Time Begin //
 	 if (g_TstTime_Enble_P)

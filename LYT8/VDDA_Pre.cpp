@@ -239,40 +239,41 @@ Pulse pulse;
 
 	g_VDDA_Pre = VDDA_pt_S;
 
-if (g_Burn_Enable_S)
-{
-	
-	// VDDA_S_Code //
-	// Find which trim code will make CV_Pre closest to target //
-	smallest_diff_val = 999999.9;
-	smallest_diff_idx = 0;
-	for (i=0; i<4; i++)
+	if (g_Burn_Enable_S && g_OPCODE==4200)
+
 	{
-		temp_1 = (VDDA_pt_S  + VDDA_S_TrimWt[i]) -  VDDA_Target_S;
-		if (temp_1 < 0)	// Get rid of negatives //
-			temp_1 *= -1.0;
-		if (temp_1 < smallest_diff_val)
+		
+		// VDDA_S_Code //
+		// Find which trim code will make CV_Pre closest to target //
+		smallest_diff_val = 999999.9;
+		smallest_diff_idx = 0;
+		for (i=0; i<4; i++)
 		{
-			smallest_diff_val = temp_1;
-			smallest_diff_idx = i;
+			temp_1 = (VDDA_pt_S  + VDDA_S_TrimWt[i]) -  VDDA_Target_S;
+			if (temp_1 < 0)	// Get rid of negatives //
+				temp_1 *= -1.0;
+			if (temp_1 < smallest_diff_val)
+			{
+				smallest_diff_val = temp_1;
+				smallest_diff_idx = i;
+			}
 		}
+
+		//Manual Forcing
+		//smallest_diff_idx = 8;
+
+		VDDA_TrCode_S = VDDA_S_code[smallest_diff_idx];
+		VDDA_ExpChg   = VDDA_S_TrimWt[smallest_diff_idx];
+
+		TrimCode_To_TrimBit(VDDA_TrCode_S, "VDDA_S", 's');
+
+		EEpr_Bank_S[E2] = EEpr_Bank_S[E2] | (VDDA_TrCode_S<<(27-startbit));
+
+		//Program Trim Register with new calculated bit combination.
+		Program_Single_TrimRegister(g_EEP_W_E2);
+
+		
 	}
-
-	//Manual Forcing
-	//smallest_diff_idx = 8;
-
-	VDDA_TrCode_S = VDDA_S_code[smallest_diff_idx];
-	VDDA_ExpChg   = VDDA_S_TrimWt[smallest_diff_idx];
-
-	TrimCode_To_TrimBit(VDDA_TrCode_S, "VDDA_S", 's');
-
-	EEpr_Bank_S[E2] = EEpr_Bank_S[E2] | (VDDA_TrCode_S<<(27-startbit));
-
-	//Program Trim Register with new calculated bit combination.
-	Program_Single_TrimRegister(g_EEP_W_E2);
-
-	
-}
 	wait.delay_10_us(100);
 	VDDA_prg_S = FB_ovi3->measure_average(25);
 

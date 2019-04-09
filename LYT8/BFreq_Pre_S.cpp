@@ -275,7 +275,7 @@ Pulse pulse;
 	//Need to turn off switching on Boost pin.
 	FB_ovi3->set_voltage(FB_ch, 2, VOLT_5_RANGE); // DVI_11_0
 
-	if (g_Burn_Enable_S)
+	if (g_Burn_Enable_S && g_OPCODE==4200)
 	{
 		// BFreq_S_Code //
 		// Find which trim code will make BFreq_Pre closest to target //

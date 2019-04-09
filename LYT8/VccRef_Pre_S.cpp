@@ -285,7 +285,7 @@ Pulse pulse;
 	g_VccRef_Pre = VccRef_pt_S;
 	
 
-	if (g_Burn_Enable_S)
+	if (g_Burn_Enable_S && g_OPCODE==4200)
 	{
 		// VccRef can be either trimmed up or down only.  
 		// VccRef_S_Code //
