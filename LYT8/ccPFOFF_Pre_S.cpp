@@ -47,8 +47,8 @@ void ccPFOFF_Pre_S(test_function& func)
 	if (AbortTest)
 		return;
 
-	// Skip trimming if g_Trim_Enable_S is not set //
-	if (g_Trim_Enable_S == 0 && g_GRR == 0)
+	// Skip trimming if g_Burn_Enable_S is not set //
+	if (g_Burn_Enable_S == 0 && g_GRR_Enable == 0)
 		return;
 
 	//if (g_Fn_VccRef_Pre == 0 )  return;
@@ -67,7 +67,7 @@ void ccPFOFF_Pre_S(test_function& func)
 	// Test Names //
 	float ccPFOFF_pt_S     = 0;
 	float ccPFOFF_prg_S    = 0;
-	float ccPFOFF_Target_S = 14e-3; 
+	float ccPFOFF_Target_S = 2*g_ccPFOFF_Target_S_Trimops; //14e-3; 
 	int ccPFOFF_TrCode_S   = 0;
 	int ccPFOFF_BitCode_S  = 0;
 	int Eetr35_Icc0_S      = 0;
@@ -314,7 +314,7 @@ Pulse pulse;
 	wait.delay_10_us(250);
 
 	DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
-	if (g_Trim_Enable_S != 0)
+	if (g_Burn_Enable_S)
 	{
 		Program_All_TrimRegister();
 	}
@@ -336,41 +336,41 @@ Pulse pulse;
 	
 	ccPFOFF_pt_S = delta;
 
-if (g_Trim_Enable_S)
-{
-
-	// ccPFOff can be either trimmed up or down only.  
-	// ccPFOff_S_Code //
-	// Find which trim code will make ccPFOff_Pre closest to target //
-	smallest_diff_val = 999999.9;
-	smallest_diff_idx = 0;
-	for (i=0; i<8; i++)
+	if (g_Burn_Enable_S)
 	{
-		temp_1 = (ccPFOFF_pt_S * (1 + (ccPFOFF_S_TrimWt[i]/100)) -  ccPFOFF_Target_S);
-		if (temp_1 < 0)	// Get rid of negatives //
-			temp_1 *= -1.0;
-		if (temp_1 < smallest_diff_val)
+
+		// ccPFOff can be either trimmed up or down only.  
+		// ccPFOff_S_Code //
+		// Find which trim code will make ccPFOff_Pre closest to target //
+		smallest_diff_val = 999999.9;
+		smallest_diff_idx = 0;
+		for (i=0; i<8; i++)
 		{
-			smallest_diff_val = temp_1;
-			smallest_diff_idx = i;
+			temp_1 = (ccPFOFF_pt_S * (1 + (ccPFOFF_S_TrimWt[i]/100)) -  ccPFOFF_Target_S);
+			if (temp_1 < 0)	// Get rid of negatives //
+				temp_1 *= -1.0;
+			if (temp_1 < smallest_diff_val)
+			{
+				smallest_diff_val = temp_1;
+				smallest_diff_idx = i;
+			}
 		}
+
+
+		//Manual forcing:
+		//smallest_diff_idx = 0;
+
+		ccPFOFF_TrCode_S   = ccPFOFF_S_code[smallest_diff_idx];
+		ccPFOFF_ExpChg   = ccPFOFF_S_TrimWt[smallest_diff_idx];
+
+		ccPFOFF_ExpValue = (ccPFOFF_pt_S * (1 + (ccPFOFF_S_TrimWt[smallest_diff_idx]/100)));
+
+		TrimCode_To_TrimBit(ccPFOFF_TrCode_S, "CCOffset_S", 's');
+
+		EEpr_Bank_S[E4] = EEpr_Bank_S[E4] | (ccPFOFF_TrCode_S<<(35-startbit));
+
+		Program_Single_TrimRegister(g_EEP_W_E4);
 	}
-
-
-	//Manual forcing:
-	//smallest_diff_idx = 0;
-
-	ccPFOFF_TrCode_S   = ccPFOFF_S_code[smallest_diff_idx];
-	ccPFOFF_ExpChg   = ccPFOFF_S_TrimWt[smallest_diff_idx];
-
-	ccPFOFF_ExpValue = (ccPFOFF_pt_S * (1 + (ccPFOFF_S_TrimWt[smallest_diff_idx]/100)));
-
-	TrimCode_To_TrimBit(ccPFOFF_TrCode_S, "CCOffset_S", 's');
-
-	EEpr_Array[2] = EEpr_Array[2] | (ccPFOFF_TrCode_S<<(35-startbit));
-
-	Program_Single_TrimRegister(g_EEP_W_E4);
-}
 	IS_dvi2k->set_current(IS_ch, 200e-6, RANGE_20_MA);
 	IS_dvi2k->set_voltage(IS_ch, 0.5, VOLT_2_RANGE);
 	wait.delay_10_us(10);
@@ -464,7 +464,7 @@ if (g_Trim_Enable_S)
 
 	PiDatalog(func, A_ccPFOFF_pt_S,			ccPFOFF_pt_S,			26, POWER_MILLI);
 	
-	if (g_Trim_Enable_S)
+	if (g_Burn_Enable_S)
 	{
 		PiDatalog(func, A_ccPFOFF_target_S,     ccPFOFF_Target_S,       26, POWER_MILLI);
 		PiDatalog(func, A_ccPFOFF_TrCode_S,     ccPFOFF_TrCode_S,        26, POWER_UNIT);
@@ -474,7 +474,7 @@ if (g_Trim_Enable_S)
 		PiDatalog(func, A_Eetr35_Icc0_S,      g_S_TrimRegisterTemp[35],	26, POWER_UNIT);
 		PiDatalog(func, A_Eetr36_Icc1_S,      g_S_TrimRegisterTemp[36],	26, POWER_UNIT);
 		PiDatalog(func, A_Eetr37_Icc2_S,      g_S_TrimRegisterTemp[37],	26, POWER_UNIT);
-		PiDatalog(func, A_Bin2Dec1_S,			  EEpr_Array[2],				26, POWER_UNIT);
+		PiDatalog(func, A_Bin2Dec1_S,			  EEpr_Bank_S[E4],				26, POWER_UNIT);
 		PiDatalog(func, A_ccPFOFF_prg_S,          ccPFOFF_prg_S,              26, POWER_MILLI);
 		PiDatalog(func, A_ccPFOFF_prgchg_S,       ccPFOFF_PrgChg,             26, POWER_UNIT);
 	}

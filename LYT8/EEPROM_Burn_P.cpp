@@ -9,6 +9,7 @@
 #include "asl.h"
 // Disable warning C4244 "conversion from 'const double' to 'float', possible loss of data"
 #pragma warning (disable : 4244)
+#pragma warning (disable : 4305)
 
 #include "EEPROM_Burn_P.h"
 
@@ -44,6 +45,9 @@ void EEPROM_Burn_P(test_function& func)
 
 	// Skip Test if AbortTest set //
 	if (AbortTest)
+		return;
+
+	if (g_OPCODE==4250 || g_OPCODE==4300 || g_OPCODE==4500)
 		return;
 
 	// Test Time Begin //

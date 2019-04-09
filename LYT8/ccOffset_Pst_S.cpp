@@ -188,9 +188,8 @@ Pulse pulse;
 	wait.delay_10_us(100);
 
 	CCOffset_Pst_S = FB_ovi3->measure_average(25);
-	delay(1);
-
-	if(g_Trim_Enable_S && g_CCOffset_Pre != 0)
+	
+	if(g_Burn_Enable_S && g_CCOffset_Pre != 0)
 	{
 		CCOffset_Detla_S = 100*(CCOffset_Pst_S - g_CCOffset_Pre) / g_CCOffset_Pre;
 	}
@@ -231,7 +230,7 @@ Pulse pulse;
 
 
 	PiDatalog(func, A_CCOffset_Pst_S,		  CCOffset_Pst_S,               26, POWER_UNIT);
-	if (g_Trim_Enable_S != 0)
+	if (g_Burn_Enable_S != 0)
 	{
 		PiDatalog(func, A_CCOffset_Delta_S,      CCOffset_Detla_S,           26, POWER_UNIT);
 	}

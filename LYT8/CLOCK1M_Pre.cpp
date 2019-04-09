@@ -52,7 +52,7 @@ void CLOCK1M_Pre(test_function& func)
 	//if (g_Burn_Enable_P == 0)
 //		return;
 
-	if (g_Trim_Enable_S == 0 && g_GRR == 0)
+	if (g_Burn_Enable_S == 0 && g_GRR_Enable == 0)
 		return;
 	//if (g_Fn_CLK1M_Pre == 0 )  return;
 
@@ -70,7 +70,7 @@ void CLOCK1M_Pre(test_function& func)
 	// Test Names //
 	float CLK1M_pt_S      =0;
 	float CLK1M_prg_S     =0;
-	float CLK1M_Target_S  = 1E6; 
+	float CLK1M_Target_S  = g_CLK1M_Target_S_Trimops;//1E6; 
 	int   CLK1M_TrCode_S  = 0;
 	int   CLK1M_BitCode_S = 0;
 	int   EEtr70_B0_S     = 0;
@@ -260,7 +260,7 @@ Pulse pulse;
 	B_ovi3->set_current(B_ch1, 30e-3, RANGE_30_MA);
 	B_ovi3->set_voltage(B_ch1, 5.0, VOLT_10_RANGE);
 
-	if (g_Trim_Enable_S != 0)
+	if (g_Burn_Enable_S)
 	{
 		//Loading previous trimming before performing the test.
 		Program_All_TrimRegister();
@@ -291,49 +291,49 @@ Pulse pulse;
 
 	g_CLK1M_Pre = CLK1M_pt_S;
 
-if (g_Trim_Enable_S)
-{
-
-	// CLK1M_S_Code //
-	// Find which trim code will make CLK1M_Pre closest to target //
-	smallest_diff_val = 999999.9;
-	smallest_diff_idx = 0;
-	for (i=0; i<16; i++)
+	if (g_Burn_Enable_S)
 	{
-		temp_1 = (CLK1M_pt_S * (1 + (CLK1M_S_TrimWt[i]/100)) -  CLK1M_Target_S);
-		if (temp_1 < 0)	// Get rid of negatives //
-			temp_1 *= -1.0;
-		if (temp_1 < smallest_diff_val)
+
+		// CLK1M_S_Code //
+		// Find which trim code will make CLK1M_Pre closest to target //
+		smallest_diff_val = 999999.9;
+		smallest_diff_idx = 0;
+		for (i=0; i<16; i++)
 		{
-			smallest_diff_val = temp_1;
-			smallest_diff_idx = i;
+			temp_1 = (CLK1M_pt_S * (1 + (CLK1M_S_TrimWt[i]/100)) -  CLK1M_Target_S);
+			if (temp_1 < 0)	// Get rid of negatives //
+				temp_1 *= -1.0;
+			if (temp_1 < smallest_diff_val)
+			{
+				smallest_diff_val = temp_1;
+				smallest_diff_idx = i;
+			}
 		}
+
+
+		//Manual forcing:
+		//smallest_diff_idx = 15;
+
+		CLK1M_TrCode_S = CLK1M_S_code[smallest_diff_idx];
+		CLK1M_ExpChg   = CLK1M_S_TrimWt[smallest_diff_idx];
+		CLK1M_ExpValue = (CLK1M_pt_S * (1 + (CLK1M_S_TrimWt[smallest_diff_idx]/100)));
+		TrimCode_To_TrimBit(CLK1M_TrCode_S, "Clock1M_S", 's');
+
+		//Convert Trimcode to readable datalog file.
+		///*if(CLK1M_S_code[smallest_diff_idx]>=0 && CLK1M_S_code[smallest_diff_idx] <= 7)
+		//{
+		//	CLK1M_BitCode_S = -1*VADC_TrCode_S; 
+		//}
+		//else
+		//{
+		//	VADC_BitCode_S = VADC_TrCode_S - 7;
+		//}*/
+
+		EEpr_Bank_S[E8] = EEpr_Bank_S[E8] | (CLK1M_TrCode_S<<(70-startbit));
+
+		Program_Single_TrimRegister(g_EEP_W_E8);
+
 	}
-
-
-	//Manual forcing:
-	//smallest_diff_idx = 15;
-
-	CLK1M_TrCode_S = CLK1M_S_code[smallest_diff_idx];
-	CLK1M_ExpChg   = CLK1M_S_TrimWt[smallest_diff_idx];
-	CLK1M_ExpValue = (CLK1M_pt_S * (1 + (CLK1M_S_TrimWt[smallest_diff_idx]/100)));
-	TrimCode_To_TrimBit(CLK1M_TrCode_S, "Clock1M_S", 's');
-
-	//Convert Trimcode to readable datalog file.
-	///*if(CLK1M_S_code[smallest_diff_idx]>=0 && CLK1M_S_code[smallest_diff_idx] <= 7)
-	//{
-	//	CLK1M_BitCode_S = -1*VADC_TrCode_S; 
-	//}
-	//else
-	//{
-	//	VADC_BitCode_S = VADC_TrCode_S - 7;
-	//}*/
-
-	EEpr_Array[4] = EEpr_Array[4] | (CLK1M_TrCode_S<<(70-startbit));
-
-	Program_Single_TrimRegister(g_EEP_W_E8);
-
-}
 	tmeas = 0.0;
 
 	//Monitor 1Mhz switching on Boost pin.	
@@ -394,7 +394,7 @@ if (g_Trim_Enable_S)
 
 	PiDatalog(func, A_CLK1M_pt_S,		  CLK1M_pt_S,               26, POWER_MEGA);
 	
-	if (g_Trim_Enable_S)
+	if (g_Burn_Enable_S)
 	{
 		PiDatalog(func, A_CLK1M_target_S,     CLK1M_Target_S,           26, POWER_MEGA);
 		PiDatalog(func, A_CLK1M_TrCode_S,     CLK1M_TrCode_S,           26, POWER_UNIT);
@@ -405,7 +405,7 @@ if (g_Trim_Enable_S)
 		PiDatalog(func, A_Eetr71_B1_S,    g_S_TrimRegisterTemp[71],    26, POWER_UNIT);
 		PiDatalog(func, A_Eetr72_B2_S,    g_S_TrimRegisterTemp[72],    26, POWER_UNIT);
 		PiDatalog(func, A_Eetr73_B3_S,    g_S_TrimRegisterTemp[73],    26, POWER_UNIT);
-		PiDatalog(func, A_Bin2Dec1_S,         EEpr_Array[4],          26, POWER_UNIT);
+		PiDatalog(func, A_Bin2Dec1_S,         EEpr_Bank_S[E8],          26, POWER_UNIT);
 		PiDatalog(func, A_CLK1M_prg_S,         CLK1M_prg_S,              26, POWER_MEGA);
 		PiDatalog(func, A_CLK1M_prgchg_S,      CLK1M_PrgChg,             26, POWER_UNIT);
 	}

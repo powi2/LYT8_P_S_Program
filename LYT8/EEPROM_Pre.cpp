@@ -511,11 +511,17 @@ void EEPROM_Pre(test_function& func)
 	EEprcode_2_EEprArray(g_Pre_E6_data_S, EEpr_S, 48);
 	EEprcode_2_EEprArray(g_Pre_E8_data_S, EEpr_S, 64);
 
-	EEpr_Array[0] = EEpr_Array[0] | g_Pre_E0_data_S;
-	EEpr_Array[1] = EEpr_Array[1] | g_Pre_E2_data_S;
-	EEpr_Array[2] = EEpr_Array[2] | g_Pre_E4_data_S;
-	EEpr_Array[3] = EEpr_Array[3] | g_Pre_E6_data_S;
-	EEpr_Array[4] = EEpr_Array[4] | g_Pre_E8_data_S;
+	//EEpr_Bank_S[E0] = EEpr_Bank_S[E0] | g_Pre_E0_data_S;
+	//EEpr_Bank_S[E2] = EEpr_Bank_S[E2] | g_Pre_E2_data_S;
+	//EEpr_Bank_S[E4] = EEpr_Bank_S[E4] | g_Pre_E4_data_S;
+	//EEpr_Bank_S[E6] = EEpr_Bank_S[E6] | g_Pre_E6_data_S;
+	//EEpr_Bank_S[E8] = EEpr_Bank_S[E8] | g_Pre_E8_data_S;
+
+	EEpr_Bank_S[E0] = EEpr_Bank_S[E0] | g_Pre_E0_data_S;
+	EEpr_Bank_S[E2] = EEpr_Bank_S[E2] | g_Pre_E2_data_S;
+	EEpr_Bank_S[E4] = EEpr_Bank_S[E4] | g_Pre_E4_data_S;
+	EEpr_Bank_S[E6] = EEpr_Bank_S[E6] | g_Pre_E6_data_S;
+	EEpr_Bank_S[E8] = EEpr_Bank_S[E8] | g_Pre_E8_data_S;
 
 	//Power down secondary from here.
 	DSM_set_I2C_clock_freq(DSM_CONTEXT, 100);

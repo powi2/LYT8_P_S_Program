@@ -1,0 +1,5 @@
+LYT8380C.prg		LYT8380C 4200 @ 25C		First		BUFgain		High Limit change to: 1.5
+LYT8380C.prg		LYT8380C 4200 @ 25C		First		iPV3_Cal_CC90		Low Limit change to: 0.5		High Limit change to: 1.5
+LYT8380C.prg		LYT8380C 4200 @ 25C		First		DVI2K_ch0_Temp		Low Limit change to: 10
+LYT8380C.prg		LYT8380C 4300 @ 125C		First		BUFgain		High Limit change to: 1.5
+Exported : LYT8380C_Limits.txt

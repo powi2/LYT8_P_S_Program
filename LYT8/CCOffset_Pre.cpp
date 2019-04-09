@@ -9,7 +9,7 @@
 #include "asl.h"
 // Disable warning C4244 "conversion from 'const double' to 'float', possible loss of data"
 #pragma warning (disable : 4244)
-#pragma warning (disable :4305)
+#pragma warning (disable : 4305)
 
 
 #include "CCOffset_Pre.h"
@@ -51,7 +51,7 @@ void CCOffset_Pre(test_function& func)
 	// Skip trimming if g_Burn_Enable_P set //
 	//if (g_Burn_Enable_P == 0)
 //		return;
-if (g_Trim_Enable_S == 0 && g_GRR == 0)
+if (g_Burn_Enable_S == 0 && g_GRR_Enable == 0)
 		return;
 	//if (g_Fn_CCOffset_Pre == 0 )  return;
 
@@ -69,7 +69,7 @@ if (g_Trim_Enable_S == 0 && g_GRR == 0)
 	// Test Names //
 	float CCOffset_pt_S    =0;
 	float CCOffset_prg_S   = 0;
-	float CCOffset_Target_S = 1.2; 
+	float CCOffset_Target_S = g_CCOffset_Target_S_Trimops;//1.2; 
 	int CCOffset_TrCode_S  = 0;
 	int CCOffset_BitCode_S = 0;
 	int EEtr32_Zoffset0_S  = 0;
@@ -227,7 +227,7 @@ DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
 	FB_ovi3->set_voltage(FB_ch, 0.0, VOLT_2_RANGE); 	
 	wait.delay_10_us(100);
 
-	if (g_Trim_Enable_S != 0)
+	if (g_Burn_Enable_S)
 	{
 		//Loading previous trimming before performing the test.
 		Program_All_TrimRegister();
@@ -237,49 +237,49 @@ DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
 	
 	g_CCOffset_Pre = CCOffset_pt_S;
 
-if (g_Trim_Enable_S)
-{
-
-	// CCOffset can be either trimmed up or down only.  
-	// CCOffset_S_Code //
-	// Find which trim code will make CCOffset_Pre closest to target //
-	smallest_diff_val = 999999.9;
-	smallest_diff_idx = 0;
-	for (i=0; i<5; i++)
+	if (g_Burn_Enable_S)
 	{
-		temp_1 = (CCOffset_pt_S  + CCOffset_S_TrimWt[i] -  CCOffset_Target_S);
-		if (temp_1 < 0)	// Get rid of negatives //
-			temp_1 *= -1.0;
-		if (temp_1 < smallest_diff_val)
+
+		// CCOffset can be either trimmed up or down only.  
+		// CCOffset_S_Code //
+		// Find which trim code will make CCOffset_Pre closest to target //
+		smallest_diff_val = 999999.9;
+		smallest_diff_idx = 0;
+		for (i=0; i<5; i++)
 		{
-			smallest_diff_val = temp_1;
-			smallest_diff_idx = i;
+			temp_1 = (CCOffset_pt_S  + CCOffset_S_TrimWt[i] -  CCOffset_Target_S);
+			if (temp_1 < 0)	// Get rid of negatives //
+				temp_1 *= -1.0;
+			if (temp_1 < smallest_diff_val)
+			{
+				smallest_diff_val = temp_1;
+				smallest_diff_idx = i;
+			}
 		}
+
+
+		if(smallest_diff_idx == 3) smallest_diff_idx = 0;
+		//Manual forcing:
+		//smallest_diff_idx = 0;
+
+		CCOffset_TrCode_S = CCOffset_S_code[smallest_diff_idx];
+		CCOffset_ExpChg   = CCOffset_S_TrimWt[smallest_diff_idx];
+
+		CCOffset_ExpValue = (CCOffset_pt_S  + CCOffset_S_TrimWt[smallest_diff_idx]);
+
+		TrimCode_To_TrimBit(CCOffset_TrCode_S, "CCOffset_S", 's');
+
+
+		//Convert Trimcode to readable datalog file.
+		if(CCOffset_S_code[smallest_diff_idx]>=0 && CCOffset_S_code[smallest_diff_idx] <= 2)
+		{
+			CCOffset_BitCode_S = -1*CCOffset_TrCode_S; 
+		}
+
+		EEpr_Bank_S[E4] = EEpr_Bank_S[E4] | (CCOffset_TrCode_S<<(32-startbit));
+
+		Program_Single_TrimRegister(g_EEP_W_E4);
 	}
-
-
-	if(smallest_diff_idx == 3) smallest_diff_idx = 0;
-	//Manual forcing:
-	//smallest_diff_idx = 0;
-
-	CCOffset_TrCode_S = CCOffset_S_code[smallest_diff_idx];
-	CCOffset_ExpChg   = CCOffset_S_TrimWt[smallest_diff_idx];
-
-	CCOffset_ExpValue = (CCOffset_pt_S  + CCOffset_S_TrimWt[smallest_diff_idx]);
-
-	TrimCode_To_TrimBit(CCOffset_TrCode_S, "CCOffset_S", 's');
-
-
-	//Convert Trimcode to readable datalog file.
-	if(CCOffset_S_code[smallest_diff_idx]>=0 && CCOffset_S_code[smallest_diff_idx] <= 2)
-	{
-		CCOffset_BitCode_S = -1*CCOffset_TrCode_S; 
-	}
-
-	EEpr_Array[2] = EEpr_Array[2] | (CCOffset_TrCode_S<<(32-startbit));
-
-	Program_Single_TrimRegister(g_EEP_W_E4);
-}
 	wait.delay_10_us(100);
 
 	CCOffset_prg_S = FB_ovi3->measure_average(25);
@@ -326,7 +326,7 @@ if (g_Trim_Enable_S)
 
 	PiDatalog(func, A_CCOffset_pt_S,		  CCOffset_pt_S,               26, POWER_UNIT);
 	
-	if (g_Trim_Enable_S)
+	if (g_Burn_Enable_S)
 	{
 		PiDatalog(func, A_CCOffset_target_S,      CCOffset_Target_S,           26, POWER_UNIT);
 		PiDatalog(func, A_CCOffset_TrCode_S,      CCOffset_TrCode_S,           26, POWER_UNIT);
@@ -336,7 +336,7 @@ if (g_Trim_Enable_S)
 		PiDatalog(func, A_Eetr32_Zoffset0_S,      g_S_TrimRegisterTemp[32],			26, POWER_UNIT);
 		PiDatalog(func, A_Eetr33_Zoffset1_S,      g_S_TrimRegisterTemp[33],			26, POWER_UNIT);
 		PiDatalog(func, A_Eetr34_Zoffset2_S,      g_S_TrimRegisterTemp[34],			26, POWER_UNIT);
-		PiDatalog(func, A_Bin2Dec1_S,			  EEpr_Array[2],				26, POWER_UNIT);	
+		PiDatalog(func, A_Bin2Dec1_S,			  EEpr_Bank_S[E4],				26, POWER_UNIT);	
 		PiDatalog(func, A_CCOffset_prg_S,         CCOffset_prg_S,              26, POWER_UNIT);
 		PiDatalog(func, A_CCOffset_prgchg_S,      CCOffset_PrgChg,             26, POWER_UNIT);
 	}

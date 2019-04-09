@@ -47,8 +47,8 @@ void VADC_Pre(test_function& func)
 	if (AbortTest)
 		return;
 
-	// Skip trimming if g_Trim_Enable_S is not set //
-	if (g_Trim_Enable_S == 0 && g_GRR == 0)
+	// Skip trimming if g_Burn_Enable_S is not set //
+	if (g_Burn_Enable_S == 0 && g_GRR_Enable == 0)
 		return;
 
 	//if (g_Fn_VADC_Pre == 0 )  return;
@@ -67,7 +67,7 @@ void VADC_Pre(test_function& func)
 	// Test Names //
 	float VADC_pt_S      =0;
 	float VADC_prg_S     =0;
-	float VADC_Target_S  = 3.5; 
+	float VADC_Target_S  = g_VADC_Target_S_Trimops;//3.5; 
 	int VADC_TrCode_S    = 0;
 	int VADC_BitCode_S   = 0;
 	int EEtr48_ZTMFS0_S  = 0;
@@ -233,7 +233,7 @@ Pulse pulse;
 
 	DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
 
-	if (g_Trim_Enable_S != 0)
+	if (g_Burn_Enable_S)
 	{
 		//Loading previous trimming before performing the test.
 		Program_All_TrimRegister();
@@ -253,52 +253,52 @@ Pulse pulse;
 
 	g_VADC_Pre = VADC_pt_S;
 
-if (g_Trim_Enable_S != 0)
-{
-	// IRSET_S_Code //
-	// Find which trim code will make IRSET_Pre closest to target //
-	smallest_diff_val = 999999.9;
-	smallest_diff_idx = 0;
-	for (i=0; i<16; i++)
+	if (g_Burn_Enable_S)
 	{
-		temp_1 = (VADC_pt_S * (1 + (VADC_S_TrimWt[i]/100)) -  VADC_Target_S);
-		if (temp_1 < 0)	// Get rid of negatives //
-			temp_1 *= -1.0;
-		if (temp_1 < smallest_diff_val)
+		// IRSET_S_Code //
+		// Find which trim code will make IRSET_Pre closest to target //
+		smallest_diff_val = 999999.9;
+		smallest_diff_idx = 0;
+		for (i=0; i<16; i++)
 		{
-			smallest_diff_val = temp_1;
-			smallest_diff_idx = i;
+			temp_1 = (VADC_pt_S * (1 + (VADC_S_TrimWt[i]/100)) -  VADC_Target_S);
+			if (temp_1 < 0)	// Get rid of negatives //
+				temp_1 *= -1.0;
+			if (temp_1 < smallest_diff_val)
+			{
+				smallest_diff_val = temp_1;
+				smallest_diff_idx = i;
+			}
 		}
+
+
+		//Manual forcing:
+	//	smallest_diff_idx = 15;
+
+		VADC_TrCode_S = VADC_S_code[smallest_diff_idx];
+		VADC_ExpChg   = VADC_S_TrimWt[smallest_diff_idx];
+
+		VADC_ExpValue = (VADC_pt_S * (1 + (VADC_S_TrimWt[smallest_diff_idx]/100)));
+
+		TrimCode_To_TrimBit(VADC_TrCode_S, "VADC_S", 's');
+
+
+		//Convert Trimcode to readable datalog file.
+		if(VADC_S_code[smallest_diff_idx]>=0 && VADC_S_code[smallest_diff_idx] <= 7)
+		{
+			VADC_BitCode_S = -1*VADC_TrCode_S; 
+		}
+		else
+		{
+			VADC_BitCode_S = VADC_TrCode_S - 7;
+		}
+
+		EEpr_Bank_S[E6] = EEpr_Bank_S[E6] | (VADC_TrCode_S<<(48-startbit));
+
+		Program_Single_TrimRegister(g_EEP_W_E6);
+
+
 	}
-
-
-	//Manual forcing:
-//	smallest_diff_idx = 15;
-
-	VADC_TrCode_S = VADC_S_code[smallest_diff_idx];
-	VADC_ExpChg   = VADC_S_TrimWt[smallest_diff_idx];
-
-	VADC_ExpValue = (VADC_pt_S * (1 + (VADC_S_TrimWt[smallest_diff_idx]/100)));
-
-	TrimCode_To_TrimBit(VADC_TrCode_S, "VADC_S", 's');
-
-
-	//Convert Trimcode to readable datalog file.
-	if(VADC_S_code[smallest_diff_idx]>=0 && VADC_S_code[smallest_diff_idx] <= 7)
-	{
-		VADC_BitCode_S = -1*VADC_TrCode_S; 
-	}
-	else
-	{
-		VADC_BitCode_S = VADC_TrCode_S - 7;
-	}
-
-	EEpr_Array[3] = EEpr_Array[3] | (VADC_TrCode_S<<(48-startbit));
-
-	Program_Single_TrimRegister(g_EEP_W_E6);
-
-
-}
 	wait.delay_10_us(100);
 
 	VADC_prg_S = FB_ovi3->measure_average(25);
@@ -343,7 +343,7 @@ if (g_Trim_Enable_S != 0)
 
 	PiDatalog(func, A_VADC_pt_S,		  VADC_pt_S,               26, POWER_UNIT);
 	
-	if (g_Trim_Enable_S)
+	if (g_Burn_Enable_S)
 	{
 		PiDatalog(func, A_VADC_target_S,      VADC_Target_S,           26, POWER_UNIT);
 		PiDatalog(func, A_VADC_TrCode_S,      VADC_TrCode_S,           26, POWER_UNIT);
@@ -354,7 +354,7 @@ if (g_Trim_Enable_S != 0)
 		PiDatalog(func, A_Eetr49_ZTMFS1_S,    g_S_TrimRegisterTemp[49],    26, POWER_UNIT);
 		PiDatalog(func, A_Eetr50_ZTMFS2_S,    g_S_TrimRegisterTemp[50],    26, POWER_UNIT);
 		PiDatalog(func, A_Eetr51_ZTMFS3_S,    g_S_TrimRegisterTemp[51],    26, POWER_UNIT);
-		PiDatalog(func, A_Bin2Dec1_S,         EEpr_Array[3],          26, POWER_UNIT);
+		PiDatalog(func, A_Bin2Dec1_S,         EEpr_Bank_S[E6],          26, POWER_UNIT);
 		PiDatalog(func, A_VADC_prg_S,         VADC_prg_S,              26, POWER_UNIT);
 		PiDatalog(func, A_VADC_prgchg_S,      VADC_PrgChg,             26, POWER_UNIT);
 	}

@@ -89,7 +89,7 @@ void First(test_function& func)
 	float DVI2K_ch1_Temp = 0;
 	float First_TT = 0;
 
-	g_GRR          = 0;
+	g_GRR_Enable          = 0;
 	g_HBP_P_S	   = 0;
 	g_HBP_Pre_S    = 0;
 	g_CV_Pre       = 0;
@@ -123,9 +123,9 @@ void First(test_function& func)
 
 	g_Char_Enable_S=0;
 
-	if(ours->CHAR_Enable == 2||ours->CHAR_Enable == 3)  g_Char_Enable_S=1;
+	if(ours->CHAR_Enable)  g_Char_Enable_S=1;
 
-	if(ours->GRR_Enable)   g_GRR = 1;
+	if(ours->GRR_Enable)   g_GRR_Enable = 1;
 
 	//if(ours->ExtraParam1 > 0) g_DOPL_Primary = 1;
 
@@ -172,6 +172,10 @@ void First(test_function& func)
 	p_VbILimit_Code_S = ours->VbILimit_Code_S;
 
 	g_Burn_Enable_P = ours->BURN_Enable_P;
+	g_Burn_Enable_S = ours->BURN_Enable_S;
+	g_Erase_Enable_P = ours->force_ERASE_P;
+	g_Erase_Enable_S = ours->force_ERASE_S;
+	g_GRR_Enable     = ours->GRR_Enable;
 	g_TstTime_Enble_P = ours->TestTime_Enable;
 	p_Rewrite_EPROM = ours->Rewrite_EPROM;
 	p_ExtraParam1 = ours->ExtraParam1;
@@ -202,13 +206,9 @@ void First(test_function& func)
 	g_Require_PartID = false;
 
 	//Global Characterization variables
-	g_Char_iOVp_XYplot		= 0;
-	g_Char_iOVm_XYplot		= 0;
-	//g_Char_vBPPpv_XYplot	= 0;
-	//g_Char_vBPPm_XYplot		= 0;
-	//g_Char_vBPPp_XYplot		= 0;
-	g_USE_VR_600K			= false;
-	g_Char_vBPPth			= 1;
+	g_Char_iOVp_XYplot = 0;
+	g_Char_iOVm_XYplot = 0;
+	g_USE_VR_600K = false;
 
 	//Global digitizer Awav and Text variables
 	g_Save_Awav_TextDebug_ALL		= 0;
@@ -402,9 +402,9 @@ void First(test_function& func)
 
 
 
-	 //Get serial number //
-	GetSerialNum(CURRENT_SERIAL_NUM);
-	g_SERIAL_NUM= atoi(CURRENT_SERIAL_NUM);
+	// Get serial number //
+	//GetSerialNum(CURRENT_SERIAL_NUM);
+	//g_SERIAL_NUM= atoi(CURRENT_SERIAL_NUM);
 
 	//if (g_First_Time_Run || g_FirstPart <2)
 	if (g_FirstPart)
@@ -942,7 +942,7 @@ void First(test_function& func)
 
 	for(i=0;i<5;i++)
 	{
-		EEpr_Array[i] = 0;
+		EEpr_Bank_S[i] = 0;
 	}
 	// Test program delay //
 	if (p_Loop_wait > 0)

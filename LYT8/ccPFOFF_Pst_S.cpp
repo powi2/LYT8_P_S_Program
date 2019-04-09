@@ -76,12 +76,6 @@ void ccPFOFF_Pst_S(test_function& func)
 
 Pulse pulse;
 
-	
-	
-	
-
-
-	
 	// Open all relays //
 	Initialize_Relays();
 
@@ -202,8 +196,6 @@ Pulse pulse;
 	SCL_ovi3->set_voltage(SCL_ch, 3.3, VOLT_5_RANGE); 
 	wait.delay_10_us(200);
 
-
-
 	//-----------------------------------------------------------------------------------
 	//I2C command.
 	//------------------------------------------------------------------------------------
@@ -284,7 +276,6 @@ Pulse pulse;
 
 	DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
 	
-
 	ddd_7->ddd_stop_pattern(); //Stop the 10Khz Pattern.
 
 	IS_dvi2k->set_current(IS_ch, 200e-6, RANGE_20_MA);
@@ -302,11 +293,10 @@ Pulse pulse;
 //g_Debug	= 0;
 	ccPFOFF_Pst_S = delta;
 
-	if (g_Trim_Enable_S && g_ccPFOFF_Pre != 0)
+	if (g_Burn_Enable_S && g_ccPFOFF_Pre != 0)
 	{
 		ccPFOFF_Delta_S = 100*(ccPFOFF_Pst_S - g_ccPFOFF_Pre) / g_ccPFOFF_Pre;
 	}
-
 
 	//---------------------------------------------------------------------------------
 	//--------------------------------------------------------------------------------
@@ -374,9 +364,8 @@ Pulse pulse;
 	mux_20->open_relay(MUX_5_4); //DVI_21_GNDS to Secondary GNDS on TB.
 	wait.delay_10_us(250);
 
-
 	PiDatalog(func, A_ccPFOFF_Pst_S,	ccPFOFF_Pst_S,			26, POWER_MILLI);
-	if (g_Trim_Enable_S)
+	if (g_Burn_Enable_S)
 	{
 		PiDatalog(func, A_ccPFOFF_Delta_S,		  ccPFOFF_Delta_S,               26, POWER_UNIT);
 	}

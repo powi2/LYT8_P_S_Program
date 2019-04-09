@@ -9,7 +9,7 @@
 #include "asl.h"
 // Disable warning C4244 "conversion from 'const double' to 'float', possible loss of data"
 #pragma warning (disable : 4244)
-#pragma warning (disable :4305)
+#pragma warning (disable : 4305)
 
 #include "CLOCK1M_Pst_S.h"
 
@@ -234,7 +234,7 @@ Pulse pulse;
 	else
 		CLK1M_Pst_S = 0.0;	
 
-	if (g_Trim_Enable_S && g_CLK1M_Pre != 0)
+	if (g_Burn_Enable_S && g_CLK1M_Pre != 0)
 	{
 	
 		CLK1M_Delta_S = 100*(CLK1M_Pst_S - g_CLK1M_Pre) / g_CLK1M_Pre;
@@ -258,16 +258,6 @@ Pulse pulse;
 		CLK6M_S = 1/tmeas;
 	else
 		CLK6M_S = 0.0;	
-
-
-
-
-
-
-
-
-
-
 
 	//---------------------------------------------------------------------------------
 	//--------------------------------------------------------------------------------
@@ -309,7 +299,7 @@ Pulse pulse;
 
 
 	PiDatalog(func, A_CLK1M_Pst_S,		  CLK1M_Pst_S,               26, POWER_MEGA);
-	if (g_Trim_Enable_S)
+	if (g_Burn_Enable_S)
 	{
 		PiDatalog(func, A_CLK1M_Delta_S,		  CLK1M_Delta_S,               26, POWER_UNIT);
 	}

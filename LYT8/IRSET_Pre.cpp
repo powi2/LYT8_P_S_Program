@@ -50,7 +50,7 @@ void IRSET_Pre(test_function& func)
 	// Skip trimming if g_Burn_Enable_P set //
 	//if (g_Burn_Enable_P == 0)
 //		return;
-	if (g_Trim_Enable_S == 0 && g_GRR == 0)
+	if (g_Burn_Enable_S == 0 && g_GRR_Enable == 0)
 		return;
 	//if (g_Fn_IRSET_Pre == 0 )  return;
 
@@ -70,7 +70,7 @@ void IRSET_Pre(test_function& func)
 	//int fNum_CV_Pre = 0;
 	float IRSET_pt_S     =0;
 	float IRSET_prg_S    =0;
-	float IRSET_Target_S = 160e-6; 
+	float IRSET_Target_S = g_IRSET_Target_S_Trimops;//160e-6; 
 	int IRSET_TrCode_S   = 0;
 	int IRSET_BitCode_S  = 0;
 	int EEtr76_ZTLnt0_S  = 0;
@@ -232,7 +232,7 @@ Pulse pulse;
 	DSM_I2C_Write('w', g_TM_CTRL, 0x0006);
 
 
-	if (g_Trim_Enable_S != 0)
+	if (g_Burn_Enable_S)
 	{
 		//Loading previous trimming before performing the test.
 		Program_All_TrimRegister();
@@ -248,51 +248,51 @@ Pulse pulse;
 
 	g_IRSET_Pre = IRSET_pt_S;
 
-if (g_Trim_Enable_S)
-{
-	// IRSET_S_Code //
-	// Find which trim code will make IRSET_Pre closest to target //
-	smallest_diff_val = 999999.9;
-	smallest_diff_idx = 0;
-	for (i=0; i<16; i++)
+	if (g_Burn_Enable_S)
 	{
-		temp_1 = (IRSET_pt_S * (1 + (IRSET_S_TrimWt[i]/100)) -  IRSET_Target_S);
-		if (temp_1 < 0)	// Get rid of negatives //
-			temp_1 *= -1.0;
-		if (temp_1 < smallest_diff_val)
+		// IRSET_S_Code //
+		// Find which trim code will make IRSET_Pre closest to target //
+		smallest_diff_val = 999999.9;
+		smallest_diff_idx = 0;
+		for (i=0; i<16; i++)
 		{
-			smallest_diff_val = temp_1;
-			smallest_diff_idx = i;
+			temp_1 = (IRSET_pt_S * (1 + (IRSET_S_TrimWt[i]/100)) -  IRSET_Target_S);
+			if (temp_1 < 0)	// Get rid of negatives //
+				temp_1 *= -1.0;
+			if (temp_1 < smallest_diff_val)
+			{
+				smallest_diff_val = temp_1;
+				smallest_diff_idx = i;
+			}
 		}
+
+
+		//Manual forcing:
+		//smallest_diff_idx = 14;
+
+		IRSET_TrCode_S = IRSET_S_code[smallest_diff_idx];
+		IRSET_ExpChg   = IRSET_S_TrimWt[smallest_diff_idx];
+
+		TrimCode_To_TrimBit(IRSET_TrCode_S, "IRSET_S", 's');
+
+		if(IRSET_TrCode_S >=0 && IRSET_TrCode_S <= 7)
+		{
+			IRSET_BitCode_S = -1*IRSET_TrCode_S; 
+		}
+		else if(IRSET_TrCode_S == 15) IRSET_BitCode_S = 1;
+		else if(IRSET_TrCode_S == 14) IRSET_BitCode_S = 2;
+		else if(IRSET_TrCode_S == 13) IRSET_BitCode_S = 3;
+		else if(IRSET_TrCode_S == 12) IRSET_BitCode_S = 4;
+		else if(IRSET_TrCode_S == 11) IRSET_BitCode_S = 5;
+		else if(IRSET_TrCode_S == 10) IRSET_BitCode_S = 6;
+		else if(IRSET_TrCode_S == 9)  IRSET_BitCode_S = 7;
+		else if(IRSET_TrCode_S == 8)  IRSET_BitCode_S = 8;
+
+		EEpr_Bank_S[E8] = EEpr_Bank_S[E8] | (IRSET_TrCode_S<<(76-startbit));
+
+		Program_Single_TrimRegister(g_EEP_W_E8);
+
 	}
-
-
-	//Manual forcing:
-	//smallest_diff_idx = 14;
-
-	IRSET_TrCode_S = IRSET_S_code[smallest_diff_idx];
-	IRSET_ExpChg   = IRSET_S_TrimWt[smallest_diff_idx];
-
-	TrimCode_To_TrimBit(IRSET_TrCode_S, "IRSET_S", 's');
-
-	if(IRSET_TrCode_S >=0 && IRSET_TrCode_S <= 7)
-	{
-		IRSET_BitCode_S = -1*IRSET_TrCode_S; 
-	}
-	else if(IRSET_TrCode_S == 15) IRSET_BitCode_S = 1;
-	else if(IRSET_TrCode_S == 14) IRSET_BitCode_S = 2;
-	else if(IRSET_TrCode_S == 13) IRSET_BitCode_S = 3;
-	else if(IRSET_TrCode_S == 12) IRSET_BitCode_S = 4;
-	else if(IRSET_TrCode_S == 11) IRSET_BitCode_S = 5;
-	else if(IRSET_TrCode_S == 10) IRSET_BitCode_S = 6;
-	else if(IRSET_TrCode_S == 9)  IRSET_BitCode_S = 7;
-	else if(IRSET_TrCode_S == 8)  IRSET_BitCode_S = 8;
-
-	EEpr_Array[4] = EEpr_Array[4] | (IRSET_TrCode_S<<(76-startbit));
-
-	Program_Single_TrimRegister(g_EEP_W_E8);
-
-}
 	wait.delay_10_us(100);
 
 	IRSET_prg_S = -1*(IS_dvi2k->measure_average(25));
@@ -337,7 +337,7 @@ if (g_Trim_Enable_S)
 
 	PiDatalog(func, A_IRSET_pt_S, IRSET_pt_S,              26, POWER_MICRO);
 	
-	if (g_Trim_Enable_S)
+	if (g_Burn_Enable_S)
 	{
 		PiDatalog(func, A_IRSET_target_S,     IRSET_Target_S,          26, POWER_MICRO);
 		PiDatalog(func, A_IRSET_TrCode_S,     IRSET_TrCode_S,          26, POWER_UNIT);
@@ -347,7 +347,7 @@ if (g_Trim_Enable_S)
 		PiDatalog(func, A_Eetr77_ZTLnt1_S,    g_S_TrimRegisterTemp[77],    26, POWER_UNIT);
 		PiDatalog(func, A_Eetr78_ZTLnt2_S,    g_S_TrimRegisterTemp[78],    26, POWER_UNIT);
 		PiDatalog(func, A_Eetr79_ZTLnt3_S,    g_S_TrimRegisterTemp[79],    26, POWER_UNIT);
-		PiDatalog(func, A_Bin2Dec1_S,         EEpr_Array[4],          26, POWER_UNIT);
+		PiDatalog(func, A_Bin2Dec1_S,         EEpr_Bank_S[E8],          26, POWER_UNIT);
 		PiDatalog(func, A_IRSET_prg_S,        IRSET_prg_S,             26, POWER_MICRO);
 		PiDatalog(func, A_IRSET_prgchg_S,     IRSET_PrgChg,            26, POWER_UNIT);
 	}

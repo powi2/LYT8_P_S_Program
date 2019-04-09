@@ -47,7 +47,7 @@ void VR_Detect_S(test_function& func)
 		return;
 
 
-	if(g_TvrOption_B16_17_S != 0)
+	if(g_Trim_TvrOption_B16_17_S_Trimops != 0)
 		return;
 
 	//if (g_Fn_VADC_Pre == 0 )  return;
@@ -683,7 +683,7 @@ VR_Detect_A_Search(B1_FastUpdate, B2_MaxSate, A_Skipping, A1_MinState, A2_FastUp
 	Open_relay(K4_DSM_TB);
 	wait.delay_10_us(250);
 	
-	PiDatalog(func, A_VR_Opt,		  g_TvrOption_B16_17_S,      26, POWER_UNIT);
+	PiDatalog(func, A_VR_Opt,		  g_Trim_TvrOption_B16_17_S_Trimops,      26, POWER_UNIT);
 	PiDatalog(func, A_AVR_Tap1,		  VFB_Meas[4],               26, POWER_UNIT);
 	PiDatalog(func, A_AVR_Tap2,		  VFB_Meas[1],               26, POWER_UNIT);
 	PiDatalog(func, A_AVR_Tap3,		  VFB_Meas[2],               26, POWER_UNIT);
@@ -733,7 +733,7 @@ VR_Detect_A_Search(B1_FastUpdate, B2_MaxSate, A_Skipping, A1_MinState, A2_FastUp
 	
 
 
-	////////if (g_Trim_Enable_S)
+	////////if (g_Burn_Enable_S)
 	////////{
 	////////	PiDatalog(func, A_VADC_Delta_S,      VADC_Delta_S,           26, POWER_UNIT);
 	////////}

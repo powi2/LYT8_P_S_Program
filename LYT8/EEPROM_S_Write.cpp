@@ -43,7 +43,10 @@ void EEPROM_S_Write(test_function& func)
 	if(gDisplay_FuncNum)
 		PiDatalog(func, A_Func_Num_EEpr_S_Write, gFuncNum, 27, POWER_UNIT);
 
-if(g_Trim_Enable_S)
+	if (g_OPCODE==4250 || g_OPCODE==4300 || g_OPCODE==4500)
+		return;
+
+if(g_Burn_Enable_S && g_GRR_Enable == 0)
 {
 
 	float vVR_set=15;
@@ -170,7 +173,7 @@ if(g_Trim_Enable_S)
 		i++;
 	}
 
-	VR_dvi->set_voltage(VR_ch, vVR_set, VOLT_50_RANGE); // DVI_11_1
+	VR_dvi->set_voltage(VR_ch, vVR_Burn_th, VOLT_50_RANGE); // DVI_11_1
 	wait.delay_10_us(200);
 	// Stop/End Burn EEprom
 	//  0x00 0x5C write 0x00
@@ -217,7 +220,7 @@ if(g_Trim_Enable_S)
 	Open_relay(K1_FB_SPI_TB);		 //Reconnect OVI to FB
 	wait.delay_10_us(250);
 
-	if(g_Trim_Enable_S)
+	if(g_Burn_Enable_S)
 	{
 		PiDatalog(func, A_EEpr_S_Write_S,      1,     26, POWER_UNIT);
 	}

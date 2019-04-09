@@ -47,7 +47,7 @@ void CV_Pre(test_function& func)
 		return;
 
 	// Skip trimming if g_Burn_Enable_P set //
-	if (g_Trim_Enable_S == 0 && g_GRR == 0)
+	if (g_Burn_Enable_S == 0 && g_GRR_Enable == 0)
 		return;
 
 	//if (g_Fn_CV_Pre == 0 )  return;
@@ -78,7 +78,7 @@ void CV_Pre(test_function& func)
 	//int fNum_CV_Pre = 0;
 	float CV_pt_S  =0;
 	float CV_prg_S =0;
-	float CV_Target_S = 1.25; //gCV_Vout_TARGET_Trimops;
+	float CV_Target_S = g_CV_Target_S_Trimops;//1.25; //gCV_Vout_TARGET_Trimops;
 	int CV_TrCode_S = 0;
 	int CV_BitCode_S = 0;
 	int EEtr_Vref0_S = 0;
@@ -250,7 +250,7 @@ Pulse pulse;
 		//0x00 0x44 write 0x10 0x00  ==> ZTMC_Avref_1p25V
 		DSM_I2C_Write('w', g_ANA_CTRL_0, 0x0010);
 
-		if (g_Trim_Enable_S != 0)
+		if (g_Burn_Enable_S != 0)
 		{
 			Program_All_TrimRegister();
 		}
@@ -287,7 +287,7 @@ Pulse pulse;
 			//0x00 0x46 write 0x00 0xF0  ==> enable Dcv_comps_out to HSG
 			DSM_I2C_Write('w', g_ANA_CTRL_1, 0xF000); 
 
-			if (g_Trim_Enable_S != 0)
+			if (g_Burn_Enable_S != 0)
 			{
 				Program_All_TrimRegister();
 			}
@@ -310,7 +310,7 @@ Pulse pulse;
 	// Find which trim code will make CV_Pre closest to target //
 
 
-if (g_Trim_Enable_S)
+if (g_Burn_Enable_S)
 {
 	
 	
@@ -345,7 +345,7 @@ if (g_Trim_Enable_S)
 		CV_BitCode_S = CV_TrCode_S - 7;
 	}
 
-	EEpr_Array[2] = EEpr_Array[2] | (CV_TrCode_S<<(38-startbit));
+	EEpr_Bank_S[E4] = EEpr_Bank_S[E4] | (CV_TrCode_S<<(38-startbit));
 
 	Program_Single_TrimRegister(g_EEP_W_E4);
 }
@@ -411,7 +411,7 @@ if (g_Trim_Enable_S)
 	}
 	
 	
-	if (g_Trim_Enable_S)
+	if (g_Burn_Enable_S)
 	{
 		PiDatalog(func, A_CV_target_S,  CV_Target_S,          26, POWER_UNIT);
 		PiDatalog(func, A_CV_TrCode_S,  CV_TrCode_S,          26, POWER_UNIT);
@@ -421,7 +421,7 @@ if (g_Trim_Enable_S)
 		PiDatalog(func, A_Iztr_Vref1_S, g_S_TrimRegisterTemp[39], 26, POWER_UNIT);
 		PiDatalog(func, A_Iztr_Vref2_S, g_S_TrimRegisterTemp[40], 26, POWER_UNIT);
 		PiDatalog(func, A_Iztr_Vref3_S, g_S_TrimRegisterTemp[41], 26, POWER_UNIT);
-		PiDatalog(func, A_Bin2Dec1_S,   EEpr_Array[2],        26, POWER_UNIT);
+		PiDatalog(func, A_Bin2Dec1_S,   EEpr_Bank_S[E4],        26, POWER_UNIT);
 		PiDatalog(func, A_CV_prg_S,     CV_prg_S,             26, POWER_UNIT);
 		PiDatalog(func, A_CV_prgchg_S,  CV_PrgChg,         26, POWER_UNIT);
 	}

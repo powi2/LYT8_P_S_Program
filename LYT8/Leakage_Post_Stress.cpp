@@ -9,6 +9,7 @@
 #include "asl.h"
 // Disable warning C4244 "conversion from 'const double' to 'float', possible loss of data"
 #pragma warning (disable : 4244)
+#pragma warning (disable : 4305)
 
 #include "Leakage_Post_Stress.h"
 

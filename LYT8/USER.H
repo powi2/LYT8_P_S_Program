@@ -303,8 +303,8 @@ extern int	SCL_ch;        //OVI_3_6
 extern int	FB_ch;         //OVI_3_7
 
 extern uint16_t EEpr_Bank_P[5];
-extern uint16_t EEpr_Array_S[5];	//replace EEpr_Array with additional _S for secondary  --> to do later by HL
-extern uint16_t EEpr_Array[5];
+extern uint16_t EEpr_Bank_S_S[5];	//replace EEpr_Bank_S with additional _S for secondary  --> to do later by HL
+extern uint16_t EEpr_Bank_S[5];
 
 extern uint16_t EEpr_E0;   
 extern uint16_t EEpr_E2;
@@ -376,7 +376,7 @@ extern bool g_Require_PartID;
 extern int	AbortTest; 
 extern int	g_Sim_Enable_P;
 extern int  g_Burn_Enable_P;
-extern int  g_Trim_Enable_S;
+extern int  g_Burn_Enable_S;
 extern int	g_Erase_Enable_P;
 extern int  g_Erase_Enable_S;
 extern int  g_TstTime_Enble_P;
@@ -487,8 +487,7 @@ enum Vd_Input_Mode {High_Vd_Input, Low_Vd_Input, High_Temp_Vd_Input, Low_Load_Vd
 extern float gTrim_Voltage;
 
 /* ======================  Setup Variable  ============================*/
-extern STRING CURRENT_SERIAL_NUM; 
-extern int g_SERIAL_NUM;
+//extern STRING CURRENT_SERIAL_NUM; 
 extern int g_FirstPart;
 extern int gFuncNum;
 extern int gDisplay_FuncNum;
@@ -513,7 +512,6 @@ extern bool	g_Char_iOVp_XYplot;
 extern bool	g_Char_iOVm_XYplot;
 extern bool	g_Char_iUVp_XYplot;
 extern bool	g_Char_iUVm_XYplot;
-extern bool g_Char_vBPPth;
 
 //iOV function global variables
 extern bool g_USE_VR_600K;
@@ -900,24 +898,39 @@ extern int g_SiliconRev_Sec; // Secondary silicon revision //
 
 //HL
 // Secondary Trim Options.
-extern int g_tsstart_B8_9_S;			//Softstart time    
-extern int g_tfbOption_B10_11_S;		//Boost Frequency Options
-extern int g_DOPL_B15_S;				//DOPL Option Bit
-extern int g_TvrOption_B16_17_S;		//VR Option Selection.
-extern int g_TenCP_B18_S;				//Enable CP in Non I2C Mode
-extern int g_ZffOption_B19_20_S;		//Feedforward Option.
-extern int g_DsblJitDim_B21_S;			//Disable Jitter in Dimming.
-extern int g_JitterOff_B22_S;			//Turn off Jitter.
-extern int g_ZTMBStr_B29_30_S;			//Enable 1 segment Boost Driver.
-extern int g_DsblFlBck_B31_S;			//Disable Foldback.
-extern int g_Dimth_B47_S;				//Select Deep Dim Threshold
-extern int g_tHrtBtOpt_B61_S;			//Heat beat time option.
-extern int g_CPNonI2C_B62_S;			//Disable CP
-extern int g_ZEE_50KStr_B63_S;			//Set softstart start up freq
-extern int g_FlBck_Ccopt_B74_S;			//To change rate of change in CC reference.
-extern int g_FlBck_Sel_B75_S;			//Trim to disable thermal foldback and line induced foldback.
+extern int g_Trim_tsstart_B8_9_S_Trimops;			//Softstart time    
+extern int g_Trim_tfbOption_B10_11_S_Trimops;		//Boost Frequency Options
+extern int g_Trim_DOPL_B15_S_Trimops;				//DOPL Option Bit
+extern int g_Trim_TvrOption_B16_17_S_Trimops;		//VR Option Selection.
+extern int g_Trim_TenCP_B18_S_Trimops;				//Enable CP in Non I2C Mode
+extern int g_Trim_ZffOption_B19_20_S_Trimops;		//Feedforward Option.
+extern int g_Trim_DsblJitDim_B21_S_Trimops;			//Disable Jitter in Dimming.
+extern int g_Trim_JitterOff_B22_S_Trimops;			//Turn off Jitter.
+extern int g_Trim_ZTMBStr_B29_30_S_Trimops;			//Enable 1 segment Boost Driver.
+extern int g_Trim_DsblFlBck_B31_S_Trimops;			//Disable Foldback.
+extern int g_Trim_Dimth_B47_S_Trimops;				//Select Deep Dim Threshold
+extern int g_Trim_tHrtBtOpt_B61_S_Trimops;			//Heat beat time option.
+extern int g_Trim_CPNonI2C_B62_S_Trimops;			//Disable CP
+extern int g_Trim_ZEE_50KStr_B63_S_Trimops;			//Set softstart start up freq
+extern int g_Trim_FlBck_Ccopt_B74_S_Trimops;			//To change rate of change in CC reference.
+extern int g_Trim_FlBck_Sel_B75_S_Trimops;			//Trim to disable thermal foldback and line induced foldback.
+extern int g_SID_Trimops;							//Si ID
 
-extern int   g_GRR;
+extern float g_BFreq_Target_S_Trimops;
+extern float g_ccPFOFF_Target_S_Trimops;
+extern float g_Fosc_Target_S_Trimops;
+extern float g_CLK1M_Target_S_Trimops;
+extern float g_VDDA_Target_S_Trimops;
+extern float g_CV_Target_S_Trimops;
+extern float g_VbIlim_Target_S_Trimops;
+extern float g_VADC_Target_S_Trimops;
+extern float g_ZTtimer_Target_S_Trimops;
+extern float g_VccRef_Target_S_Trimops;
+extern float g_CCOffset_Target_S_Trimops;
+extern float g_CP_IS_Target_S_Trimops;
+extern float g_IRSET_Target_S_Trimops;
+
+extern int   g_GRR_Enable;
 extern float g_HBP_P_S;
 extern float g_CV_Pre;
 extern float g_VDDA_Pre;
@@ -2501,8 +2514,6 @@ void PowerUp_I2C_S();
 void DSM_init_LYT8();
 void Setup_Resources_for_I2C_P();
 void Power_Down_I2C_P();
-void Characterize_vBPPth();
-
 
 void EEPROM_ERASE_P(float *vErase_th_P);
 void EEPROM_BURN_P(float *vBurn_th_P);

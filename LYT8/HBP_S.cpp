@@ -351,6 +351,20 @@ Pulse pulse;
 			}
 		}
 	}
+	else
+	{
+
+		j =  UpperLimit; 		
+		while(j > LowerLimit )
+		{
+			HBP_dvi2k->set_voltage(HBP_ch, j, VOLT_20_RANGE);
+			wait.delay_10_us(50);
+			j=j-0.01;
+		
+		}
+
+	}
+
 
 	//This voltage will be the lower limit of HBP_M from the search loop below.
 	HBP_dvi2k->set_voltage(HBP_ch, LowerLimit, VOLT_20_RANGE);

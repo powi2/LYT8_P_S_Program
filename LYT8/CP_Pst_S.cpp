@@ -81,7 +81,6 @@ void CP_Pst_S(test_function& func)
 	float delta           = 0;
 	
 
-
 	if(g_Device_ID_S == 6160||g_Device_ID_S == 6159||g_Device_ID_S==6155)
 	{
 		//CP_IS_Target_S = 201e-3; 
@@ -292,7 +291,7 @@ Pulse pulse;
 		CP2_BOFF_Pst_S  = CP_BOFF_TH;
 		CP2_PFOFF_Pst_S = CP_PFOFF_TH; 
 
-		if (g_Trim_Enable_S && g_CP_IS_Pre != 0)
+		if (g_Burn_Enable_S && g_CP_IS_Pre != 0)
 		{
 			CP_IS_Delta_S = 100*(CP2_IS_Pst_S - g_CP_IS_Pre) / g_CP_IS_Pre;
 		}
@@ -304,7 +303,7 @@ Pulse pulse;
 		CP1_BOFF_Pst_S  = CP_BOFF_TH;
 		CP1_PFOFF_Pst_S = CP_PFOFF_TH;
 
-		if (g_Trim_Enable_S && g_CP_IS_Pre != 0)
+		if (g_Burn_Enable_S && g_CP_IS_Pre != 0)
 		{
 			CP_IS_Delta_S = 100*(CP1_IS_Pst_S - g_CP_IS_Pre) / g_CP_IS_Pre;
 		}
@@ -392,7 +391,7 @@ Pulse pulse;
 		PiDatalog(func, A_CP1_IS_Pst_S,			CP1_IS_Pst_S,			  26, POWER_MILLI);
 		PiDatalog(func, A_CP1_PFOFF_Pst_S,		CP1_PFOFF_Pst_S,			 26, POWER_MILLI);
 	}
-	if (g_Trim_Enable_S)
+	if (g_Burn_Enable_S)
 	{
 		PiDatalog(func, A_CP_IS_Delta_S,      CP_IS_Delta_S,       26, POWER_UNIT);
 	}

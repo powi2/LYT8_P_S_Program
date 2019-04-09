@@ -51,7 +51,7 @@ void VDDA_Pst_S(test_function& func)
 	//if (g_Burn_Enable_P == 0)
 //		return;
 
-	///*if (g_Trim_Enable_S == 0)
+	///*if (g_Burn_Enable_S == 0)
 	//	return;*/
 
 	//if (g_Fn_CV_Pre == 0 )  return;
@@ -242,7 +242,7 @@ Pulse pulse;
 	
 	VDDA_pst_S = FB_ovi3->measure_average(25);
 
-	if (g_Trim_Enable_S && g_VDDA_Pre != 0.0)
+	if (g_Burn_Enable_S && g_VDDA_Pre != 0.0)
 	{
 		VDDA_Pct_Delta_S =  100*(VDDA_pst_S - g_VDDA_Pre) / g_VDDA_Pre;		
 	}
@@ -309,7 +309,7 @@ Pulse pulse;
 
 // Datalog //
 	PiDatalog(func, A_VDDA_Post_S, VDDA_pst_S,         26, POWER_UNIT);
-	if (g_Trim_Enable_S)
+	if (g_Burn_Enable_S)
 	{
 		PiDatalog(func, A_VDDA_Pct_Del_S,   VDDA_Pct_Delta_S,          26, POWER_UNIT);
 	}

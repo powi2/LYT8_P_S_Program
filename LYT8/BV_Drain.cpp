@@ -149,8 +149,8 @@ void BV_Drain(test_function& func)
 	wait.delay_10_us(250);
 
 	// BPP //
-	BPP_dvi->set_voltage(BPP_ch, 0.0, RANGE_10_V); // OVI_1_0 //
-	BPP_dvi->set_current(BPP_ch, 30e-3, RANGE_30_MA); // OVI_1_0 //
+	BPP_ovi->set_voltage(BPP_ch, 0.0, RANGE_10_V); // OVI_1_0 //
+	BPP_ovi->set_current(BPP_ch, 30e-3, RANGE_30_MA); // OVI_1_0 //
 
 	// Be sure HVS is connected to drain.  Force 5V to drain with HVS and measure with dvi. //
 	// Setup to measure drain voltage //
@@ -158,34 +158,34 @@ void BV_Drain(test_function& func)
 	D_dvi->set_current(D_ch, 1e-6, RANGE_30_UA); // DVI_11_0, float //
 
 	// Power up from 0V 6.3V->4.4V->6.8V above Vshunt to stop device from switching
-	BPP_dvi->set_current(BPP_ch, 5e-3, RANGE_30_MA); // OVI_1_0 //
-	BPP_dvi->set_voltage(BPP_ch, 0.0, RANGE_10_V); // OVI_1_0 //
+	BPP_ovi->set_current(BPP_ch, 5e-3, RANGE_30_MA); // OVI_1_0 //
+	BPP_ovi->set_voltage(BPP_ch, 0.0, RANGE_10_V); // OVI_1_0 //
 	wait.delay_10_us(10);
-	BPP_dvi->set_voltage(BPP_ch, 3.0, RANGE_10_V); // OVI_1_0 //
+	BPP_ovi->set_voltage(BPP_ch, 3.0, RANGE_10_V); // OVI_1_0 //
 	wait.delay_10_us(50);
-//	BPP_dvi->set_voltage(BPP_ch, gVshunt_BPP-50e-3, RANGE_10_V); // OVI_1_0 //
+//	BPP_ovi->set_voltage(BPP_ch, gVshunt_BPP-50e-3, RANGE_10_V); // OVI_1_0 //
 //	wait.delay_10_us(10);
-//	BPP_dvi->set_voltage(BPP_ch, 4.4, RANGE_10_V); // OVI_1_0 //
+//	BPP_ovi->set_voltage(BPP_ch, 4.4, RANGE_10_V); // OVI_1_0 //
 //	wait.delay_10_us(10);
-//	BPP_dvi->set_voltage(BPP_ch, gVshunt_BPP, RANGE_10_V); // OVI_1_0 //
+//	BPP_ovi->set_voltage(BPP_ch, gVshunt_BPP, RANGE_10_V); // OVI_1_0 //
 //	wait.delay_10_us(10);
 	j = 3.0;
 	while(j < gVshunt_BPP)
 	{
 		if(j > 5.4 && i_set < 1)
 		{
-			BPP_dvi->set_current(BPP_ch, 18e-3, RANGE_30_MA);  //used to be at 5mA
+			BPP_ovi->set_current(BPP_ch, 18e-3, RANGE_30_MA);  //used to be at 5mA
 			i_set = 1;
 		}
-		BPP_dvi->set_voltage(BPP_ch, j, RANGE_10_V); // OVI_1_0 //
+		BPP_ovi->set_voltage(BPP_ch, j, RANGE_10_V); // OVI_1_0 //
 		wait.delay_10_us(10);
 		j = j + 0.1;
 	}
-	BPP_dvi->set_voltage(BPP_ch, gVshunt_BPP+100e-6, RANGE_10_V); // OVI_1_0 //
+	BPP_ovi->set_voltage(BPP_ch, gVshunt_BPP+100e-6, RANGE_10_V); // OVI_1_0 //
 	wait.delay_10_us(10);	
 
 	//Randy's recommendation to use 18mA to prevent the DUT going into Shutdown mode.
-	BPP_dvi->set_current(BPP_ch, 18e-3, RANGE_30_MA); // OVI_1_0 // // require > Ishunt to hit Vshunt_BPP  zcx 12/28/16
+	BPP_ovi->set_current(BPP_ch, 18e-3, RANGE_30_MA); // OVI_1_0 // // require > Ishunt to hit Vshunt_BPP  zcx 12/28/16
 	wait.delay_10_us(50);	
 
 	// Be sure HVS is connected to drain.  Force 30V to drain with HVS and measure with dvi. //
@@ -202,7 +202,7 @@ void BV_Drain(test_function& func)
 	// Powerdown //
 	hvs_15->set_voltage(0.0, RANGE_1_KV);
 	VBPP_ramp_down(4, 0, 0.05);
-	BPP_dvi->set_current(BPP_ch, 30e-3, RANGE_30_MA); // OVI_1_0 //
+	BPP_ovi->set_current(BPP_ch, 30e-3, RANGE_30_MA); // OVI_1_0 //
 	Open_relay(K2); // Disconnect dvi from drain //
 	ovi_1->disconnect(0);
 	wait.delay_10_us(250);

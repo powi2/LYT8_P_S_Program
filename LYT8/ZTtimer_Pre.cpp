@@ -51,7 +51,7 @@ void ZTtimer_Pre(test_function& func)
 	//if (g_Burn_Enable_P == 0)
 //		return;
 
-	if (g_Trim_Enable_S == 0 && g_GRR == 0)
+	if (g_Burn_Enable_S == 0 && g_GRR_Enable == 0)
 		return;
 
 	//if (g_Fn_ZTtimer_Pre == 0 )  return;
@@ -72,7 +72,7 @@ void ZTtimer_Pre(test_function& func)
 	//int fNum_ZTtimer_Pre = 0;
 	float ZTtimer_pt_S      =   0;
 	float ZTtimer_prg_S     =   0;
-	double ZTtimer_Target_S  = 1.35e-6; 
+	double ZTtimer_Target_S  = g_ZTtimer_Target_S_Trimops;//1.35e-6; 
 	int   ZTtimer_TrCode_S  = 0;
 	int   ZTtimer_BitCode_S = 0;
 	int   EEtr57_ZTtimer0_S  = 0;
@@ -258,7 +258,7 @@ Pulse pulse;
 	//HSG_ovi->set_voltage(HSG_ch, 5, VOLT_20_RANGE); 
 
 	DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
-	if (g_Trim_Enable_S != 0)
+	if (g_Burn_Enable_S != 0)
 	{
 		//Loading previous trimming before performing the test.
 		Program_All_TrimRegister();
@@ -301,41 +301,41 @@ Pulse pulse;
 
 	g_ZTtimer_Pre = ZTtimer_pt_S;
 
-if (g_Trim_Enable_S)
-{
-
-
-	// ZTtimer_S_Code //
-	// Find which trim code will make ZTtimer_Pre closest to target //
-	smallest_diff_val = 999999.9;
-	smallest_diff_idx = 0;
-	for (i=0; i<16; i++)
+	if (g_Burn_Enable_S)
 	{
-		temp_1 = (ZTtimer_pt_S * (1 + (ZTtimer_S_TrimWt[i]/100)) -  ZTtimer_Target_S);
-		if (temp_1 < 0)	// Get rid of negatives //
-			temp_1 *= -1.0;
-		if (temp_1 < smallest_diff_val)
+
+
+		// ZTtimer_S_Code //
+		// Find which trim code will make ZTtimer_Pre closest to target //
+		smallest_diff_val = 999999.9;
+		smallest_diff_idx = 0;
+		for (i=0; i<16; i++)
 		{
-			smallest_diff_val = temp_1;
-			smallest_diff_idx = i;
+			temp_1 = (ZTtimer_pt_S * (1 + (ZTtimer_S_TrimWt[i]/100)) -  ZTtimer_Target_S);
+			if (temp_1 < 0)	// Get rid of negatives //
+				temp_1 *= -1.0;
+			if (temp_1 < smallest_diff_val)
+			{
+				smallest_diff_val = temp_1;
+				smallest_diff_idx = i;
+			}
 		}
+
+
+		//Manual forcing:
+		//smallest_diff_idx = 7;
+
+		ZTtimer_TrCode_S = ZTtimer_S_code[smallest_diff_idx];
+		ZTtimer_ExpChg   = ZTtimer_S_TrimWt[smallest_diff_idx];
+
+		TrimCode_To_TrimBit(ZTtimer_TrCode_S, "ZTtime_S", 's');
+
+		EEpr_Bank_S[E6] = EEpr_Bank_S[E6] | (ZTtimer_TrCode_S<<(57-startbit));
+
+		Program_Single_TrimRegister(g_EEP_W_E6);
+
+
 	}
-
-
-	//Manual forcing:
-	//smallest_diff_idx = 7;
-
-	ZTtimer_TrCode_S = ZTtimer_S_code[smallest_diff_idx];
-	ZTtimer_ExpChg   = ZTtimer_S_TrimWt[smallest_diff_idx];
-
-	TrimCode_To_TrimBit(ZTtimer_TrCode_S, "ZTtime_S", 's');
-
-	EEpr_Array[3] = EEpr_Array[3] | (ZTtimer_TrCode_S<<(57-startbit));
-
-	Program_Single_TrimRegister(g_EEP_W_E6);
-
-
-}
 
 	for (i=0; i<15; i++)
 	{
@@ -409,7 +409,7 @@ if (g_Trim_Enable_S)
 
 	PiDatalog(func, A_ZTtimer_pt_S, ZTtimer_pt_S,              26, POWER_MICRO);
 	
-	if (g_Trim_Enable_S)
+	if (g_Burn_Enable_S)
 	{
 		PiDatalog(func, A_ZTtimer_target_S,     ZTtimer_Target_S,          26, POWER_MICRO);
 		PiDatalog(func, A_ZTtimer_TrCode_S,     ZTtimer_TrCode_S,          26, POWER_UNIT);
@@ -419,7 +419,7 @@ if (g_Trim_Enable_S)
 		PiDatalog(func, A_Eetr58_ZTtimer1_S,    g_S_TrimRegisterTemp[58],    26, POWER_UNIT);
 		PiDatalog(func, A_Eetr59_ZTtimer2_S,    g_S_TrimRegisterTemp[59],    26, POWER_UNIT);
 		PiDatalog(func, A_Eetr60_ZTtimer3_S,    g_S_TrimRegisterTemp[60],    26, POWER_UNIT);
-		PiDatalog(func, A_Bin2Dec1_S,			EEpr_Array[3],          26, POWER_UNIT);
+		PiDatalog(func, A_Bin2Dec1_S,			EEpr_Bank_S[E6],          26, POWER_UNIT);
 		PiDatalog(func, A_ZTtimer_prg_S,        ZTtimer_prg_S,             26, POWER_MICRO);
 		PiDatalog(func, A_ZTtimer_prgchg_S,     ZTtimer_PrgChg,            26, POWER_UNIT);
 	}

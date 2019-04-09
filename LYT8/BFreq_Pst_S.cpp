@@ -47,7 +47,6 @@ void BFreq_Pst_S(test_function& func)
 	if (AbortTest)
 		return;
 
-
 	//if (g_Fn_BFreq_Pre == 0 )  return;
 
 	// Test Time Begin //
@@ -71,8 +70,6 @@ void BFreq_Pst_S(test_function& func)
 	float tmeas_array[20] = {0};
 
 Pulse pulse;
-
-	
 
 	// Open all relays //
 	Initialize_Relays();
@@ -178,7 +175,6 @@ Pulse pulse;
 	SCL_ovi3->set_voltage(SCL_ch, 3.3, VOLT_10_RANGE); 
 	wait.delay_10_us(200);
 
-
 	//-----------------------------------------------------------------------------------
 	//I2C command.
 	//------------------------------------------------------------------------------------
@@ -210,12 +206,10 @@ Pulse pulse;
 	////Dali State to 254
 	DSM_I2C_Write('b', 0x10, 0xFF);
 	
-//
-
 	num_loop = 20;
 	BFreq_Pst_S = BFreq_Meas(num_loop);
 
-	if (g_Trim_Enable_S&& g_BFreq_Pre != 0.0)
+	if (g_Burn_Enable_S&& g_BFreq_Pre != 0.0)
 	{
 		BFreq_Delta_S = 100*(BFreq_Pst_S - g_BFreq_Pre) / g_BFreq_Pre;
 	}
@@ -289,7 +283,7 @@ Pulse pulse;
 
 
 	PiDatalog(func, A_BFreq_Pst_S,		  BFreq_Pst_S,               26, POWER_KILO);
-	if (g_Trim_Enable_S)
+	if (g_Burn_Enable_S)
 	{
 		PiDatalog(func, A_BFreq_Delta_S,		  BFreq_Delta_S,               26, POWER_UNIT);
 	}

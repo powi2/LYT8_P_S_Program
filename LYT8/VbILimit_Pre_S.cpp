@@ -46,8 +46,8 @@ void VbILimit_Pre_S(test_function& func)
 	if (AbortTest)
 		return;
 
-	// Skip trimming if g_Trim_Enable_S is not set //
-	if (g_Trim_Enable_S == 0 && g_GRR == 0)
+	// Skip trimming if g_Burn_Enable_S is not set //
+	if (g_Burn_Enable_S == 0 && g_GRR_Enable == 0)
 		return;
 
 	//if (g_Fn_VccRef_Pre == 0 )  return;
@@ -66,10 +66,10 @@ void VbILimit_Pre_S(test_function& func)
 	// Test Names //
 	float VbIlim_pt_S     = 0;
 	float VbIlim_prg_S    = 0;
-	float VbIlim_Target_S = 82e-3; 
+	float VbIlim_Target_S = g_VbIlim_Target_S_Trimops;//82e-3; 
 	if(g_Device_ID_S == 6154)
 	{
-		VbIlim_Target_S = 160e-3; 
+		//VbIlim_Target_S = 160e-3; //Taken care by trimops.
 	}
 	int VbIlim_TrCode_S   = 0;
 	int VbIlim_BitCode_S  = 0;
@@ -299,7 +299,7 @@ Pulse pulse;
 	//0x00 0x60 write 0x18 0xb0  
 	DSM_I2C_Write('w', g_TEST_CTRL1, 0xb018);
 
-	if (g_Trim_Enable_S != 0)
+	if (g_Burn_Enable_S)
 	{
 		Program_All_TrimRegister();
 	}
@@ -368,68 +368,68 @@ Pulse pulse;
 
 	g_VbIlim_Pre = VbIlim_pt_S;
 
-if (g_Trim_Enable_S)
-{
-
-	// VbIlim_Pre can be either trimmed up or down only.  
-	// VbIlim_TrCode_S //
-	// Find which trim code will make VbIlim_Pre closest to target //
-	smallest_diff_val = 999999.9;
-	smallest_diff_idx = 0;
-	for (i=0; i<32; i++)
+	if (g_Burn_Enable_S)
 	{
-		temp_1 = (VbIlim_pt_S * (1 + (VbIlim_S_TrimWt[i]/100)) -  VbIlim_Target_S);
-		if (temp_1 < 0)	// Get rid of negatives //
-			temp_1 *= -1.0;
-		if (temp_1 < smallest_diff_val)
+
+		// VbIlim_Pre can be either trimmed up or down only.  
+		// VbIlim_TrCode_S //
+		// Find which trim code will make VbIlim_Pre closest to target //
+		smallest_diff_val = 999999.9;
+		smallest_diff_idx = 0;
+		for (i=0; i<32; i++)
 		{
-			smallest_diff_val = temp_1;
-			smallest_diff_idx = i;
+			temp_1 = (VbIlim_pt_S * (1 + (VbIlim_S_TrimWt[i]/100)) -  VbIlim_Target_S);
+			if (temp_1 < 0)	// Get rid of negatives //
+				temp_1 *= -1.0;
+			if (temp_1 < smallest_diff_val)
+			{
+				smallest_diff_val = temp_1;
+				smallest_diff_idx = i;
+			}
 		}
+
+
+		//Manual forcing:
+		//smallest_diff_idx = 1;
+
+		VbIlim_TrCode_S   = VbIlim_S_code[smallest_diff_idx];
+		VbIlim_ExpChg     = VbIlim_S_TrimWt[smallest_diff_idx];
+
+		VbIlim_ExpValue = (VbIlim_pt_S * (1 + (VbIlim_S_TrimWt[smallest_diff_idx]/100)));
+
+		TrimCode_To_TrimBit(VbIlim_TrCode_S, "VbILimit_S", 's');
+
+
+		//////Convert Trimcode to readable datalog file.
+		////if(VbIlim_S_code[smallest_diff_idx]>=0 && VbIlim_S_code[smallest_diff_idx] <= 15)
+		////{
+		////	VbIlim_BitCode_S = -1*VbIlim_TrCode_S; 
+		////}
+		////else
+		////{
+		////	VbIlim_BitCode_S = VbIlim_BitCode_S - 7;
+		////}
+
+		EEpr_Bank_S[E4] = EEpr_Bank_S[E4] | (VbIlim_TrCode_S<<(42-startbit));
+
+		Program_Single_TrimRegister(g_EEP_W_E4);
+
+		
 	}
-
-
-	//Manual forcing:
-	//smallest_diff_idx = 1;
-
-	VbIlim_TrCode_S   = VbIlim_S_code[smallest_diff_idx];
-	VbIlim_ExpChg     = VbIlim_S_TrimWt[smallest_diff_idx];
-
-	VbIlim_ExpValue = (VbIlim_pt_S * (1 + (VbIlim_S_TrimWt[smallest_diff_idx]/100)));
-
-	TrimCode_To_TrimBit(VbIlim_TrCode_S, "VbILimit_S", 's');
-
-
-	//////Convert Trimcode to readable datalog file.
-	////if(VbIlim_S_code[smallest_diff_idx]>=0 && VbIlim_S_code[smallest_diff_idx] <= 15)
-	////{
-	////	VbIlim_BitCode_S = -1*VbIlim_TrCode_S; 
-	////}
-	////else
-	////{
-	////	VbIlim_BitCode_S = VbIlim_BitCode_S - 7;
-	////}
-
-	EEpr_Array[2] = EEpr_Array[2] | (VbIlim_TrCode_S<<(42-startbit));
-
-	Program_Single_TrimRegister(g_EEP_W_E4);
-
-	
-}
 	wait.delay_10_us(500);
 
 	FB_ovi3->set_voltage(FB_ch, 3, VOLT_5_RANGE); // DVI_11_0
 	wait.delay_10_us(50);
 	
 
-//Program Trim Register with new calculated bit combination.
+	//Program Trim Register with new calculated bit combination.
 	//Program_Trim_Register(g_S_TrimRegister);
 	VbIlim_TH = 0;
 	float vbilim_prg_array[30] = {0};
 
-//
 
-g_Debug = 0;
+
+	g_Debug = 0;
 	for(i=0;i<5;i++)
 	{
 		FB_ovi3->set_voltage(FB_ch, 0, VOLT_5_RANGE); // DVI_11_0
@@ -546,7 +546,7 @@ g_Debug = 0;
 	Open_relay(K2_IS_BUFF_TB);      //Disconnect IS_Boost_Comp_Out to IS pin.
 	Open_relay(K2_HSG_SPI_TB);     //Reconnect OVI_1_0 from HSG
 	Open_relay(K3_HSG_SPI_TB);      //Disconnect 2nF from HSG
-Open_relay(K5_IS_SPI_IB);
+	Open_relay(K5_IS_SPI_IB);
 	Open_relay(K2_B_SPI_TB);       //Reconnect OVI_3_1 to B.
 	Open_relay(K3_B_SPI_TB);		//Disconnect 2nF from B
 	Open_relay(K1_FW_SPI_TB);      //Reconnect OVI to FW pin.
@@ -562,7 +562,7 @@ Open_relay(K5_IS_SPI_IB);
 
 	PiDatalog(func, A_VbIlim_pt_S,			VbIlim_pt_S,			  26, POWER_MILLI);
 	
-	if (g_Trim_Enable_S != 0)
+	if (g_Burn_Enable_S)
 	{
 		PiDatalog(func, A_VbIlim_target_S,      VbIlim_Target_S,       26, POWER_MILLI);
 		PiDatalog(func, A_VbIlim_TrCode_S,      VbIlim_TrCode_S,       26, POWER_UNIT);
@@ -574,7 +574,7 @@ Open_relay(K5_IS_SPI_IB);
 		PiDatalog(func, A_Eetr44_BILIM2_S,    g_S_TrimRegisterTemp[44], 26, POWER_UNIT);
 		PiDatalog(func, A_Eetr45_BILIM3_S,    g_S_TrimRegisterTemp[45], 26, POWER_UNIT);
 		PiDatalog(func, A_Eetr46_BILIM4_S,    g_S_TrimRegisterTemp[46], 26, POWER_UNIT);
-		PiDatalog(func, A_Bin2Dec1_S,		EEpr_Array[2],		  26, POWER_UNIT);	
+		PiDatalog(func, A_Bin2Dec1_S,		EEpr_Bank_S[E4],		  26, POWER_UNIT);	
 		PiDatalog(func, A_VbIlim_prg_S,         VbIlim_prg_S,          26, POWER_MILLI);
 		PiDatalog(func, A_VbIlim_prgchg_S,      VbIlim_PrgChg,         26, POWER_UNIT);
 	}

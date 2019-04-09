@@ -78,11 +78,8 @@ void Fosc_Pst_S(test_function& func)
 	int   Skip_Test2    = 0;
 	int   Skip_Test3    = 0;
 
-	
 
 Pulse pulse;
-
-
 
 	// Open all relays //
 	Initialize_Relays();
@@ -198,7 +195,6 @@ Pulse pulse;
 	SCL_ovi3->set_voltage(SCL_ch, 3.3, VOLT_10_RANGE); 
 	wait.delay_10_us(200);
 
-
 	//-----------------------------------------------------------------------------------
 	//I2C command.
 	//------------------------------------------------------------------------------------
@@ -255,8 +251,7 @@ Pulse pulse;
 	else
 		Fosc_Pst_S = 0.0;	
 
-
-	if (g_Trim_Enable_S && g_Fosc_Pre != 0)
+	if (g_Burn_Enable_S && g_Fosc_Pre != 0)
 	{
 		Fosc_Delta_S = 100*(Fosc_Pst_S - g_Fosc_Pre) / g_Fosc_Pre;
 
@@ -275,8 +270,6 @@ Pulse pulse;
 	wait.delay_10_us(30);				// Wait for TMU to trigger and to capture 10 cycles 
 	Fosc_TonMax_S = tmu_6->read(300e-6);
 
-//
-
 	toff = Fosc_TonMax_S;
 	ton  = period - toff;
 
@@ -285,27 +278,27 @@ Pulse pulse;
 		Duty_Cycle = 100*ton / period;
 	}
 
-	if(g_ZffOption_B19_20_S == 0)
+	if(g_Trim_ZffOption_B19_20_S_Trimops == 0)
 	{
 		 Fosc_FF_00_S  = Fosc_Pst_S;
 		 Skip_Test0     = 1;
 		
 	}
-	else if(g_ZffOption_B19_20_S == 1)
+	else if(g_Trim_ZffOption_B19_20_S_Trimops == 1)
 	{
 		
 		 Fosc_FF_01_S  = Fosc_Pst_S;
 		 Skip_Test1     = 1;
 		 
 	}
-	else if(g_ZffOption_B19_20_S == 2)
+	else if(g_Trim_ZffOption_B19_20_S_Trimops == 2)
 	{
 		
 		 Fosc_FF_10_S  = Fosc_Pst_S;
 		 Skip_Test2    = 1;
 		
 	}
-	else if(g_ZffOption_B19_20_S == 3)
+	else if(g_Trim_ZffOption_B19_20_S_Trimops == 3)
 	{
 		 Fosc_FF_11_S  = Fosc_Pst_S;
 		 Skip_Test3    = 1;
@@ -327,8 +320,8 @@ Pulse pulse;
 	if(Skip_Test0 == 0)
 	{
 		////////////FeedFWD Option = 0 //////////////
-		Set_EEprBit(EEpr_Array[1], 19-16, 0);
-		Set_EEprBit(EEpr_Array[1], 20-16, 0);
+		Set_EEprBit(EEpr_Bank_S[E2], 19-16, 0);
+		Set_EEprBit(EEpr_Bank_S[E2], 20-16, 0);
 		Program_Single_TrimRegister(g_EEP_W_E2);
 
 
@@ -351,8 +344,8 @@ Pulse pulse;
 	if(Skip_Test1 == 0)
 	{
 		////////////FeedFWD Option = 1 //////////////
-		Set_EEprBit(EEpr_Array[1], 19-16, 0);
-		Set_EEprBit(EEpr_Array[1], 20-16, 1);
+		Set_EEprBit(EEpr_Bank_S[E2], 19-16, 0);
+		Set_EEprBit(EEpr_Bank_S[E2], 20-16, 1);
 		Program_Single_TrimRegister(g_EEP_W_E2);
 
 
@@ -375,8 +368,8 @@ Pulse pulse;
 	if(Skip_Test2 == 0)
 	{
 		////////////FeedFWD Option = 2 //////////////
-		Set_EEprBit(EEpr_Array[1], 19-16, 1);
-		Set_EEprBit(EEpr_Array[1], 20-16, 0);
+		Set_EEprBit(EEpr_Bank_S[E2], 19-16, 1);
+		Set_EEprBit(EEpr_Bank_S[E2], 20-16, 0);
 		Program_Single_TrimRegister(g_EEP_W_E2);
 
 
@@ -399,8 +392,8 @@ Pulse pulse;
 	if(Skip_Test3 == 0)
 	{
 		////////////FeedFWD Option = 1 //////////////
-		Set_EEprBit(EEpr_Array[1], 19-16, 1);
-		Set_EEprBit(EEpr_Array[1], 20-16, 1);
+		Set_EEprBit(EEpr_Bank_S[E2], 19-16, 1);
+		Set_EEprBit(EEpr_Bank_S[E2], 20-16, 1);
 		Program_Single_TrimRegister(g_EEP_W_E2);
 
 
@@ -422,36 +415,36 @@ Pulse pulse;
 
 	//Reset EEpr[2] to original settings.
 
-	if(g_ZffOption_B19_20_S == 0)
+	if(g_Trim_ZffOption_B19_20_S_Trimops == 0)
 	{
 		////////////FeedFWD Option = 0 //////////////
-		Set_EEprBit(EEpr_Array[1], 19-16, 0);
-		Set_EEprBit(EEpr_Array[1], 20-16, 0);
+		Set_EEprBit(EEpr_Bank_S[E2], 19-16, 0);
+		Set_EEprBit(EEpr_Bank_S[E2], 20-16, 0);
 		Program_Single_TrimRegister(g_EEP_W_E2);
 		
 	}
-	else if(g_ZffOption_B19_20_S == 1)
+	else if(g_Trim_ZffOption_B19_20_S_Trimops == 1)
 	{
 		////////////FeedFWD Option = 1 //////////////
-		Set_EEprBit(EEpr_Array[1], 19-16, 0);
-		Set_EEprBit(EEpr_Array[1], 20-16, 1);
+		Set_EEprBit(EEpr_Bank_S[E2], 19-16, 0);
+		Set_EEprBit(EEpr_Bank_S[E2], 20-16, 1);
 		Program_Single_TrimRegister(g_EEP_W_E2);
 		 
 	}
-	else if(g_ZffOption_B19_20_S == 2)
+	else if(g_Trim_ZffOption_B19_20_S_Trimops == 2)
 	{
 		
 	////////////FeedFWD Option = 2 //////////////
-		Set_EEprBit(EEpr_Array[1], 19-16, 1);
-		Set_EEprBit(EEpr_Array[1], 20-16, 0);
+		Set_EEprBit(EEpr_Bank_S[E2], 19-16, 1);
+		Set_EEprBit(EEpr_Bank_S[E2], 20-16, 0);
 		Program_Single_TrimRegister(g_EEP_W_E2);		 
 		
 	}
-	else if(g_ZffOption_B19_20_S == 3)
+	else if(g_Trim_ZffOption_B19_20_S_Trimops == 3)
 	{
 	////////////FeedFWD Option = 3 //////////////
-		Set_EEprBit(EEpr_Array[1], 19-16, 1);
-		Set_EEprBit(EEpr_Array[1], 20-16, 1);
+		Set_EEprBit(EEpr_Bank_S[E2], 19-16, 1);
+		Set_EEprBit(EEpr_Bank_S[E2], 20-16, 1);
 		Program_Single_TrimRegister(g_EEP_W_E2);		
 	}
 
@@ -553,7 +546,7 @@ Pulse pulse;
 
 
 	PiDatalog(func, A_Fosc_Pst_S,		    Fosc_Pst_S,               26, POWER_KILO);
-	if (g_Trim_Enable_S)
+	if (g_Burn_Enable_S)
 	{
 		PiDatalog(func, A_Fosc_Delta_S,     Fosc_Delta_S,           26, POWER_UNIT);
 	}

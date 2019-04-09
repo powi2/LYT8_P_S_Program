@@ -425,7 +425,7 @@ Pulse pulse;
 	
 
 
-	////////if (g_Trim_Enable_S)
+	////////if (g_Burn_Enable_S)
 	////////{
 	////////	PiDatalog(func, A_VADC_Delta_S,      VADC_Delta_S,           26, POWER_UNIT);
 	////////}

@@ -234,7 +234,7 @@ Pulse pulse;
 	
 	CV_pst_S = FB_ovi3->measure_average(25);
 
-	if (g_Trim_Enable_S&& g_CV_Pre != 0.0)
+	if (g_Burn_Enable_S&& g_CV_Pre != 0.0)
 	{
 		CV_pct_Detla_S =  100*(CV_pst_S - g_CV_Pre) / g_CV_Pre;		
 	}
@@ -487,15 +487,6 @@ Pulse pulse;
 		VcvOVP5A_H_S_PF = 1;
 	}
 
-
-
-
-
-
-
-
-
-
 	//-----------------------------------------------------------------------------------------------------
 	//Powerdown sequence.
 	//Disable I2C after programming.
@@ -555,7 +546,7 @@ Pulse pulse;
 		PiDatalog(func, A_VcvOVP5A_S,   VcvOVP5A_S,           26, POWER_UNIT);
 	}	
 	PiDatalog(func, A_VcvOVP5A_H_S_PF,   VcvOVP5A_H_S_PF, 26, POWER_UNIT);
-	if (g_Trim_Enable_S)
+	if (g_Burn_Enable_S)
 	{
 		PiDatalog(func, A_CV_pct_Detla_S, CV_pct_Detla_S,  26, POWER_UNIT);
 	}

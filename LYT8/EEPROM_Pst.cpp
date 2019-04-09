@@ -291,13 +291,13 @@ DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
 	//-------------------------------------------------------------------------------
 	//If Secondary is untrimmed, then Pretrim EEprom readings required to be updated.
 	//--------------------------------------------------------------------------------
-	if (g_Trim_Enable_S )
+	if (g_Burn_Enable_S )
 	{
-		g_Pre_E0_data_S = EEpr_Array[0];
-		g_Pre_E2_data_S = EEpr_Array[1];
-		g_Pre_E4_data_S = EEpr_Array[2];
-		g_Pre_E6_data_S = EEpr_Array[3];
-		g_Pre_E8_data_S = EEpr_Array[4];
+		g_Pre_E0_data_S = EEpr_Bank_S[E0];
+		g_Pre_E2_data_S = EEpr_Bank_S[E2];
+		g_Pre_E4_data_S = EEpr_Bank_S[E4];
+		g_Pre_E6_data_S = EEpr_Bank_S[E6];
+		g_Pre_E8_data_S = EEpr_Bank_S[E8];
 	}
 
 	if(g_Pre_E0_data_S == E0_data_S &&

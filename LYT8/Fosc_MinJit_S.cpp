@@ -36,9 +36,7 @@ void Fosc_MinJit_S(test_function& func)
     Fosc_MinJit_S_params *ours;
     ours = (Fosc_MinJit_S_params *)func.params;
 
-
-
-			gFuncNum++;	
+	gFuncNum++;	
 
 // Datalog gFuncNum variable //
 	if(gDisplay_FuncNum)
@@ -72,12 +70,7 @@ void Fosc_MinJit_S(test_function& func)
 	float tmeas         = 0;
 	int   i             = 0;
 
-
-	
-
 Pulse pulse;
-
-
 
 	// Open all relays //
 	Initialize_Relays();
@@ -264,7 +257,7 @@ Pulse pulse;
 		temp_1 = 0.0;	
 
 
-	if(g_ZffOption_B19_20_S == 0)
+	if(g_Trim_ZffOption_B19_20_S_Trimops == 0)
 	{	
 		Fosc_25K_NoFF_S = temp_1;
 
@@ -285,8 +278,8 @@ Pulse pulse;
 		//Reset E2 Bit_19 & Bit_20 to 0 as disable FdFW option.
 
 		////////////FeedFWD Option = 1 per Design Request //////////////
-		Set_EEprBit(EEpr_Array[1], 19-16, 1);
-		Set_EEprBit(EEpr_Array[1], 20-16, 1);
+		Set_EEprBit(EEpr_Bank_S[E2], 19-16, 1);
+		Set_EEprBit(EEpr_Bank_S[E2], 20-16, 1);
 		Program_Single_TrimRegister(g_EEP_W_E2);
 
 		//Setup TMU on Buffer of HSG pin.
@@ -329,8 +322,8 @@ Pulse pulse;
 
 		//Reset EEpr2.
 
-		Set_EEprBit(EEpr_Array[1], 19-16, 0);
-		Set_EEprBit(EEpr_Array[1], 20-16, 0);
+		Set_EEprBit(EEpr_Bank_S[E2], 19-16, 0);
+		Set_EEprBit(EEpr_Bank_S[E2], 20-16, 0);
 		Program_Single_TrimRegister(g_EEP_W_E2);
 
 	}
@@ -355,8 +348,8 @@ Pulse pulse;
 		//Reset E2 Bit_19 & Bit_20 to 0 as disable FdFW option.
 
 		////////////FeedFWD Option = 0 //////////////
-		Set_EEprBit(EEpr_Array[1], 19-16, 0);
-		Set_EEprBit(EEpr_Array[1], 20-16, 0);
+		Set_EEprBit(EEpr_Bank_S[E2], 19-16, 0);
+		Set_EEprBit(EEpr_Bank_S[E2], 20-16, 0);
 		Program_Single_TrimRegister(g_EEP_W_E2);
 
 		//Setup TMU on Buffer of HSG pin.
@@ -400,36 +393,36 @@ Pulse pulse;
 		//Reset EEpr E2
 		//Reset EEpr[2] to original settings.
 
-		if(g_ZffOption_B19_20_S == 0)
+		if(g_Trim_ZffOption_B19_20_S_Trimops == 0)
 		{
 			////////////FeedFWD Option = 0 //////////////
-			Set_EEprBit(EEpr_Array[1], 19-16, 0);
-			Set_EEprBit(EEpr_Array[1], 20-16, 0);
+			Set_EEprBit(EEpr_Bank_S[E2], 19-16, 0);
+			Set_EEprBit(EEpr_Bank_S[E2], 20-16, 0);
 			Program_Single_TrimRegister(g_EEP_W_E2);
 			
 		}
-		else if(g_ZffOption_B19_20_S == 1)
+		else if(g_Trim_ZffOption_B19_20_S_Trimops == 1)
 		{
 			////////////FeedFWD Option = 1 //////////////
-			Set_EEprBit(EEpr_Array[1], 19-16, 0);
-			Set_EEprBit(EEpr_Array[1], 20-16, 1);
+			Set_EEprBit(EEpr_Bank_S[E2], 19-16, 0);
+			Set_EEprBit(EEpr_Bank_S[E2], 20-16, 1);
 			Program_Single_TrimRegister(g_EEP_W_E2);
 			 
 		}
-		else if(g_ZffOption_B19_20_S == 2)
+		else if(g_Trim_ZffOption_B19_20_S_Trimops == 2)
 		{
 			
 		////////////FeedFWD Option = 2 //////////////
-			Set_EEprBit(EEpr_Array[1], 19-16, 1);
-			Set_EEprBit(EEpr_Array[1], 20-16, 0);
+			Set_EEprBit(EEpr_Bank_S[E2], 19-16, 1);
+			Set_EEprBit(EEpr_Bank_S[E2], 20-16, 0);
 			Program_Single_TrimRegister(g_EEP_W_E2);		 
 			
 		}
-		else if(g_ZffOption_B19_20_S == 3)
+		else if(g_Trim_ZffOption_B19_20_S_Trimops == 3)
 		{
 		////////////FeedFWD Option = 3 //////////////
-			Set_EEprBit(EEpr_Array[1], 19-16, 1);
-			Set_EEprBit(EEpr_Array[1], 20-16, 1);
+			Set_EEprBit(EEpr_Bank_S[E2], 19-16, 1);
+			Set_EEprBit(EEpr_Bank_S[E2], 20-16, 1);
 			Program_Single_TrimRegister(g_EEP_W_E2);		
 		}
 

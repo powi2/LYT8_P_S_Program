@@ -51,7 +51,7 @@ void IRSET_Pst_S(test_function& func)
 	// Skip trimming if g_Burn_Enable_P set //
 	//if (g_Burn_Enable_P == 0)
 //		return;
-////if (g_Trim_Enable_S == 0)
+////if (g_Burn_Enable_S == 0)
 ////		return;
 	//if (g_Fn_IRSET_Pre == 0 )  return;
 
@@ -208,7 +208,7 @@ Pulse pulse;
 
 	IRSET_Pst_S = -1*(IS_dvi2k->measure_average(25));
 
-	if (g_Trim_Enable_S && g_IRSET_Pre != 0.0)
+	if (g_Burn_Enable_S && g_IRSET_Pre != 0.0)
 	{
 		IRSET_Pct_Delta_S = 100*(IRSET_Pst_S - g_IRSET_Pre) / g_IRSET_Pre;
 	}
@@ -298,7 +298,7 @@ Pulse pulse;
 
 
 	PiDatalog(func, A_IRSET_Pst_S,		 IRSET_Pst_S,              26, POWER_MICRO);
-	if (g_Trim_Enable_S)
+	if (g_Burn_Enable_S)
 	{
 		PiDatalog(func, A_IRSET_Pct_Delta_S, IRSET_Pct_Delta_S,        26, POWER_UNIT);
 	}

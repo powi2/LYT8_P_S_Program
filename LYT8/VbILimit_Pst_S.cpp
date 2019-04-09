@@ -47,10 +47,6 @@ void VbILimit_Pst_S(test_function& func)
 	if (AbortTest)
 		return;
 
-	// Skip trimming if g_Trim_Enable_S is not set //
-	///*if (g_Trim_Enable_S == 0)
-	//	return;*/
-
 	//if (g_Fn_VccRef_Pre == 0 )  return;
 
 	// Test Time Begin //
@@ -205,8 +201,6 @@ Pulse pulse;
 	ovi_1->set_current(OVI_CHANNEL_4, 10E-3, RANGE_30_MA);
 	ovi_1->set_voltage(OVI_CHANNEL_4, 0, VOLT_5_RANGE);
 
-
-
 	//-----------------------------------------------------------------------------------
 	//I2C command.
 	//------------------------------------------------------------------------------------
@@ -297,15 +291,11 @@ Pulse pulse;
 		if(vbilim_pst_array[i] > 0) VbIlim1_Pst_S = vbilim_pst_array[i];
 	}
 
-	if (g_Trim_Enable_S && g_VbIlim_Pre != 0)
+	if (g_Burn_Enable_S && g_VbIlim_Pre != 0)
 	{
 		VbIlim_Delta_S = 100*(VbIlim1_Pst_S - g_VbIlim_Pre) / g_VbIlim_Pre;
 	}
 
-//////////	if(VbIlim_pt_S != 0)
-//////////	{
-//////////		VbIlim_PrgChg = 100*(VbIlim_prg_S - VbIlim_pt_S) / VbIlim_pt_S;
-//////////	}
 	//---------------------------------------------------------------------------------
 	//--------------------------------------------------------------------------------
 	//Powerdown
@@ -405,35 +395,10 @@ Pulse pulse;
 	wait.delay_10_us(250);
 
 	PiDatalog(func, A_VbIlim1_Pst_S,			VbIlim1_Pst_S,			  26, POWER_MILLI);
-	if (g_Trim_Enable_S)
+	if (g_Burn_Enable_S)
 	{
 		PiDatalog(func, A_VbIlim_Delta_S,			VbIlim_Delta_S,			  26, POWER_UNIT);
 	}
-//////////		PiDatalog(func, A_VbIlim_target_S,      VbIlim_Target_S,       26, POWER_MILLI);
-//////////		PiDatalog(func, A_VbIlim_TrCode_S,      VbIlim_TrCode_S,       26, POWER_UNIT);
-//////////		PiDatalog(func, A_VbIlim_BitCode_S,     VbIlim_BitCode_S,      26, POWER_UNIT);
-//////////		PiDatalog(func, A_VbIlim_ExpChg_S,      VbIlim_ExpChg,         26, POWER_UNIT);
-//////////		if (g_Trim_Enable_S != 0)
-//////////		{
-//////////			PiDatalog(func, A_VbIlim_Exp_Value,     VbIlim_ExpValue,       26, POWER_MILLI);
-//////////		}
-//////////		PiDatalog(func, A_Eetr42_BILIM0_S,    g_S_TrimRegisterTemp[42], 26, POWER_UNIT);
-//////////		PiDatalog(func, A_Eetr43_BILIM1_S,    g_S_TrimRegisterTemp[43], 26, POWER_UNIT);
-//////////		PiDatalog(func, A_Eetr44_BILIM2_S,    g_S_TrimRegisterTemp[44], 26, POWER_UNIT);
-//////////		PiDatalog(func, A_Eetr45_BILIM3_S,    g_S_TrimRegisterTemp[45], 26, POWER_UNIT);
-//////////		PiDatalog(func, A_Eetr46_BILIM4_S,    g_S_TrimRegisterTemp[46], 26, POWER_UNIT);
-//////////	
-//////////
-//////////		PiDatalog(func, A_Bin2Dec1_S,		EEpr_Array[2],		  26, POWER_UNIT);
-//////////		if (g_Trim_Enable_S != 0)
-//////////		{
-//////////			PiDatalog(func, A_VbIlim_prg_S,         VbIlim_prg_S,          26, POWER_MILLI);
-//////////			PiDatalog(func, A_VbIlim_prgchg_S,      VbIlim_PrgChg,         26, POWER_UNIT);
-//////////		}
-//////////		else
-//////////		{
-//////////			PiDatalog(func, A_VbIlim_Pst,         VbIlim_prg_S,          26, POWER_MILLI);
-//////////
-//////////		}
+
 
 }

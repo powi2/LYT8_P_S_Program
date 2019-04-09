@@ -60,7 +60,7 @@ void EEprom_DevID(test_function& func)
 		pE6_data=0,
 		pE8_data=0;
 
-	g_Trim_Enable_S = 0;
+	g_Burn_Enable_S = 0;
 
 	// Increment function number //
 	gFuncNum++;	
@@ -197,8 +197,8 @@ void EEprom_DevID(test_function& func)
 		//-------------------------------------------------------------
 		EEPROM_Read_Enable_P();
 
-		g_Erase_Enable_P = 0;
-		g_Burn_Enable_P	 = 0;
+		//g_Erase_Enable_P = 0;
+		//g_Burn_Enable_P	 = 0;
 
 		//if(ours->Blind_Trim_P)
 		//{
@@ -208,7 +208,7 @@ void EEprom_DevID(test_function& func)
 		//Read data out from EEPROM registers 0xC0
 		pE0_data = DSM_I2C_Read(g_EEP_R_C0); //Read data of RegAddr 0xE0 from 0xC0 RegAddr from READ_ADDR 0x00
 		//if(g_LowerByte != 0 || ours->Primary_Erase) //If any bit of lower byte is 1, it's considered Not Erased and we Enable ERASE
-		if(g_LowerByte != 0) //If any bit of lower byte is 1, it's considered Not Erased and we Enable ERASE
+		if(g_LowerByte != 0||g_Erase_Enable_P) //If any bit of lower byte is 1, it's considered Not Erased and we Enable ERASE
 		{
 			g_Erase_Enable_P = 1;
 			g_Burn_Enable_P	 = 1;
@@ -284,7 +284,12 @@ void EEprom_DevID(test_function& func)
 		{
 			EEPROM_ERASE_P(&g_vDrain_Erase_th_P);
 		}
-		PiDatalog(func, A_Pri_Erased, g_vDrain_Erase_th_P, 20, POWER_UNIT);
+		
+
+		PiDatalog(func, A_vErase_P, g_vDrain_Erase_th_P, 20, POWER_UNIT);
+
+		PiDatalog(func, A_Pri_Erased, g_Erase_Enable_P, 20, POWER_UNIT);
+
 
 		//-----------------------------------------------------------------------------------------------------------------
 		// ERASE if "g_RTR_Enable" or "g_Erase_Enable_P" and must be at OPCode 4200 *END
@@ -530,8 +535,8 @@ void EEprom_DevID(test_function& func)
 	}
 
 
-	g_Erase_Enable_S = 0;
-	g_Trim_Enable_S  = 0;
+	//g_Erase_Enable_S = 0;
+	//g_Burn_Enable_S  = 0;
 
 	//-----------------------------------------------------------------------------------------------------------------
 	// Read Back EEprom for Secondary to determine if it's trimmed? *START
@@ -548,10 +553,10 @@ void EEprom_DevID(test_function& func)
 	//If any bit of LowerByte of 0XC0 is not zero, then it's considered a virgin unit and secondary erase flag should be enabled.
 	//If Virgin unit then proceed to erase EEprom.
 	//if(g_LowerByte != 0 || ours->Secondary_Erase) 
-	if(g_LowerByte != 0) 
+	if(g_LowerByte != 0 || g_Erase_Enable_S) 
 	{
 		g_Erase_Enable_S = 1;
-		g_Trim_Enable_S = 1;
+		g_Burn_Enable_S = 1;
 	}
 	else
 	{
@@ -564,12 +569,12 @@ void EEprom_DevID(test_function& func)
 		if(Sec_E0 == 0 && Sec_E2 == 0 && Sec_E4 == 0 && Sec_E6 == 0&& Sec_E8 ==0&&g_Device_ID_S!=0)
 		{
 			g_Erase_Enable_S = 0;
-			g_Trim_Enable_S = 1;
+			g_Burn_Enable_S = 1;
 			Sec_Untrimmed = 1;
 		}
 		else
 		{
-			g_Trim_Enable_S = 0;
+			g_Burn_Enable_S = 0;
 			Sec_Untrimmed = 0;
 		}
 
@@ -637,10 +642,12 @@ void EEprom_DevID(test_function& func)
 		}
 
 		//Hold VR for 2ms.
-		VR_dvi->set_voltage(VR_ch, vVR_set, VOLT_50_RANGE); // DVI_11_1
+		VR_dvi->set_voltage(VR_ch, vVR_Erase_th, VOLT_50_RANGE); // DVI_11_1
 		wait.delay_10_us(200);
 		//6g.	Stop/End Erase EEprom
 		End_EEprom_Erase_Secondary();
+
+
 	}
 ////////////	//---------------------------------
 ////////////	// Erase EEProm for Secondary *END
@@ -689,7 +696,9 @@ void EEprom_DevID(test_function& func)
 	//PiDatalog(func, A_Pri_Si_ID, Primary_Die_ID, 20, POWER_UNIT);
 	PiDatalog(func, A_Sec_SI_ID, Secondary_DieID, 20, POWER_UNIT);
 	PiDatalog(func, A_Sec_UnTrimmed, Sec_Untrimmed, 20, POWER_UNIT);
+	PiDatalog(func, A_vErase_S, vVR_Erase_th, 20, POWER_UNIT);
 	PiDatalog(func, A_Sec_Erased, Sec_Erased, 20, POWER_UNIT);
+
 }
 
 

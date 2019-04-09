@@ -47,8 +47,8 @@ void VccRef_Pre_S(test_function& func)
 	if (AbortTest)
 		return;
 
-	// Skip trimming if g_Trim_Enable_S is not set //
-	if (g_Trim_Enable_S == 0 && g_GRR == 0)
+	// Skip trimming if g_Burn_Enable_S is not set //
+	if (g_Burn_Enable_S == 0 && g_GRR_Enable == 0)
 		return;
 
 	//if (g_Fn_VccRef_Pre == 0 )  return;
@@ -67,14 +67,14 @@ void VccRef_Pre_S(test_function& func)
 	// Test Names //
 	float VccRef_pt_S     =0;
 	float VccRef_prg_S    = 0;
-	float VccRef_Target_S = 0;
+	float VccRef_Target_S = g_VccRef_Target_S_Trimops;
 	if(g_Device_ID_S == 6160||g_Device_ID_S == 6159||g_Device_ID_S==6155)
 	{
-		VccRef_Target_S = 335e-3; 
+		VccRef_Target_S = 335e-3; //Taken care by Trimops.
 	}
 	else
 	{
-		VccRef_Target_S = 200e-3; 
+		VccRef_Target_S = 200e-3; //Taken care by Trimops.
 	}
 	
 	int VccRef_TrCode_S   = 0;
@@ -275,7 +275,7 @@ Pulse pulse;
 	FB_ovi3->set_voltage(FB_ch, 0.0, VOLT_1_RANGE); 	
 	wait.delay_10_us(500);
 
-	if (g_Trim_Enable_S != 0)
+	if (g_Burn_Enable_S)
 	{	
 		Program_All_TrimRegister();
 	}
@@ -285,46 +285,46 @@ Pulse pulse;
 	g_VccRef_Pre = VccRef_pt_S;
 	
 
-if (g_Trim_Enable_S)
-{
-	// VccRef can be either trimmed up or down only.  
-	// VccRef_S_Code //
-	// Find which trim code will make VccRef_Pre closest to target //
-	smallest_diff_val = 999999.9;
-	smallest_diff_idx = 0;
-	for (i=0; i<32; i++)
+	if (g_Burn_Enable_S)
 	{
-		temp_1 = (VccRef_pt_S * (1 + (VccRef_S_TrimWt[i]/100)) -  VccRef_Target_S);
-		if (temp_1 < 0)	// Get rid of negatives //
-			temp_1 *= -1.0;
-		if (temp_1 < smallest_diff_val)
+		// VccRef can be either trimmed up or down only.  
+		// VccRef_S_Code //
+		// Find which trim code will make VccRef_Pre closest to target //
+		smallest_diff_val = 999999.9;
+		smallest_diff_idx = 0;
+		for (i=0; i<32; i++)
 		{
-			smallest_diff_val = temp_1;
-			smallest_diff_idx = i;
+			temp_1 = (VccRef_pt_S * (1 + (VccRef_S_TrimWt[i]/100)) -  VccRef_Target_S);
+			if (temp_1 < 0)	// Get rid of negatives //
+				temp_1 *= -1.0;
+			if (temp_1 < smallest_diff_val)
+			{
+				smallest_diff_val = temp_1;
+				smallest_diff_idx = i;
+			}
 		}
+
+
+		//if(smallest_diff_idx == 3) smallest_diff_idx = 0;
+		//Manual forcing:
+		//smallest_diff_idx = 17;
+
+		VccRef_TrCode_S = VccRef_S_code[smallest_diff_idx];
+		VccRef_ExpChg   = VccRef_S_TrimWt[smallest_diff_idx];
+
+		VccRef_ExpValue = (VccRef_pt_S * (1 + (VccRef_S_TrimWt[smallest_diff_idx]/100)));
+
+		TrimCode_To_TrimBit(VccRef_TrCode_S, "VccRef_S", 's');
+
+		//Convert Trimcode to readable datalog file.
+		///*if(VccRef_S_code[smallest_diff_idx]>=0 && VccRef_S_code[smallest_diff_idx] <= 2)
+		//{
+		//	CCOffset_BitCode_S = -1*CCOffset_TrCode_S; 
+		//}*/
+
+		EEpr_Bank_S[E6] = EEpr_Bank_S[E6] | (VccRef_TrCode_S<<(52-startbit));
+		Program_Single_TrimRegister(g_EEP_W_E6);
 	}
-
-
-	//if(smallest_diff_idx == 3) smallest_diff_idx = 0;
-	//Manual forcing:
-	//smallest_diff_idx = 17;
-
-	VccRef_TrCode_S = VccRef_S_code[smallest_diff_idx];
-	VccRef_ExpChg   = VccRef_S_TrimWt[smallest_diff_idx];
-
-	VccRef_ExpValue = (VccRef_pt_S * (1 + (VccRef_S_TrimWt[smallest_diff_idx]/100)));
-
-	TrimCode_To_TrimBit(VccRef_TrCode_S, "VccRef_S", 's');
-
-	//Convert Trimcode to readable datalog file.
-	///*if(VccRef_S_code[smallest_diff_idx]>=0 && VccRef_S_code[smallest_diff_idx] <= 2)
-	//{
-	//	CCOffset_BitCode_S = -1*CCOffset_TrCode_S; 
-	//}*/
-
-	EEpr_Array[3] = EEpr_Array[3] | (VccRef_TrCode_S<<(52-startbit));
-	Program_Single_TrimRegister(g_EEP_W_E6);
-}
 	wait.delay_10_us(500);
 
 	VccRef_prg_S = FB_ovi3->measure_average(25);
@@ -373,7 +373,7 @@ if (g_Trim_Enable_S)
 
 	PiDatalog(func, A_VccRef_pt_S,			VccRef_pt_S,            26, POWER_MILLI);
 	
-	if (g_Trim_Enable_S)
+	if (g_Burn_Enable_S)
 	{
 		PiDatalog(func, A_VccRef_target_S,      VccRef_Target_S,        26, POWER_MILLI);
 		PiDatalog(func, A_VccRef_TrCode_S,      VccRef_TrCode_S,        26, POWER_UNIT);
@@ -385,7 +385,7 @@ if (g_Trim_Enable_S)
 		PiDatalog(func, A_Eetr54_DacTr2_S,      g_S_TrimRegisterTemp[54],	26, POWER_UNIT);
 		PiDatalog(func, A_Eetr55_DacTr3_S,      g_S_TrimRegisterTemp[55],	26, POWER_UNIT);
 		PiDatalog(func, A_Eetr56_DacTr4_S,      g_S_TrimRegisterTemp[56],	26, POWER_UNIT);
-		PiDatalog(func, A_Bin2Dec1_S,			  EEpr_Array[3],				26, POWER_UNIT);
+		PiDatalog(func, A_Bin2Dec1_S,			  EEpr_Bank_S[E6],				26, POWER_UNIT);
 		PiDatalog(func, A_VccRef_prg_S,          VccRef_prg_S,              26, POWER_MILLI);
 		PiDatalog(func, A_VccRef_prgchg_S,       VccRef_PrgChg,             26, POWER_UNIT);
 	}

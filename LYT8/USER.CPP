@@ -106,8 +106,10 @@
 04/03/19 HL v0.0070 - Added FOSC-FeedForward tests in the FOSC posttrim functions.
                     - Added Fosc Min functions.
 04/04/19 HL v0.0071	- Added Fosc Jitter measurements to the FOSC_PST functions.
-04/04/19 CX v0.01CXa- Merge Primary/Secondary program and Compile pass.   
-04/08/19 CX v0.01CXb- Added Char function for vBPPth
+04/04/19 CX v0.01CXa- Merge Primary/Secondary program and Compile pass. 
+04/04/19 HL v0.01HLb- Debugged secondary of new merged test program (First, Cont, Lkg & EEpromID: Not Erase or Burn yet)
+04/05/19 HL v0.01HLc- Added secondary trimops variables.
+04/08/19 HL v0.01HLd- Assigned secondary trimops targets and options to secondary test functions.
 
 History Revisions (Above)
 */
@@ -291,7 +293,7 @@ int g_Setup_OK = 0;  //HL added.
 //HL---------------------------------------------------------------------------------
 //Secondary Variables.
 //-----------------------------------------------------------------------------------
-int   g_GRR          = 0;
+int   g_GRR_Enable          = 0;
 float g_HBP_P_S      = 0;
 float g_HBP_Pre_S    = 0;
 float g_CV_Pre       = 0;
@@ -335,13 +337,49 @@ int		g_BV_Trimops									=0,
 		gP_Trim_Junction_TSD_Trimops					=0, //bit 64,65,66
 		gP_Trim_iUV_10pct_Trimops						=0; //bit 71
 
+		// Secondary Trim Options.
+int		g_Trim_tsstart_B8_9_S_Trimops					= 0,			//Softstart time    
+		g_Trim_tfbOption_B10_11_S_Trimops				= 0,			//Boost Frequency Options
+		g_Trim_DOPL_B15_S_Trimops						= 0,			//DOPL Option Bit
+		g_Trim_TvrOption_B16_17_S_Trimops				= 0,			//VR Option Selection.
+		g_Trim_TenCP_B18_S_Trimops						= 0,			//Enable CP in Non I2C Mode
+		g_Trim_ZffOption_B19_20_S_Trimops				= 0,			//Feedforward Option.
+		g_Trim_DsblJitDim_B21_S_Trimops					= 0,			//Disable Jitter in Dimming.
+		g_Trim_JitterOff_B22_S_Trimops					= 0,			//Turn off Jitter.
+		g_Trim_ZTMBStr_B29_30_S_Trimops					= 0,			//Enable 1 segment Boost Driver.
+		g_Trim_DsblFlBck_B31_S_Trimops					= 0,			//Disable Foldback.
+		g_Trim_Dimth_B47_S_Trimops						= 0,			//Select Deep Dim Threshold
+		g_Trim_tHrtBtOpt_B61_S_Trimops					= 0,			//Heat beat time option.
+		g_Trim_CPNonI2C_B62_S_Trimops					= 0,			//Disable CP
+		g_Trim_ZEE_50KStr_B63_S_Trimops					= 0,			//Set softstart start up freq
+		g_Trim_FlBck_Ccopt_B74_S_Trimops				= 0,			//To change rate of change in CC reference.
+		g_SID_Trimops									= 0,
+		g_Trim_FlBck_Sel_B75_S_Trimops					= 0;			//Trim to disable thermal foldback and line induced foldback.
+
+//Secondary Trim Targets.
+
+float	g_BFreq_Target_S_Trimops						= 0,
+		g_ccPFOFF_Target_S_Trimops						= 0,
+		g_Fosc_Target_S_Trimops							= 0,
+		g_CLK1M_Target_S_Trimops						= 0,
+		g_VDDA_Target_S_Trimops							= 0,
+		g_CV_Target_S_Trimops							= 0,
+		g_VbIlim_Target_S_Trimops						= 0,
+		g_VADC_Target_S_Trimops							= 0,
+		g_ZTtimer_Target_S_Trimops						= 0,
+		g_VccRef_Target_S_Trimops						= 0,
+		g_CCOffset_Target_S_Trimops						= 0,
+		g_CP_IS_Target_S_Trimops						= 0,
+		g_IRSET_Target_S_Trimops						= 0;
+
+
 /* ======================  Test Flow Control Parameter  ============================*/
 //int  g_First_Time_Run =1;
 bool  g_Require_PartID = true;
 int	  AbortTest =0; 
 int	  g_Sim_Enable_P =0;
 int	  g_Burn_Enable_P = 0;
-int   g_Trim_Enable_S = 0;
+int   g_Burn_Enable_S = 0;
 int	  g_Erase_Enable_P =0;
 int   g_Erase_Enable_S = 0;
 int   g_TstTime_Enble_P = 0;
@@ -361,31 +399,13 @@ int	 g_Char_Enable_P=0;
 int	 g_Char_Enable_S=0;
 int g_Debug = 0;
 int g_FeedFoward = 0;
-// Secondary Trim Options.
-int g_tsstart_B8_9_S     = 0;			//Softstart time    
-int g_tfbOption_B10_11_S = 0;			//Boost Frequency Options
-int g_DOPL_B15_S         = 0;			//DOPL Option Bit
-int g_TvrOption_B16_17_S = 0;			//VR Option Selection.
-int g_TenCP_B18_S		 = 0;			//Enable CP in Non I2C Mode
-int g_ZffOption_B19_20_S = 0;			//Feedforward Option.
-int g_DsblJitDim_B21_S   = 0;			//Disable Jitter in Dimming.
-int g_JitterOff_B22_S    = 0;			//Turn off Jitter.
-int g_ZTMBStr_B29_30_S   = 0;			//Enable 1 segment Boost Driver.
-int g_DsblFlBck_B31_S    = 0;			//Disable Foldback.
-int g_Dimth_B47_S        = 0;			//Select Deep Dim Threshold
-int g_tHrtBtOpt_B61_S    = 0;			//Heat beat time option.
-int g_CPNonI2C_B62_S     = 0;			//Disable CP
-int g_ZEE_50KStr_B63_S   = 0;			//Set softstart start up freq
-int g_FlBck_Ccopt_B74_S  = 0;			//To change rate of change in CC reference.
-int g_FlBck_Sel_B75_S    = 0;			//Trim to disable thermal foldback and line induced foldback.
 
 // ======================  Debug Parameters ============================ //
 char *g_Func_name;
 char *g_WAVE_NAME = "NoWaveName"; 
 
 // ======================  Setup Variable  ============================//
-STRING CURRENT_SERIAL_NUM; 
-int  g_SERIAL_NUM=0;
+//STRING CURRENT_SERIAL_NUM; 
 int  g_FirstPart = 0; // Must initialize to 1 to start. //
 int  gFuncNum=0;
 int  gDisplay_FuncNum=0;
@@ -423,11 +443,10 @@ float g_vDSM_pullup_P = 0;
 float g_vDSM_pullup_S = 0;
 
 //Global Characterization variables
-bool	g_Char_iOVp_XYplot	= false;
-bool	g_Char_iOVm_XYplot	= false;
-bool	g_Char_iUVp_XYplot	= false;
-bool	g_Char_iUVm_XYplot	= false;
-bool	g_Char_vBPPth		= false;
+bool	g_Char_iOVp_XYplot = false;
+bool	g_Char_iOVm_XYplot = false;
+bool	g_Char_iUVp_XYplot = false;
+bool	g_Char_iUVm_XYplot = false;
 
 //iOV function global variables
 bool g_USE_VR_600K = true;
@@ -773,8 +792,8 @@ int g_SiliconRev_Pri = 1; // Primary silicon revision //
 int g_SiliconRev_Sec = 1; // Secondary silicon revision //
 
 uint16_t EEpr_Bank_P[5] = {0};
-uint16_t EEpr_Array_S[5] = {0};  //replace EEpr_Array with additional _S for secondary  --> to do later by HL
-uint16_t EEpr_Array[5] = {0};
+uint16_t EEpr_Bank_S_S[5] = {0};  //replace EEpr_Bank_S with additional _S for secondary  --> to do later by HL
+uint16_t EEpr_Bank_S[5] = {0};
 
 //HL added
 uint16_t EEpr_E0 = 0x0000;   
@@ -1053,7 +1072,7 @@ int Gage_pretrig_samples = 1024; //must be divisible by 32
 	//for Create_Awav 
 	char			Wav_Outfile_path[100] = "e:\\DL4\\";
 	char			Wav_outfile_name[100];
-	//STRING	Dut_serial_number;	
+	STRING	Dut_serial_number;	
 	STRING  lot_info_handler;
 //	STRING ProgramName, Prg_Name;
 
@@ -1304,6 +1323,11 @@ int	g_E2_start_bit = 16;
 int	g_E4_start_bit = 32;
 int	g_E6_start_bit = 48;
 int	g_E8_start_bit = 64;
+
+
+
+
+
 
 //----------------------------
 int g_binary_array[30] = {0};
@@ -2231,7 +2255,7 @@ void user_load(void)
 	theLimitSetName >> Part_ID_LimitSet  >> g_OperCode >> dummy >> dummy;
 
 	// Test Program Rev //
-	PrgRev = "0.01CXb"; // This should be identical to PiSetProgramName() function call. //
+	PrgRev = "0.01HLd"; // This should be identical to PiSetProgramName() function call. //
 	FamilyName = "LYT8"; // This should be identical to PiSetProgramName() function call. //
 
 	// Modify AutoCorrReport file to share one golden unit for multiple devices of same family. //
@@ -2287,7 +2311,7 @@ void user_load(void)
 	PiEnableGoldenUnit();
 
 	// Test Program Rev //
-	PiSetProgramName("LYT8 0.01CXb");
+	PiSetProgramName("LYT8 0.01HLd");
 
 	// Setup //
 	PiUserLoad( );
@@ -3819,6 +3843,40 @@ void mode_change(void)
 	gP_Dtemp_TARGET_Trimops							= gP_VTSstart_TARGET_Trimops/5.0*512;			// Dtemp	Target based on 5V, 512 FullScale code
 
 	// Secondary Targets and Feature Trim bits
+	//trimops_num = 36;
+	g_BFreq_Target_S_Trimops						= trimops->GetTrimOpAsDouble(trimops_num++)*1e3;    //Boost Frequency Target (Khz)
+	g_ccPFOFF_Target_S_Trimops						= trimops->GetTrimOpAsDouble(trimops_num++)*1e-3;   //Boost/PassFet CC Threshold.
+	g_Fosc_Target_S_Trimops							= trimops->GetTrimOpAsDouble(trimops_num++)*1e3;	//Max. VCO Frequency (Khz)
+	g_CLK1M_Target_S_Trimops						= trimops->GetTrimOpAsDouble(trimops_num++)*1e6;	//HF Oscillator (1Mhz)
+	g_VDDA_Target_S_Trimops							= trimops->GetTrimOpAsDouble(trimops_num++);		//VDDA Target.
+	g_CV_Target_S_Trimops							= trimops->GetTrimOpAsDouble(trimops_num++);		//FB Reference.
+	g_VbIlim_Target_S_Trimops						= trimops->GetTrimOpAsDouble(trimops_num++)*1e-3;	//Boost Ilim Threshold.
+	g_VADC_Target_S_Trimops							= trimops->GetTrimOpAsDouble(trimops_num++);		//ADC Vref.
+	g_ZTtimer_Target_S_Trimops						= trimops->GetTrimOpAsDouble(trimops_num++)*1e-6;	//Handshake Time.
+	g_VccRef_Target_S_Trimops						= trimops->GetTrimOpAsDouble(trimops_num++)*1e-3;	//AVccRef
+	g_CCOffset_Target_S_Trimops						= trimops->GetTrimOpAsDouble(trimops_num++);		//CC compoffset compensation.
+	g_Trim_Dimth_B47_S_Trimops						= trimops->GetTrimOpAsLong(trimops_num++);			//Select Deep Dim Threshold_47
+	g_Trim_ZEE_50KStr_B63_S_Trimops					= trimops->GetTrimOpAsLong(trimops_num++);			//Set softstart start up freq_48
+	g_CP_IS_Target_S_Trimops						= trimops->GetTrimOpAsDouble(trimops_num++)*1e-3;   //CP Target.
+	g_IRSET_Target_S_Trimops						= trimops->GetTrimOpAsDouble(trimops_num++)*1e-6;	//lint_Ref current for RSET (uA)
+	g_SID_Trimops									= trimops->GetTrimOpAsLong(trimops_num++);			//Si ID
+	g_Trim_ZTMBStr_B29_30_S_Trimops					= trimops->GetTrimOpAsLong(trimops_num++);			//Enable 1 segment Boost Driver_52
+	g_Trim_tsstart_B8_9_S_Trimops					= trimops->GetTrimOpAsLong(trimops_num++);			//Softstart time_53
+	g_Trim_tfbOption_B10_11_S_Trimops				= trimops->GetTrimOpAsLong(trimops_num++);			//Boost Freq_54
+	g_Trim_DOPL_B15_S_Trimops						= trimops->GetTrimOpAsLong(trimops_num++);			//DOPL Option Bit_55
+	g_Trim_TvrOption_B16_17_S_Trimops				= trimops->GetTrimOpAsLong(trimops_num++);			//VR Option Selection_56
+	g_Trim_TenCP_B18_S_Trimops						= trimops->GetTrimOpAsLong(trimops_num++);			//Dim Set Freq_57
+	g_Trim_ZffOption_B19_20_S_Trimops				= trimops->GetTrimOpAsLong(trimops_num++);			//Feedforward Option_58
+	g_Trim_DsblJitDim_B21_S_Trimops					= trimops->GetTrimOpAsLong(trimops_num++);			//Disable Jitter in Dimming_59
+	g_Trim_JitterOff_B22_S_Trimops					= trimops->GetTrimOpAsLong(trimops_num++);			//Turn off Jitter_60
+	g_Trim_DsblFlBck_B31_S_Trimops					= trimops->GetTrimOpAsLong(trimops_num++);			//Disable Foldback_61
+	g_Trim_FlBck_Ccopt_B74_S_Trimops				= trimops->GetTrimOpAsLong(trimops_num++);			//To change rate of change in CC reference_62
+	g_Trim_FlBck_Sel_B75_S_Trimops					= trimops->GetTrimOpAsLong(trimops_num++);			//Trim to disable thermal foldback and line induced foldback_63
+	g_Trim_tHrtBtOpt_B61_S_Trimops					= trimops->GetTrimOpAsLong(trimops_num++);			//Heat beat time option_64
+	g_Trim_CPNonI2C_B62_S_Trimops					= trimops->GetTrimOpAsLong(trimops_num++);			//Disable CP_65
+		
+//Getting Secondary Trim Targets from Trimops Table.
+
 
 
 	// Initialize global variables based on Trimops //
@@ -6487,7 +6545,7 @@ void Power_Down_Primary()
 {
 	////D_dvi->set_voltage(D_ch, 0.0, VOLT_10_RANGE); // DVI_11_0
 	////D_dvi->set_current(D_ch, 30e-3, RANGE_30_MA); // DVI_11_0
-	////BPP_dvi->set_current(BPP_ch, 30e-3,	RANGE_30_MA);
+	////BPP_ovi->set_current(BPP_ch, 30e-3,	RANGE_30_MA);
 	////VBPP_ramp_down(3, 0.0, 0.05);
 	////VPIN_ovi->connect(1); // Connect OVI from UV (Also reset to 0V/100uA)
 	////VPIN_ovi->set_current(VPIN_ch, 30e-3, RANGE_30_MA);
@@ -6644,7 +6702,7 @@ float Rdson_Buffer_Cal(float res_div_ratio)
 ////
 ////	// Stop Primary from switching
 ////	VBPP_ramp_down(3, 0.0, 0.05);
-////	BPP_dvi->set_current(BPP_ch, 30e-3,RANGE_30_MA);
+////	BPP_ovi->set_current(BPP_ch, 30e-3,RANGE_30_MA);
 ////
 ////	D_dvi->set_current(D_ch, 30e-3,	RANGE_30_MA);	
 ////	D_dvi->set_voltage(D_ch, Vbuf_in);			// Auto range
@@ -6794,8 +6852,8 @@ void search_VBPP_th( float* vBPP_pV, float* vBPP_m, float* vBPP_p, float* vBPP_p
 ////	vBPP_P_Expect = LowerLimit;
 ////
 ////	//VBPP_ramp_down(3, 0.0, 0.05);
-////	//BPP_dvi->set_current(BPP_ch, 30e-3, RANGE_30_MA);   
-////	//BPP_dvi->set_meas_mode(BPP_ch, OVI_MEASURE_CURRENT);
+////	//BPP_ovi->set_current(BPP_ch, 30e-3, RANGE_30_MA);   
+////	//BPP_ovi->set_meas_mode(BPP_ch, OVI_MEASURE_CURRENT);
 ////	//wait.delay_10_us(30);
 ////
 ////	// ** VBPP_PV
@@ -6807,7 +6865,7 @@ void search_VBPP_th( float* vBPP_pV, float* vBPP_m, float* vBPP_p, float* vBPP_p
 ////	if(BPP_4p7uF) delay(3);
 ////	if(BPP_p47uF) delay(1);
 ////	wait.delay_10_us(10);
-////	imeas = BPP_dvi->measure_average(5);
+////	imeas = BPP_ovi->measure_average(5);
 ////
 ////	if (imeas >ich_th)
 ////	{	
@@ -6824,14 +6882,14 @@ void search_VBPP_th( float* vBPP_pV, float* vBPP_m, float* vBPP_p, float* vBPP_p
 ////			if (vfrc > 5.6) // Prevent overvoltage on BPP pin //
 ////			{
 ////				*vBPP_pV = 0;
-////				BPP_dvi->set_voltage(BPP_ch, 0, RANGE_10_V);
+////				BPP_ovi->set_voltage(BPP_ch, 0, RANGE_10_V);
 ////				return;
 ////			}
-////			BPP_dvi->set_voltage(BPP_ch, vfrc, RANGE_10_V); // Starting search point
+////			BPP_ovi->set_voltage(BPP_ch, vfrc, RANGE_10_V); // Starting search point
 ////			if(BPP_4p7uF) delay(3);
 ////			if(BPP_p47uF) delay(dly_BPP_p47uF);
 ////			wait.delay_10_us(10);
-////			imeas = BPP_dvi->measure_average(5);
+////			imeas = BPP_ovi->measure_average(5);
 ////		}
 ////		else			
 ////		{	
@@ -6845,7 +6903,7 @@ void search_VBPP_th( float* vBPP_pV, float* vBPP_m, float* vBPP_p, float* vBPP_p
 ////			if(BPP_4p7uF) delay(3);
 ////			if(BPP_p47uF) delay(dly_BPP_p47uF);
 ////			wait.delay_10_us(10);
-////			imeas = BPP_dvi->measure_average(5);				//expect device not switching here.
+////			imeas = BPP_ovi->measure_average(5);				//expect device not switching here.
 ////			if (imeas >ich_th)
 ////			{	
 ////				*vBPP_p = -1.0;	
@@ -6857,14 +6915,14 @@ void search_VBPP_th( float* vBPP_pV, float* vBPP_m, float* vBPP_p, float* vBPP_p
 ////				if (vfrc > 5.6) // Prevent overvoltage on BPP pin //
 ////				{
 ////					*vBPP_pV = 0;
-////					BPP_dvi->set_voltage(BPP_ch, 0, RANGE_10_V);
+////					BPP_ovi->set_voltage(BPP_ch, 0, RANGE_10_V);
 ////					return;
 ////				}
-////				BPP_dvi->set_voltage(BPP_ch, vfrc,	RANGE_10_V);	// Starting search point
+////				BPP_ovi->set_voltage(BPP_ch, vfrc,	RANGE_10_V);	// Starting search point
 ////				if(BPP_4p7uF) delay(3);
 ////				if(BPP_p47uF) delay(dly_BPP_p47uF);
 ////				wait.delay_10_us(10);
-////				imeas = BPP_dvi->measure_average(5);
+////				imeas = BPP_ovi->measure_average(5);
 ////			}
 ////		} 
 ////	}
@@ -6880,11 +6938,11 @@ void search_VBPP_th( float* vBPP_pV, float* vBPP_m, float* vBPP_p, float* vBPP_p
 ////	lcnt2 =0;
 ////	ich_th = 0.9e-3;
 ////
-////	BPP_dvi->set_voltage(BPP_ch, vfrc,	RANGE_10_V);	// Starting search point
+////	BPP_ovi->set_voltage(BPP_ch, vfrc,	RANGE_10_V);	// Starting search point
 ////	wait.delay_10_us(15);	// JD was 5, tester correlation
 ////	if(BPP_4p7uF) delay(3);
 ////	if(BPP_p47uF) delay(dly_BPP_p47uF);
-////	imeas = BPP_dvi->measure_average(15);	// JD was 5, tester correlation
+////	imeas = BPP_ovi->measure_average(15);	// JD was 5, tester correlation
 ////	if (imeas <ich_th)
 ////	{	
 ////		*vBPP_m = 0.0;	
@@ -6897,11 +6955,11 @@ void search_VBPP_th( float* vBPP_pV, float* vBPP_m, float* vBPP_p, float* vBPP_p
 ////		if (imeas >ich_th)
 ////		{	
 ////			vfrc-=vstep;
-////			BPP_dvi->set_voltage(BPP_ch, vfrc,	RANGE_10_V);	// Starting search point
+////			BPP_ovi->set_voltage(BPP_ch, vfrc,	RANGE_10_V);	// Starting search point
 ////			if(BPP_4p7uF) delay(3);
 ////			if(BPP_p47uF) delay(dly_BPP_p47uF);
 ////			wait.delay_10_us(10);
-////			imeas = BPP_dvi->measure_average(5);	
+////			imeas = BPP_ovi->measure_average(5);	
 ////		}
 ////		else			
 ////		{	
@@ -6910,11 +6968,11 @@ void search_VBPP_th( float* vBPP_pV, float* vBPP_m, float* vBPP_p, float* vBPP_p
 ////			while ((imeas > ich_th) && (vfrc > 2))
 ////			{	
 ////				vfrc-=vstep;
-////				BPP_dvi->set_voltage(BPP_ch, vfrc,	RANGE_10_V);	// Starting search point
+////				BPP_ovi->set_voltage(BPP_ch, vfrc,	RANGE_10_V);	// Starting search point
 ////				if(BPP_4p7uF) delay(3);
 ////				if(BPP_p47uF) delay(dly_BPP_p47uF);
 ////				wait.delay_10_us(15);	// JD was 5, tester correlation
-////				imeas = BPP_dvi->measure_average(15);	// JD was 5, tester correlation
+////				imeas = BPP_ovi->measure_average(15);	// JD was 5, tester correlation
 ////			}
 ////		} 
 ////	}
@@ -6930,9 +6988,9 @@ void search_VBPP_th( float* vBPP_pV, float* vBPP_m, float* vBPP_p, float* vBPP_p
 ////	ich_th = -2e-3;			// threshold to decide if device is switching or not
 ////	vstep = 0.1;	// used to be 0.2
 ////
-////	BPP_dvi->set_voltage(BPP_ch, vfrc-10e-3,	RANGE_10_V);
+////	BPP_ovi->set_voltage(BPP_ch, vfrc-10e-3,	RANGE_10_V);
 ////	wait.delay_10_us(5);
-////	imeas = BPP_dvi->measure_average(5);
+////	imeas = BPP_ovi->measure_average(5);
 ////
 ////	while (vstep >=0.1)
 ////	{
@@ -6942,14 +7000,14 @@ void search_VBPP_th( float* vBPP_pV, float* vBPP_m, float* vBPP_p, float* vBPP_p
 ////			if (vfrc > 5.6) // Prevent overvoltage on BPP pin //
 ////			{
 ////				*vBPP_p = 0;
-////				BPP_dvi->set_voltage(BPP_ch, 0, RANGE_10_V);
+////				BPP_ovi->set_voltage(BPP_ch, 0, RANGE_10_V);
 ////				return;
 ////			}
-////			BPP_dvi->set_voltage(BPP_ch, vfrc,	RANGE_10_V);	// Starting search point
+////			BPP_ovi->set_voltage(BPP_ch, vfrc,	RANGE_10_V);	// Starting search point
 ////			if(BPP_4p7uF) delay(3);
 ////			if(BPP_p47uF) delay(dly_BPP_p47uF);
 ////			wait.delay_10_us(10);
-////			imeas = BPP_dvi->measure_average(5);
+////			imeas = BPP_ovi->measure_average(5);
 ////		}
 ////		else			
 ////		{	
@@ -6960,14 +7018,14 @@ void search_VBPP_th( float* vBPP_pV, float* vBPP_m, float* vBPP_p, float* vBPP_p
 ////				if (vfrc > 5.6) // Prevent overvoltage on BPP pin //
 ////				{
 ////					*vBPP_p = 0;
-////					BPP_dvi->set_voltage(BPP_ch, 0, RANGE_10_V);
+////					BPP_ovi->set_voltage(BPP_ch, 0, RANGE_10_V);
 ////					return;
 ////				}
-////				BPP_dvi->set_voltage(BPP_ch, vfrc,	RANGE_10_V);	// Starting search point
+////				BPP_ovi->set_voltage(BPP_ch, vfrc,	RANGE_10_V);	// Starting search point
 ////				if(BPP_4p7uF) delay(3);
 ////				if(BPP_p47uF) delay(dly_BPP_p47uF);
 ////				wait.delay_10_us(10);
-////				imeas = BPP_dvi->measure_average(5);
+////				imeas = BPP_ovi->measure_average(5);
 ////			}
 ////		} 
 ////	}
@@ -6976,7 +7034,7 @@ void search_VBPP_th( float* vBPP_pV, float* vBPP_m, float* vBPP_p, float* vBPP_p
 ////
 ////	// Take anothe measurement to get more accurate value //
 ////	wait.delay_10_us(100);
-////	imeas = BPP_dvi->measure_average(5);
+////	imeas = BPP_ovi->measure_average(5);
 ////
 //////4. Increase BPP to around 5.1V to see IBPP drops to +200uA (this is where the high-voltage current source turns off)			*
 ////// ** VBPP_P_iHVoff
@@ -6991,14 +7049,14 @@ void search_VBPP_th( float* vBPP_pV, float* vBPP_m, float* vBPP_p, float* vBPP_p
 ////		if (vfrc > 5.6) // Prevent overvoltage on BPP pin //
 ////		{
 ////			*vBPP_p_iHVoff = 0;
-////			BPP_dvi->set_voltage(BPP_ch, 0, RANGE_10_V);
+////			BPP_ovi->set_voltage(BPP_ch, 0, RANGE_10_V);
 ////			return;
 ////		}
-////		BPP_dvi->set_voltage(BPP_ch, vfrc,	RANGE_10_V);	// Starting search point
+////		BPP_ovi->set_voltage(BPP_ch, vfrc,	RANGE_10_V);	// Starting search point
 ////		if(BPP_4p7uF) delay(3);
 ////		if(BPP_p47uF) delay(dly_BPP_p47uF);
 ////		wait.delay_10_us(15);	// JD was 5, tester correlation
-////		imeas = BPP_dvi->measure_average(15);	// JD was 5, tester correlation
+////		imeas = BPP_ovi->measure_average(15);	// JD was 5, tester correlation
 ////	}
 ////
 ////	*vBPP_p_iHVoff = vfrc;
@@ -7213,9 +7271,9 @@ void search_VBPS_Reset(float *VBPS_Reset)
 	////}
 
 	////// VBP_P drops when secondary has control //
-	////BPP_dvi->set_voltage(BPP_ch, g_VBPP_P_s_final+0.1, RANGE_10_V); // prevent undershoot //
+	////BPP_ovi->set_voltage(BPP_ch, g_VBPP_P_s_final+0.1, RANGE_10_V); // prevent undershoot //
 	////wait.delay_10_us(8);
-	////BPP_dvi->set_voltage(BPP_ch, g_VBPP_P_s_final, RANGE_10_V);
+	////BPP_ovi->set_voltage(BPP_ch, g_VBPP_P_s_final, RANGE_10_V);
 	////wait.delay_10_us(10);
 
 	////lcnt=0;
@@ -7268,7 +7326,7 @@ void search_VBPP_Reset(float *VBPP_Reset)
 	////	vforce -= vstep;
 
 	////	// JD ramp BPP down and look for a change in Vpin current
-	////	BPP_dvi->set_voltage(BPP_ch, vforce, 	RANGE_10_V);	// OVI_1_0
+	////	BPP_ovi->set_voltage(BPP_ch, vforce, 	RANGE_10_V);	// OVI_1_0
 	////	wait.delay_10_us(20);
 	////	imeasure = VPIN_ovi->measure_average(15);	
 	////}
@@ -10231,8 +10289,12 @@ void Create_Awav_xp (	char	*wave_name,
 						int		arr_size,
 						float	samp_rate )
 {
+	//GetSerialNum(Dut_serial_number);
+
+//		strcpy (Wav_outfile_name, Wav_Outfile_path); 
 		strcpy (Wav_outfile_name, "e:\\DL4\\"); 
 		strcat (Wav_outfile_name, Part_ID_LimitSet); 
+		//strcat (Wav_outfile_name, "_#"); strcat (Wav_outfile_name, Dut_serial_number); 
 		strcat (Wav_outfile_name, "_"); 
 		strcat (Wav_outfile_name, g_WAVE_NAME);
 		//strcat (Wav_outfile_name, "_"); strcat (Wav_outfile_name, Hdwr_id); 
@@ -11430,8 +11492,8 @@ void VBPP_Power_Up_w_Test_Mode(int TestModeSelect, int ILIM_Mode)
 ////	}
 ////	
 ////	//BPP set 0V
-////	BPP_dvi->set_current(BPP_ch, 30e-3,	RANGE_30_MA);
-////	BPP_dvi->set_voltage(BPP_ch, 0.0, 	RANGE_10_V); // OVI_1_0 //
+////	BPP_ovi->set_current(BPP_ch, 30e-3,	RANGE_30_MA);
+////	BPP_ovi->set_voltage(BPP_ch, 0.0, 	RANGE_10_V); // OVI_1_0 //
 ////	wait.delay_10_us(5);
 ////
 ////	// BPP ramp up to VBPP_PV  (Note: DO NOT GO ABOVE 5.5V ON BPP, Above 5.5V might cause damage to device) //
@@ -11465,7 +11527,7 @@ void VBPP_Power_Up_w_Test_Mode(int TestModeSelect, int ILIM_Mode)
 ////		wait.delay_10_us(30);
 ////
 ////	VBPP_ramp_down(gVBPP_PV_Init, gVBPP_M_Init +0.25, 0.1);	// vstart, vstop, vstep	
-////	BPP_dvi->set_current(BPP_ch, 30e-3, RANGE_30_MA); // 15mA here so iBPP_minus won't clamp at 2mA from above for B3 silicon
+////	BPP_ovi->set_current(BPP_ch, 30e-3, RANGE_30_MA); // 15mA here so iBPP_minus won't clamp at 2mA from above for B3 silicon
 ////	
 ////	// Determine what ILIM mode we want to be power-up in  (IMPORTANT: ZF-P MUST TRIM FOR REFLECTION) //
 ////	if     (ILIM_Mode == ILIM_NORM) wait.delay_10_us(3); //1.0uF (ILIM) 30us //
@@ -11496,7 +11558,7 @@ void VBPP_Power_Up_w_Test_Mode(int TestModeSelect, int ILIM_Mode)
 //////	if(BPP_4p7uF) delay(3);
 //////	if(BPP_p47uF) delay(1);
 ////
-////	BPP_dvi->set_current(BPP_ch, 2e-3,	RANGE_30_MA);		//						B3 material
+////	BPP_ovi->set_current(BPP_ch, 2e-3,	RANGE_30_MA);		//						B3 material
 ////	VBPP_ramp_up(gVBPP_M_Init -0.2, gVBPP_P_final, 10e-3);	// vstart, vstop, vstep	B3 material
 ////	
 ////	wait.delay_10_us(10);
@@ -11566,13 +11628,13 @@ void Powerup_Primary_in_Testmode(int Testmodes)
 	////		break;
 
 	////	case gOT_Mode:
-	////		BPP_dvi->set_voltage(BPP_ch, 4.1, RANGE_10_V); // OVI_1_0 //
+	////		BPP_ovi->set_voltage(BPP_ch, 4.1, RANGE_10_V); // OVI_1_0 //
 	////		wait.delay_10_us(50);
 	////		//Drain set to 2V so device will switch at a low voltage
 	////		D_dvi->set_voltage(D_ch, 2.0, VOLT_5_RANGE);
 	////		wait.delay_10_us(30);
-	////		BPP_dvi->set_current(BPP_ch, 2e-3, RANGE_30_MA);
-	////		BPP_dvi->set_voltage(BPP_ch, gVBPP_P_final, RANGE_10_V); // OVI_1_0 //
+	////		BPP_ovi->set_current(BPP_ch, 2e-3, RANGE_30_MA);
+	////		BPP_ovi->set_voltage(BPP_ch, gVBPP_P_final, RANGE_10_V); // OVI_1_0 //
 	////		wait.delay_10_us(10);
 	////		break;
 
@@ -11593,7 +11655,7 @@ void Power_Up_Primary_Observe_Mode(int ObsMode_xx)
 ////	wait.delay_10_us(20);
 ////
 ////	//BPP set 0V
-//////	BPP_dvi->set_current(BPP_ch, 30e-3,	RANGE_30_MA);
+//////	BPP_ovi->set_current(BPP_ch, 30e-3,	RANGE_30_MA);
 //////	VBPP_ramp_down(3, 0.0, 0.05);
 //////	wait.delay_10_us(5);
 ////
@@ -11618,15 +11680,15 @@ void Power_Up_Primary_Observe_Mode(int ObsMode_xx)
 ////	VBPP_ramp_down(5, gVBPP_M_Init-200e-3, 50e-3);	
 ////	wait.delay_10_us(50);
 ////
-////	BPP_dvi->set_current(BPP_ch, 2e-3, RANGE_30_MA);
+////	BPP_ovi->set_current(BPP_ch, 2e-3, RANGE_30_MA);
 ////	VBPP_ramp_up(gVBPP_M_Init-200e-3, gVBPP_P_final, 10e-3);
 ////	
 ////	wait.delay_10_us(30);
 ////
 ////	//BPP set 4.5V for 100us and 5.2V to bring chip back to normal operation
-//////	BPP_dvi->set_voltage(BPP_ch, 4.2, RANGE_10_V); // OVI_1_0 //
+//////	BPP_ovi->set_voltage(BPP_ch, 4.2, RANGE_10_V); // OVI_1_0 //
 //////	wait.delay_10_us(50);
-//////	BPP_dvi->set_voltage(BPP_ch, 5.2, RANGE_10_V); // OVI_1_0 //
+//////	BPP_ovi->set_voltage(BPP_ch, 5.2, RANGE_10_V); // OVI_1_0 //
 //////	wait.delay_10_us(30);
 ////
 ////	if		(ObsMode_xx == gObserve_Mode_Xcontrol_sec)	num_pulses_Vpin = 0;
@@ -11668,7 +11730,7 @@ void Power_Up_Primary_BypassWL_TM5(int ILIM_Select)
 	////wait.delay_10_us(20);
 
 	////// BPP set 0V
-	////BPP_dvi->set_current(BPP_ch, 30e-3,	RANGE_30_MA);
+	////BPP_ovi->set_current(BPP_ch, 30e-3,	RANGE_30_MA);
 	////wait.delay_10_us(5);
 
 	////// BPP ramp up to 5.0V with 200mV step, then from 5V to VBPP_plus + 200mV
@@ -11696,10 +11758,10 @@ void Power_Up_Primary_BypassWL_TM5(int ILIM_Select)
 	////	wait.delay_10_us(150); // 10uF, ILIM+1, 1.2ms
 
 	////// BPP set 4.5V for 100us and 5.2V to bring chip back to normal operation
-	////BPP_dvi->set_voltage(BPP_ch, gVBPP_M_Init-200e-3, RANGE_10_V); // OVI_1_0 //
+	////BPP_ovi->set_voltage(BPP_ch, gVBPP_M_Init-200e-3, RANGE_10_V); // OVI_1_0 //
 	////wait.delay_10_us(20);
 
-	////BPP_dvi->set_current(BPP_ch, 2e-3, RANGE_30_MA);
+	////BPP_ovi->set_current(BPP_ch, 2e-3, RANGE_30_MA);
 	////VBPP_ramp_up(gVBPP_M_Init-200e-3, gVBPP_P_final, 10e-3);
 	////
 	////wait.delay_10_us(10);
@@ -11725,7 +11787,7 @@ void Power_Up_Primary_BypassWL_TM5_New(int ILIM_Select)
 ////	wait.delay_10_us(20);
 ////
 ////	// BPP set 0V
-////	BPP_dvi->set_current(BPP_ch, 30e-3,	RANGE_30_MA);
+////	BPP_ovi->set_current(BPP_ch, 30e-3,	RANGE_30_MA);
 ////	wait.delay_10_us(5);
 ////
 ////	// BPP ramp up to 5.0V with 200mV step, then from 5V to VBPP_plus + 200mV
@@ -11753,10 +11815,10 @@ void Power_Up_Primary_BypassWL_TM5_New(int ILIM_Select)
 ////		wait.delay_10_us(150); // 10uF, ILIM+1, 1.2ms
 ////
 ////	// BPP set 4.5V for 100us and 5.2V to bring chip back to normal operation
-////	BPP_dvi->set_voltage(BPP_ch, gVBPP_M_Init-200e-3, RANGE_10_V); // OVI_1_0 //
+////	BPP_ovi->set_voltage(BPP_ch, gVBPP_M_Init-200e-3, RANGE_10_V); // OVI_1_0 //
 ////	wait.delay_10_us(20);
 ////
-//////	BPP_dvi->set_current(BPP_ch, 2e-3, RANGE_30_MA);
+//////	BPP_ovi->set_current(BPP_ch, 2e-3, RANGE_30_MA);
 //////	VBPP_ramp_up(gVBPP_M_Init-200e-3, gVBPP_P_final, 10e-3);
 ////	
 //////	wait.delay_10_us(10);
@@ -11786,7 +11848,7 @@ void Power_Up_Primary_BypassWL_TM5_SoftStart(int ILIM_Select)
 ////	wait.delay_10_us(20);
 ////
 ////	//BPP set 0V
-////	BPP_dvi->set_current(BPP_ch, 30e-3,	RANGE_30_MA);
+////	BPP_ovi->set_current(BPP_ch, 30e-3,	RANGE_30_MA);
 ////	wait.delay_10_us(5);
 ////
 ////	//BPP ramp up to 5.0V with 200mV step, then from 5V to VBPP_plus + 200mV
@@ -11811,7 +11873,7 @@ void Power_Up_Primary_BypassWL_TM5_SoftStart(int ILIM_Select)
 ////	else if(ILIM_Select == ILIM_INCR)				wait.delay_10_us(150);	//10  uF	(ILIM+1)	1.2ms
 ////
 ////	// BPP set 4.5V for 100us and 5.2V to bring chip back to normal operation
-////	BPP_dvi->set_voltage(BPP_ch, gVBPP_M_Init-200e-3, RANGE_10_V); // OVI_1_0 //
+////	BPP_ovi->set_voltage(BPP_ch, gVBPP_M_Init-200e-3, RANGE_10_V); // OVI_1_0 //
 ////	wait.delay_10_us(20);
 ////
 ////	// Connect Inductor to Drain
@@ -11915,7 +11977,7 @@ void Power_Up_Primary_BypassWL_TM5_18kHz(int ILIM_Select)
 ////	wait.delay_10_us(20);
 ////
 ////	//BPP set 0V
-////	BPP_dvi->set_current(BPP_ch, 30e-3,	RANGE_30_MA);
+////	BPP_ovi->set_current(BPP_ch, 30e-3,	RANGE_30_MA);
 ////	wait.delay_10_us(5);
 ////
 ////	//BPP ramp up to 5.0V with 200mV step, then from 5V to VBPP_plus + 200mV
@@ -11940,7 +12002,7 @@ void Power_Up_Primary_BypassWL_TM5_18kHz(int ILIM_Select)
 ////	else if(ILIM_Select == ILIM_INCR)				wait.delay_10_us(150);	//10  uF	(ILIM+1)	1.2ms
 ////
 ////	// BPP set 4.5V for 100us and 5.2V to bring chip back to normal operation
-////	BPP_dvi->set_voltage(BPP_ch, gVBPP_M_Init-200e-3, RANGE_10_V); // OVI_1_0 //
+////	BPP_ovi->set_voltage(BPP_ch, gVBPP_M_Init-200e-3, RANGE_10_V); // OVI_1_0 //
 ////	wait.delay_10_us(20);
 ////
 ////	// Connect Inductor to Drain
@@ -11995,7 +12057,7 @@ void Power_Up_Primary_BypassWL_TM5_Partial(int ILIM_Select)
 	////wait.delay_10_us(20);
 
 	//////BPP set 0V
-	////BPP_dvi->set_current(BPP_ch, 30e-3,	RANGE_30_MA);
+	////BPP_ovi->set_current(BPP_ch, 30e-3,	RANGE_30_MA);
 	////wait.delay_10_us(5);
 
 	//////BPP ramp up to 5.0V with 200mV step, then from 5V to VBPP_plus + 200mV
@@ -12020,7 +12082,7 @@ void Power_Up_Primary_BypassWL_TM5_Partial(int ILIM_Select)
 	////else if(ILIM_Select == ILIM_INCR)				wait.delay_10_us(150);	//10  uF	(ILIM+1)	1.2ms
 
 	////// BPP set 4.5V for 100us and 5.2V to bring chip back to normal operation
-	////BPP_dvi->set_voltage(BPP_ch, gVBPP_M_Init-200e-3, RANGE_10_V); // OVI_1_0 //
+	////BPP_ovi->set_voltage(BPP_ch, gVBPP_M_Init-200e-3, RANGE_10_V); // OVI_1_0 //
 	////wait.delay_10_us(20);
 
 	////// Connect Inductor to Drain
@@ -12076,8 +12138,8 @@ void Power_Up_Primary_Normal_Mode(int ILIM_PU_Select)
 	////}
 
 	//////BPP set 0V
-	////BPP_dvi->set_current(BPP_ch, 30e-3, RANGE_30_MA);
-	////BPP_dvi->set_voltage(BPP_ch, 0.0, RANGE_10_V);	// OVI_1_0
+	////BPP_ovi->set_current(BPP_ch, 30e-3, RANGE_30_MA);
+	////BPP_ovi->set_voltage(BPP_ch, 0.0, RANGE_10_V);	// OVI_1_0
 	////wait.delay_10_us(5);
 
 	////VBPP_ramp_up(0.0, gVBPP_PV_final, 0.2);	// vstart, vstop, vstep	
@@ -12094,7 +12156,7 @@ void Power_Up_Primary_Normal_Mode(int ILIM_PU_Select)
 	////VBPP_ramp_down(gVBPP_M_Init +0.25, gVBPP_M_Init -0.2, 0.1);	// vstart, vstop, vstep	
 	////wait.delay_10_us(50);
 
-	////BPP_dvi->set_current(BPP_ch, 2e-3, RANGE_30_MA);
+	////BPP_ovi->set_current(BPP_ch, 2e-3, RANGE_30_MA);
 	////VBPP_ramp_up(gVBPP_M_Init-200e-3, gVBPP_P_final, 10e-3);
 	////
 	////wait.delay_10_us(50);
@@ -12193,10 +12255,10 @@ void Observe_Vpin_Internal_Signals()
 	////// Drain stays at 0V so BPP signal will be cleaner
 
 	////// BPP set 4.5V for 100us and 5.1V to bring chip back to normal operation
-	////BPP_dvi->set_voltage(BPP_ch, gVBPP_M_Init-0.3, RANGE_10_V); // OVI_1_0 //
+	////BPP_ovi->set_voltage(BPP_ch, gVBPP_M_Init-0.3, RANGE_10_V); // OVI_1_0 //
 	////wait.delay_10_us(10);
-	//////BPP_dvi->set_voltage(BPP_ch, gVBPP_P_Init+0.2, RANGE_10_V); // OVI_1_0 //
-	////BPP_dvi->set_voltage(BPP_ch, gVBPP_P_final, RANGE_10_V); // OVI_1_0 //
+	//////BPP_ovi->set_voltage(BPP_ch, gVBPP_P_Init+0.2, RANGE_10_V); // OVI_1_0 //
+	////BPP_ovi->set_voltage(BPP_ch, gVBPP_P_final, RANGE_10_V); // OVI_1_0 //
 	////wait.delay_10_us(10);
 	////VPIN_ovi->connect(VPIN_ch);
 
@@ -12618,8 +12680,8 @@ void Power_Down_Everything()
 {
 	////D_dvi->set_current(D_ch, 30e-3, 		RANGE_30_MA);	// DVI_11_0
 	////D_dvi->set_voltage(D_ch, 0.0, 			VOLT_10_RANGE);	// DVI_11_0
-	////BPP_dvi->set_current(BPP_ch, 30e-3,		RANGE_30_MA);
-	////BPP_dvi->set_voltage(BPP_ch, 0.0, 		RANGE_10_V);	// OVI_1_0 
+	////BPP_ovi->set_current(BPP_ch, 30e-3,		RANGE_30_MA);
+	////BPP_ovi->set_voltage(BPP_ch, 0.0, 		RANGE_10_V);	// OVI_1_0 
 	//////Vpin
 	////ovi_1->connect(OVI_CHANNEL_1);
 	////VPIN_ovi->set_current(VPIN_ch, 30e-3,	RANGE_30_MA);
@@ -12671,8 +12733,8 @@ void Power_Down_Everything_Except_Buf_Clamp()
 {
 	////D_dvi->set_current(D_ch, 30e-3, RANGE_30_MA); // DVI_11_0
 	////D_dvi->set_voltage(D_ch, 0.0, VOLT_10_RANGE); // DVI_11_0
-	////BPP_dvi->set_current(BPP_ch, 30e-3, RANGE_30_MA);
-	////BPP_dvi->set_voltage(BPP_ch, 0.0, RANGE_10_V); // OVI_1_0 
+	////BPP_ovi->set_current(BPP_ch, 30e-3, RANGE_30_MA);
+	////BPP_ovi->set_voltage(BPP_ch, 0.0, RANGE_10_V); // OVI_1_0 
 	////ovi_1->connect(OVI_CHANNEL_1);
 	////VPIN_ovi->set_current(VPIN_ch, 30e-3, RANGE_30_MA);
 	////VPIN_ovi->set_voltage(VPIN_ch, 0.0, RANGE_10_V);
@@ -12712,12 +12774,12 @@ void Power_Down_Everything_Except_Buf_Clamp()
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
 void VBPP_Negative_Cycle()
 {
-//	BPP_dvi->set_current(BPP_ch, 3e-3,		RANGE_3_MA);
-//	BPP_dvi->set_voltage(BPP_ch, 0.0, 		RANGE_10_V);	// OVI_1_0 
+//	BPP_ovi->set_current(BPP_ch, 3e-3,		RANGE_3_MA);
+//	BPP_ovi->set_voltage(BPP_ch, 0.0, 		RANGE_10_V);	// OVI_1_0 
 //	wait.delay_10_us(5);
-//	BPP_dvi->set_voltage(BPP_ch, -1.0, 		RANGE_10_V);	// OVI_1_0 
+//	BPP_ovi->set_voltage(BPP_ch, -1.0, 		RANGE_10_V);	// OVI_1_0 
 //	delay(1);	
-//	BPP_dvi->set_voltage(BPP_ch, 0.0, 		RANGE_10_V);	// OVI_1_0 
+//	BPP_ovi->set_voltage(BPP_ch, 0.0, 		RANGE_10_V);	// OVI_1_0 
 //	wait.delay_10_us(10);
 }
 
@@ -15385,9 +15447,9 @@ void Initialize_Instruments()
 ////	//hvs_15->open_relay(HVS_SHORT_POS_FS);
 ////	//hvs_15->open_relay(HVS_FORCE_POS);
 ////
-////	BPP_dvi->set_voltage(BPP_ch, 0.0, RANGE_10_V); // OVI_1_0 //
-////	BPP_dvi->set_current(BPP_ch, 30e-3, RANGE_30_MA); // OVI_1_0 //
-////	//BPP_dvi->set_meas_mode(BPP_ch, OVI_MEASURE_VOLTAGE); // OVI_1_0 //
+////	BPP_ovi->set_voltage(BPP_ch, 0.0, RANGE_10_V); // OVI_1_0 //
+////	BPP_ovi->set_current(BPP_ch, 30e-3, RANGE_30_MA); // OVI_1_0 //
+////	//BPP_ovi->set_meas_mode(BPP_ch, OVI_MEASURE_VOLTAGE); // OVI_1_0 //
 ////
 ////	//VPIN_ovi->connect(VPIN_ch);
 ////	VPIN_ovi->set_voltage(VPIN_ch, 0.0, RANGE_10_V); // OVI_1_1 //
@@ -15773,7 +15835,7 @@ void Program_All_TrimRegister()
 
 	for(i=0;i<5;i++)
 	{
-		DSM_I2C_Write('w', g_EEP_W_Array[i], EEpr_Array[i]);
+		DSM_I2C_Write('w', g_EEP_W_Array[i], EEpr_Bank_S[i]);
 		DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
 	}
 }
@@ -15801,27 +15863,27 @@ void Program_Single_TrimRegister(int TrimLocation)
 	////g_EEP_W_E8     = 0xE8;       //WR_Word
 	if(TrimLocation == 0xE0)
 	{
-		DSM_I2C_Write('w', g_EEP_W_E0, EEpr_Array[0]);
+		DSM_I2C_Write('w', g_EEP_W_E0, EEpr_Bank_S[E0]);
 		DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
 	}
 	if(TrimLocation == 0xE2)
 	{
-		DSM_I2C_Write('w', g_EEP_W_E2, EEpr_Array[1]);
+		DSM_I2C_Write('w', g_EEP_W_E2, EEpr_Bank_S[E2]);
 		DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
 	}
 	if(TrimLocation == 0xE4)
 	{
-		DSM_I2C_Write('w', g_EEP_W_E4, EEpr_Array[2]);
+		DSM_I2C_Write('w', g_EEP_W_E4, EEpr_Bank_S[E4]);
 		DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
 	}
 	if(TrimLocation == 0xE6)
 	{
-		DSM_I2C_Write('w', g_EEP_W_E6, EEpr_Array[3]);
+		DSM_I2C_Write('w', g_EEP_W_E6, EEpr_Bank_S[E6]);
 		DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
 	}
 	if(TrimLocation == 0xE8)
 	{
-		DSM_I2C_Write('w', g_EEP_W_E8, EEpr_Array[4]);
+		DSM_I2C_Write('w', g_EEP_W_E8, EEpr_Bank_S[E8]);
 		DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
 	}
 }
@@ -20207,249 +20269,4 @@ void VR_Detect_A_Search(float &VB1, float &VB2, float &VA0, float &VA1, float &V
 
 
 
-}
-
-void Characterize_vBPPth()
-{
-	/********************************************************************************************************************************
-	 *		Priamry: vBPP_PV (1.4mA) --> vBPP_M (-5mA) --> vBPP_P (-1.2mA) --> vBPP_P_iHVoff (200uA) --> vBPP_ShuntPUseq			*
-	 *																																*
-	 * 1. Drain=0, BPP=5.0, IBPP=220uA, increase BPP until IBPP jumps to 1.4mA														*
-	 *    (this is around BPP=5.4V the first level when first powering up.  This is not the VBPP-P, a Vpin threshold for Testmodes)	*
-	 * 2. Bring BPP down to 5V, turn on Drain=50V through 1K load, IBPP is still positive around 1.2mA,								*
-	 *    decrease BPP down until IBPP flip sign from 0.6mA to -5mA (this is around 4.5V the first level when BPP goes down VBPP-M)	*
-	 * 3. Increase BPP to around 5V VBPP-P to see device starts switching															*
-	 *    (this is the level after 2nd time raise BPP up) IBPP around -1.2mA														*
-	 * 4. Increase BPP to around 5.1V to see IBPP drops to +200uA (this is where the high-voltage current source turns off)			*
-	 * 5. Increase BPP to around 5.4V VBPP-shunt when the device stops switching and IBPP = 11.3mA > 10mA (DE don't need this)		*
-	 ********************************************************************************************************************************/
-
-	float	vramp_up_pv[2000] = {0},
-			vramp_dn_m[2000]  = {0},
-			vramp_up_p[2000]  = {0},
-			imeas_pv[2000]	 = {0},
-			imeas_m[2000]	 = {0},
-			imeas_p[2000]	 = {0},
-			vmeas_pv[2000]	 = {0},
-			vmeas_m[2000]	 = {0},
-			vmeas_p[2000]	 = {0};
-	float	vstep=0, vfrc, imeas, vmeas;
-	int		i=0;
-	int		vramp_up_pv_count=0,
-			vramp_dn_m_count =0,
-			vramp_up_p_count =0;
-
-	//Characterize "Time vs. Current/Voltage" enable and save all datapoint to text file.
-	FILE * File_g_Char_vBPPth;
-	File_g_Char_vBPPth = fopen ("E:\\DL4\\g_Char_vBPPth.txt","w"); //write Enable for text file to be opened
-	File_g_Char_vBPPth = fopen ("E:\\DL4\\g_Char_vBPPth.txt","a");	//set to append mode for existing opened file
-	fprintf(File_g_Char_vBPPth,"g_Char_vBPPth  Serial# %i \n\n",g_SERIAL_NUM);
-
-
-	//vBPP_PV 
-	fprintf(File_g_Char_vBPPth,"vBPP_PV  (Ramp up vBPP until iBPP change from low current to above 1.5mA)\n\n");
-	fprintf(File_g_Char_vBPPth,"vBPP(V), \tiBPP(mA),\tTime(ms),\tvStep(V),\tiStep(mA),\ttStep(ms),\n");
-	starttime = mytimer.GetElapsedTime();// testtime check
-
-		//Drain (0V)
-		D_dvi->set_current(D_ch, 300e-3,	RANGE_300_MA);		
-		D_dvi->set_voltage(D_ch, 0.0, 		VOLT_50_RANGE);	// DVI_11_0	
-		//UV pin (Vpin) set to 0V before PU
-		UV_dvi->set_voltage(UV_ch, 0,			VOLT_10_RANGE);  
-		UV_dvi->set_current(UV_ch, 20e-3,		RANGE_30_MA);	
-		//BPP set 0V
-		BPP_dvi->set_current(BPP_ch, 2e-3,	RANGE_30_MA);	// Set 2mA here to prevent BPP go into Vshunt for B3 silicon
-		BPP_dvi->set_voltage(BPP_ch, 0.0, 	RANGE_10_V);	// OVI_1_0
-		BPP_dvi->set_meas_mode(BPP_ch,		DVI_MEASURE_CURRENT);
-		wait.delay_10_us(5);
-		
-		//Characterize vBPP_PV threshold
-		BPP_dvi->set_current(BPP_ch,  15e-3,	RANGE_30_MA);	// 15mA here so iBPP_minus won't clamp at 2mA from above for B3 silicon
-		wait.delay_10_us(3);	//1.0 uF	(ILIM)		30us
-
-	vstep	= 50e-3;
-	i		= 0;
-	while(vfrc < 3.0)
-	{
-		vfrc += vstep;
-		BPP_dvi->set_voltage(BPP_ch, vfrc,	VOLT_10_RANGE);	// Starting search point
-		wait.delay_10_us(5);
-		imeas = BPP_dvi->measure_average(5);	
-		stoptime = mytimer.GetElapsedTime() - starttime;// testtime check
-		fprintf(File_g_Char_vBPPth,"%.3f , \t%.3f , \t%.3f , \t%.3f , \t%.3f , \t%.3f \n",vfrc,imeas*1000, stoptime/1000.0, vstep, 0.0, 0.0);
-		vramp_up_pv[i]  = vfrc;
-		imeas_pv[i]		= imeas;
-		i++;
-	}
-
-	vstep=2.5e-3;
-	while(vfrc < 5.55)
-	{
-		vfrc += vstep;
-		BPP_dvi->set_voltage(BPP_ch, vfrc,	VOLT_10_RANGE);	// Starting search point
-		wait.delay_10_us(5);
-		imeas = BPP_dvi->measure_average(5);	
-		stoptime = mytimer.GetElapsedTime() - starttime;// testtime check
-		fprintf(File_g_Char_vBPPth,"%.3f , \t%.3f , \t%.3f , \t%.3f , \t%.3f , \t%.3f \n",vfrc,imeas*1000, stoptime/1000.0, vstep, 0.0, 0.0);
-		vramp_up_pv[i]  = vfrc;
-		imeas_pv[i]		= imeas;
-		vramp_up_pv_count = i;
-		i++;
-	}
-
-	//vBPP_M 
-	fprintf(File_g_Char_vBPPth,"\nvBPP_M  (Ramp down vBPP until iBPP flip from positive to negative '-5mA')\n\n");
-	fprintf(File_g_Char_vBPPth,"vBPP(V), \tiBPP(mA),\tTime(ms),\tvStep(V),\tiStep(mA),\ttStep(ms),\n");
-	starttime = mytimer.GetElapsedTime();// testtime check
-
-	vfrc = 5.0;
-	BPP_dvi->set_voltage(BPP_ch, vfrc,	VOLT_10_RANGE);	// Starting search point
-	wait.delay_10_us(10);
-
-	D_dvi->set_voltage(D_ch,	 45,		VOLT_50_RANGE);  
-	D_dvi->set_meas_mode(D_ch, DVI_MEASURE_VOLTAGE);
-	wait.delay_10_us(5);
-	while(vmeas<44 && i<50)			//vDrain has to be high in order for vBPP_M to work properly
-	{
-		vmeas = D_dvi->measure();
-		i++;
-	}
-
-	BPP_dvi->set_meas_mode(BPP_ch,		DVI_MEASURE_CURRENT);
-
-	vstep	= -2.5e-3;
-	i		= 0;
-	while(vfrc>4.3)
-	{
-		vfrc += vstep;
-		BPP_dvi->set_voltage(BPP_ch, vfrc,	VOLT_10_RANGE);	// Starting search point
-		wait.delay_10_us(5);
-		imeas = BPP_dvi->measure_average(5);	
-		stoptime = mytimer.GetElapsedTime() - starttime;// testtime check
-		fprintf(File_g_Char_vBPPth,"%.4f , \t%.4f , \t%.4f , \t%.4f , \t%.4f , \t%.4f \n",vfrc,imeas*1000, stoptime/1000.0, vstep, 0.0, 0.0);
-		vramp_dn_m[i]	= vfrc;
-		imeas_m[i]		= imeas;
-		vramp_dn_m_count= i;
-		i++;
-	}
-
-	//vBPP_P 
-	fprintf(File_g_Char_vBPPth,"\nvBPP_P  (Ramp up vBPP until iBPP change from negative to 1.2mA)\n\n");
-	fprintf(File_g_Char_vBPPth,"vBPP(V), \tiBPP(mA),\tTime(ms),\tvStep(V),\tiStep(mA),\ttStep(ms),\n");
-	starttime = mytimer.GetElapsedTime();// testtime check
-
-	vstep	= +2.5e-3;
-	i		= 0;
-	while(vfrc<5.65)
-	{
-		vfrc += vstep;
-		BPP_dvi->set_voltage(BPP_ch, vfrc,	VOLT_10_RANGE);	// Starting search point
-		wait.delay_10_us(5);
-		imeas = BPP_dvi->measure_average(5);	
-		stoptime = mytimer.GetElapsedTime() - starttime;// testtime check
-		fprintf(File_g_Char_vBPPth,"%.4f , \t%.4f , \t%.4f , \t%.4f , \t%.4f , \t%.4f \n",vfrc,imeas*1000, stoptime/1000.0, vstep, 0.0, 0.0);
-		vramp_up_p[i]	= vfrc;
-		imeas_p[i]		= imeas;
-		vramp_up_p_count= i;
-		i++;
-	}
-
-	fclose (File_g_Char_vBPPth);	
-
-		//Drain (0V)
-		D_dvi->set_current(D_ch, 300e-3,	RANGE_300_MA);		
-		D_dvi->set_voltage(D_ch, 0.0, 		VOLT_50_RANGE);	// DVI_11_0	
-		//UV pin (Vpin) set to 0V before PU
-		UV_dvi->set_voltage(UV_ch, 0,			VOLT_10_RANGE);  
-		UV_dvi->set_current(UV_ch, 20e-3,		RANGE_30_MA);	
-		//BPP set 0V
-		BPP_dvi->set_current(BPP_ch, 2e-3,	RANGE_30_MA);	// Set 2mA here to prevent BPP go into Vshunt for B3 silicon
-		BPP_dvi->set_voltage(BPP_ch, 0.0, 	RANGE_10_V);	// OVI_1_0
-
-
-	//XY plot of vBPP_PV
-	if(1)
-	{
-		int j=0;
-		char debug_file_name[150] ="/0"; 
-
-		strcpy (debug_file_name, "e:\\DL4\\"); 
-		strcat (debug_file_name, g_DevName); 
-		strcat (debug_file_name, "_vBPPpv_iv_plot.txt");
-
-		//open file
-		FILE * fpr = fopen(debug_file_name, "w");
-		if (! fpr)
-			return;
-
-		//print all xy plot values to file
-		fprintf(fpr,"vBPP vs. iBPP(mA)   Ramp up vBPP 0V to 5.5V\n");
-		//fprintf(fpr,"(V) \t(mA)\n");
-		fprintf(fpr,"(mA) \t(V)\n");
-		for (j=0; j<=vramp_up_pv_count;j++)
-		{
-			//fprintf(fpr,"%.4f	\t%.7f \n",vramp_up_pv[j], imeas_pv[j]*1e3);
-			fprintf(fpr,"%.3f	\t%.3f \n",imeas_pv[j]*1e3, vramp_up_pv[j]);
-		}
-		fprintf(fpr,"\n");
-		fclose(fpr);
-	}
-
-
-	//XY plot of vBPP_Minus
-	if(1)
-	{
-		int j=0;
-		char debug_file_name[150] ="/0"; 
-
-		strcpy (debug_file_name, "e:\\DL4\\"); 
-		strcat (debug_file_name, g_DevName); 
-		strcat (debug_file_name, "_vBPPm_iv_plot.txt");
-
-		//open file
-		FILE * fpr = fopen(debug_file_name, "w");
-		if (! fpr)
-			return;
-
-		//print all xy plot values to file
-		fprintf(fpr,"vBPP vs. iBPP  Ramp down vBPP 5V to vMinus\n");
-		//fprintf(fpr,"(V) \t(mA)\n");
-		fprintf(fpr,"(mA) \t(V)\n");
-		for (j=0; j<=vramp_dn_m_count;j++)
-		{
-			//fprintf(fpr,"%.4f	\t%.7f \n", vramp_dn_m[j], imeas_m[j]*1e3);
-			fprintf(fpr,"%.3f	\t%.3f \n", imeas_m[j]*1e3, vramp_dn_m[j]);
-		}
-		fprintf(fpr,"\n");
-		fclose(fpr);
-	}
-
-	//XY plot of vBPP_Plus
-	if(1)
-	{
-		int j=0;
-		char debug_file_name[150] ="/0"; 
-
-		strcpy (debug_file_name, "e:\\DL4\\"); 
-		strcat (debug_file_name, g_DevName); 
-		strcat (debug_file_name, "_vBPPp_iv_plot.txt");
-
-		//open file
-		FILE * fpr = fopen(debug_file_name, "w");
-		if (! fpr)
-			return;
-
-		//print all xy plot values to file
-		fprintf(fpr,"vBPP vs. iBPP  Ramp vBPP from vMinus to vPlus\n");
-		//fprintf(fpr,"(V) \t(mA)\n");
-		fprintf(fpr,"(mA) \t(V)\n");
-		for (j=0; j<=vramp_up_p_count;j++)
-		{
-			//fprintf(fpr,"%.4f	\t%.7f \n",vramp_up_p[j], imeas_p[j]*1e3);
-			fprintf(fpr,"%.3f	\t%.3f \n", imeas_p[j]*1e3), vramp_up_p[j];
-		}
-		fprintf(fpr,"\n");
-		fclose(fpr);
-	}
-	delay(1);
 }

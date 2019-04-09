@@ -52,7 +52,7 @@ void Fosc_pt_S(test_function& func)
 //		return;
 
 
-	if (g_Trim_Enable_S == 0 && g_GRR == 0)
+	if (g_Burn_Enable_S == 0 && g_GRR_Enable == 0)
 		return;
 
 	//if (g_Fn_CLK1M_Pre == 0 )  return;
@@ -74,7 +74,7 @@ void Fosc_pt_S(test_function& func)
 	// Test Names //
 	float Fosc_pt_S      = 0;
 	float Fosc_prg_S     = 0;
-	float Fosc_Target_S1  = 100E3; 
+	float Fosc_Target_S1  = g_Fosc_Target_S_Trimops;//100E3; 
 	float Fosc_New_Target_S = 0;
 	int   Fosc_TrCode_S  = 0;
 	int   Fosc_BitCode_S1 = 0;
@@ -335,12 +335,12 @@ Pulse pulse;
 	//0x00 0x66 write 0x30 0x00
 	DSM_I2C_Write('w', g_TEST_CTRL4, 0x0030);
 
-	if(g_ZffOption_B19_20_S != 0)
+	if(g_Trim_ZffOption_B19_20_S_Trimops != 0)
 	{
 		//EEprom T[19]= 0, T[20] = 0 to turn off Feed Forward function.
 		//Need to program these two bits back if FeedFoward option is needed.
-		Set_EEprBit(EEpr_Array[1], 19-16, 0);
-		Set_EEprBit(EEpr_Array[1], 20-16, 0);
+		Set_EEprBit(EEpr_Bank_S[E2], 19-16, 0);
+		Set_EEprBit(EEpr_Bank_S[E2], 20-16, 0);
 	}
 
 	
@@ -349,7 +349,7 @@ Pulse pulse;
 	DSM_I2C_Write('w', g_ANA_CTRL_1, 0x2800);\
 	//Loading previous trimming except T[19] & T[20] on E2 before performing the test.
 
-	if (g_Trim_Enable_S != 0)
+	if (g_Burn_Enable_S)
 	{
 		Program_All_TrimRegister();
 	}
@@ -371,67 +371,67 @@ Pulse pulse;
 
 	g_Fosc_Pre = Fosc_pt_S;
 
-if (g_Trim_Enable_S)
-{
-
-	// Fosc_S_Code //
-	// Find which trim code will make Fosc_Pre closest to target //
-	smallest_diff_val = 999999.9;
-	smallest_diff_idx = 0;
-	for (i=0; i<64; i++)
+	if (g_Burn_Enable_S)
 	{
-		temp_1 = (Fosc_pt_S * (1 + (Fosc_S_TrimWt[i]/100)) -  Fosc_New_Target_S);
-		if (temp_1 < 0)	// Get rid of negatives //
-			temp_1 *= -1.0;
-		if (temp_1 < smallest_diff_val)
+
+		// Fosc_S_Code //
+		// Find which trim code will make Fosc_Pre closest to target //
+		smallest_diff_val = 999999.9;
+		smallest_diff_idx = 0;
+		for (i=0; i<64; i++)
 		{
-			smallest_diff_val = temp_1;
-			smallest_diff_idx = i;
+			temp_1 = (Fosc_pt_S * (1 + (Fosc_S_TrimWt[i]/100)) -  Fosc_New_Target_S);
+			if (temp_1 < 0)	// Get rid of negatives //
+				temp_1 *= -1.0;
+			if (temp_1 < smallest_diff_val)
+			{
+				smallest_diff_val = temp_1;
+				smallest_diff_idx = i;
+			}
 		}
+
+
+		//Manual forcing:
+		//smallest_diff_idx = 63;
+
+		Fosc_TrCode_S = Fosc_S_code[smallest_diff_idx];
+		Fosc_ExpChg   = Fosc_S_TrimWt[smallest_diff_idx];
+
+		Fosc_ExpValue = (Fosc_pt_S * (1 + (Fosc_S_TrimWt[smallest_diff_idx]/100)));
+
+		TrimCode_To_TrimBit(Fosc_TrCode_S, "Fosc_S", 's');
+
+
+		//Convert Trimcode to readable datalog file.
+		if(Fosc_S_code[smallest_diff_idx]>=32 && Fosc_S_code[smallest_diff_idx] <= 63)
+		{
+			Fosc_BitCode_S1 = -1*Fosc_TrCode_S + 31; 
+		}
+
+		EEpr_Bank_S[E8] = EEpr_Bank_S[E8] | (Fosc_TrCode_S<<(64-startbit));
+
+		Program_Single_TrimRegister(g_EEP_W_E8);
+		
+		if(g_Trim_ZffOption_B19_20_S_Trimops == 1)
+		{
+			//Need to program these two bits back if FeedFoward option is needed.
+			Set_EEprBit(EEpr_Bank_S[E2], 19-16, 1);
+			Set_EEprBit(EEpr_Bank_S[E2], 20-16, 0);
+		}
+		else if(g_Trim_ZffOption_B19_20_S_Trimops == 2)
+		{
+			//Need to program these two bits back if FeedFoward option is needed.
+			Set_EEprBit(EEpr_Bank_S[E2], 19-16, 0);
+			Set_EEprBit(EEpr_Bank_S[E2], 20-16, 1);
+		}
+		else if(g_Trim_ZffOption_B19_20_S_Trimops == 3)
+		{
+			//Need to program these two bits back if FeedFoward option is needed.
+			Set_EEprBit(EEpr_Bank_S[E2], 19-16, 1);
+			Set_EEprBit(EEpr_Bank_S[E2], 20-16, 1);
+		}
+
 	}
-
-
-	//Manual forcing:
-	//smallest_diff_idx = 63;
-
-	Fosc_TrCode_S = Fosc_S_code[smallest_diff_idx];
-	Fosc_ExpChg   = Fosc_S_TrimWt[smallest_diff_idx];
-
-	Fosc_ExpValue = (Fosc_pt_S * (1 + (Fosc_S_TrimWt[smallest_diff_idx]/100)));
-
-	TrimCode_To_TrimBit(Fosc_TrCode_S, "Fosc_S", 's');
-
-
-	//Convert Trimcode to readable datalog file.
-	if(Fosc_S_code[smallest_diff_idx]>=32 && Fosc_S_code[smallest_diff_idx] <= 63)
-	{
-		Fosc_BitCode_S1 = -1*Fosc_TrCode_S + 31; 
-	}
-
-	EEpr_Array[4] = EEpr_Array[4] | (Fosc_TrCode_S<<(64-startbit));
-
-	Program_Single_TrimRegister(g_EEP_W_E8);
-	
-	if(g_ZffOption_B19_20_S == 1)
-	{
-		//Need to program these two bits back if FeedFoward option is needed.
-		Set_EEprBit(EEpr_Array[1], 19-16, 1);
-		Set_EEprBit(EEpr_Array[1], 20-16, 0);
-	}
-	else if(g_ZffOption_B19_20_S == 2)
-	{
-		//Need to program these two bits back if FeedFoward option is needed.
-		Set_EEprBit(EEpr_Array[1], 19-16, 0);
-		Set_EEprBit(EEpr_Array[1], 20-16, 1);
-	}
-	else if(g_ZffOption_B19_20_S == 3)
-	{
-		//Need to program these two bits back if FeedFoward option is needed.
-		Set_EEprBit(EEpr_Array[1], 19-16, 1);
-		Set_EEprBit(EEpr_Array[1], 20-16, 1);
-	}
-
-}
 	tmeas = 0.0;
 //Monitor 100Khz switching on HSG pin.	
 	tmu_6->start_holdoff(15,TRUE);
@@ -500,7 +500,7 @@ if (g_Trim_Enable_S)
 
 	PiDatalog(func, A_Fosc_pt_S,		  Fosc_pt_S,               26, POWER_KILO);
 	
-	if (g_Trim_Enable_S)
+	if (g_Burn_Enable_S)
 	{
 		PiDatalog(func, A_Fosc_target_S,     Fosc_New_Target_S,           26, POWER_KILO);
 		PiDatalog(func, A_Fosc_TrCode_S,     Fosc_TrCode_S,           26, POWER_UNIT);
@@ -513,7 +513,7 @@ if (g_Trim_Enable_S)
 		PiDatalog(func, A_Eetr67_VCO3_S,    g_S_TrimRegisterTemp[67],    26, POWER_UNIT);
 		PiDatalog(func, A_Eetr68_VCO4_S,    g_S_TrimRegisterTemp[68],    26, POWER_UNIT);
 		PiDatalog(func, A_Eetr69_VCO5_S,    g_S_TrimRegisterTemp[69],    26, POWER_UNIT);
-		PiDatalog(func, A_Bin2Dec1_S,         EEpr_Array[4],          26, POWER_UNIT);
+		PiDatalog(func, A_Bin2Dec1_S,         EEpr_Bank_S[E8],          26, POWER_UNIT);
 		PiDatalog(func, A_Fosc_prg_S,         Fosc_prg_S,              26, POWER_KILO);
 		PiDatalog(func, A_Fosc_prgchg_S,      Fosc_PrgChg,             26, POWER_UNIT);
 	}

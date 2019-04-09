@@ -2350,9 +2350,9 @@ void Continuity(test_function& func)
 	D_dvi->set_meas_mode(D_ch, DVI_MEASURE_VOLTAGE);
 
 	// BPP //
-	BPP_dvi->set_current(BPP_ch, -0.5e-3, RANGE_3_MA); // BPP with 4.7uF
-	BPP_dvi->set_voltage(BPP_ch, -2.0, RANGE_2_V);	// OVI_1_0
-	BPP_dvi->set_meas_mode(BPP_ch, OVI_MEASURE_VOLTAGE);
+	BPP_ovi->set_current(BPP_ch, -0.5e-3, RANGE_3_MA); // BPP with 4.7uF
+	BPP_ovi->set_voltage(BPP_ch, -2.0, RANGE_2_V);	// OVI_1_0
+	BPP_ovi->set_meas_mode(BPP_ch, OVI_MEASURE_VOLTAGE);
 	
 	// IS pin //
 	IS_dvi2k->set_current(IS_ch, -100e-6, RANGE_200_UA);
@@ -2362,16 +2362,16 @@ void Continuity(test_function& func)
 	// 100uA continuity //
 	wait.delay_10_us(200);
 	VcontD = D_dvi->measure_average(5);
-	VcontBPP = BPP_dvi->measure_average(5);
+	VcontBPP = BPP_ovi->measure_average(5);
 	VcontIS = IS_dvi2k->measure_average(5);
 
 	// 1mA continuity //	
 	D_dvi->set_current(D_ch, -1.0e-3, RANGE_3_MA);
-	BPP_dvi->set_current(BPP_ch, -1.0e-3, RANGE_3_MA); // BPP with 4.7uF
+	BPP_ovi->set_current(BPP_ch, -1.0e-3, RANGE_3_MA); // BPP with 4.7uF
 	IS_dvi2k->set_current(IS_ch, -1.0e-3, RANGE_2_MA);
 	wait.delay_10_us(200);
 	VcontD_1mA = D_dvi->measure_average(5);
-	VcontBPP_1mA = BPP_dvi->measure_average(5);
+	VcontBPP_1mA = BPP_ovi->measure_average(5);
 	VcontIS_1mA = IS_dvi2k->measure_average(5);	// No ESD diode. Expect to read -2V. 
 
 	// Calculate ratio //
@@ -2417,8 +2417,8 @@ void Continuity(test_function& func)
 	// Powerdown //
 	D_dvi->set_voltage(D_ch, 0.0, VOLT_2_RANGE); // DVI_11_0
 	D_dvi->set_current(D_ch, 20.0e-3, RANGE_30_MA);
-	BPP_dvi->set_voltage(BPP_ch, 0.0, RANGE_2_V); // OVI_1_0
-	BPP_dvi->set_current(BPP_ch, 20.0e-3, RANGE_30_MA);
+	BPP_ovi->set_voltage(BPP_ch, 0.0, RANGE_2_V); // OVI_1_0
+	BPP_ovi->set_current(BPP_ch, 20.0e-3, RANGE_30_MA);
 	IS_dvi2k->set_voltage(IS_ch, 0.0, VOLT_2_RANGE); // DVI_21_0
 	wait.delay_10_us(8); // Prevent glitch //
 	IS_dvi2k->set_current(IS_ch, 20.0e-3, RANGE_20_MA);
@@ -3018,17 +3018,17 @@ void Continuity(test_function& func)
 	// rise up very quickly.  If BPP capacitor ground is connected properly, the BPP 
 	// voltage rises up more slowly.  Datalog BPP voltage, 350usec after 100uA forced to BPP.  //
 	wait.delay_10_us(300); // Wait for relays //
-	BPP_dvi->set_voltage(BPP_ch, 0.0, RANGE_10_V); // OVI_1_0 //
-	BPP_dvi->set_current(BPP_ch, 100e-6, RANGE_300_UA); // OVI_1_0 //
-	BPP_dvi->set_meas_mode(BPP_ch, OVI_MEASURE_VOLTAGE); // OVI_1_0 //
+	BPP_ovi->set_voltage(BPP_ch, 0.0, RANGE_10_V); // OVI_1_0 //
+	BPP_ovi->set_current(BPP_ch, 100e-6, RANGE_300_UA); // OVI_1_0 //
+	BPP_ovi->set_meas_mode(BPP_ch, OVI_MEASURE_VOLTAGE); // OVI_1_0 //
 	wait.delay_10_us(150);
-	BPP_dvi->set_voltage(BPP_ch, 5, RANGE_10_V); // OVI_1_0 //
+	BPP_ovi->set_voltage(BPP_ch, 5, RANGE_10_V); // OVI_1_0 //
 	wait.delay_10_us(35); // 350usec.  Don't change //
-	VcontBPP_cap = BPP_dvi->measure();
-	BPP_dvi->set_voltage(BPP_ch, 0.1, RANGE_10_V); // OVI_1_0, prevent undershoot. //
-	BPP_dvi->set_current(BPP_ch, 30e-3, RANGE_30_MA); // OVI_1_0 //
+	VcontBPP_cap = BPP_ovi->measure();
+	BPP_ovi->set_voltage(BPP_ch, 0.1, RANGE_10_V); // OVI_1_0, prevent undershoot. //
+	BPP_ovi->set_current(BPP_ch, 30e-3, RANGE_30_MA); // OVI_1_0 //
 	wait.delay_10_us(15);
-	BPP_dvi->set_voltage(BPP_ch, 0.0, RANGE_10_V); // OVI_1_0 //
+	BPP_ovi->set_voltage(BPP_ch, 0.0, RANGE_10_V); // OVI_1_0 //
 	wait.delay_10_us(20);
 	VcontBPP_capGNG = 1; // Default is pass //
 	if (VcontBPP_cap > 0.9) // Fail //

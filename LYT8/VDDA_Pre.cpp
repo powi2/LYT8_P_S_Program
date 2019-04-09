@@ -51,7 +51,7 @@ void VDDA_Pre(test_function& func)
 	//if (g_Burn_Enable_P == 0)
 //		return;
 
-	if (g_Trim_Enable_S == 0 && g_GRR == 0)
+	if (g_Burn_Enable_S == 0 && g_GRR_Enable == 0)
 		return;
 
 	//if (g_Fn_CV_Pre == 0 )  return;
@@ -71,7 +71,7 @@ void VDDA_Pre(test_function& func)
 	//int fNum_CV_Pre = 0;
 	float VDDA_pt_S     =0;
 	float VDDA_prg_S    =0;
-	float VDDA_Target_S = 5.25; 
+	float VDDA_Target_S = g_VDDA_Target_S_Trimops;//5.25; 
 	int VDDA_TrCode_S   = 0;
 	int VDDA_BitCode_S  = 0;
 	int EEtr27_ZTML0_S  = 0;
@@ -224,7 +224,7 @@ Pulse pulse;
 	//0x00 0x44 write 0x08 0x00  ==> ZTMC_VDDA_en
 	DSM_I2C_Write('w', g_ANA_CTRL_0, 0x0008);
  
-	if (g_Trim_Enable_S != 0)
+	if (g_Burn_Enable_S != 0)
 	{
 		//Loading previous trimming before performing the test.
 		Program_All_TrimRegister();
@@ -239,7 +239,7 @@ Pulse pulse;
 
 	g_VDDA_Pre = VDDA_pt_S;
 
-if (g_Trim_Enable_S)
+if (g_Burn_Enable_S)
 {
 	
 	// VDDA_S_Code //
@@ -266,7 +266,7 @@ if (g_Trim_Enable_S)
 
 	TrimCode_To_TrimBit(VDDA_TrCode_S, "VDDA_S", 's');
 
-	EEpr_Array[1] = EEpr_Array[1] | (VDDA_TrCode_S<<(27-startbit));
+	EEpr_Bank_S[E2] = EEpr_Bank_S[E2] | (VDDA_TrCode_S<<(27-startbit));
 
 	//Program Trim Register with new calculated bit combination.
 	Program_Single_TrimRegister(g_EEP_W_E2);
@@ -315,7 +315,7 @@ if (g_Trim_Enable_S)
 	//PiDatalog(func, A_Func_Num_CV_Pre, fNum_CV_Pre, 26, POWER_UNIT);
 	PiDatalog(func, A_VDDA_pt_S,      VDDA_pt_S,              26, POWER_UNIT);
 	
-	if (g_Trim_Enable_S)
+	if (g_Burn_Enable_S)
 	{
 		PiDatalog(func, A_VDDA_target_S,  VDDA_Target_S,          26, POWER_UNIT);
 		PiDatalog(func, A_VDDA_TrCode_S,  VDDA_TrCode_S,          26, POWER_UNIT);
@@ -323,7 +323,7 @@ if (g_Trim_Enable_S)
 		PiDatalog(func, A_VDDA_ExpChg_S,  VDDA_ExpChg,         26, POWER_UNIT);
 		PiDatalog(func, A_Eetr27_ZTML0_S, g_S_TrimRegisterTemp[27], 26, POWER_UNIT);
 		PiDatalog(func, A_Eetr28_ZTML1_S, g_S_TrimRegisterTemp[28], 26, POWER_UNIT);
-		PiDatalog(func, A_Bin2Dec1_S,   EEpr_Array[1],        26, POWER_UNIT);
+		PiDatalog(func, A_Bin2Dec1_S,   EEpr_Bank_S[E2],        26, POWER_UNIT);
 		PiDatalog(func, A_VDDA_prg_S,     VDDA_prg_S,             26, POWER_UNIT);
 		PiDatalog(func, A_VDDA_prgchg_S,  VDDA_PrgChg,         26, POWER_UNIT);
 	}

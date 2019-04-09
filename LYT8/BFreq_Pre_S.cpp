@@ -51,8 +51,8 @@ void BFreq_Pre_S(test_function& func)
 	//if (g_Burn_Enable_P == 0)
 //		return;
 
-	// Skip trimming if g_Trim_Enable_S is not set //
-	if (g_Trim_Enable_S == 0 && g_GRR == 0)
+	// Skip trimming if g_Burn_Enable_S is not set //
+	if (g_Burn_Enable_S == 0 && g_GRR_Enable == 0)
 		return;
 
 	//if (g_Fn_BFreq_Pre == 0 )  return;
@@ -74,7 +74,7 @@ void BFreq_Pre_S(test_function& func)
 	// Test Names //
 	float BFreq_pt_S      =0;
 	float BFreq_prg_S     =0;
-	float BFreq_Target_S  = 225E3; 
+	float BFreq_Target_S  = g_BFreq_Target_S_Trimops;//225E3; 
 	int   BFreq_TrCode_S  = 0;
 	int   BFreq_BitCode_S = 0;
 	int   EEtr12_tfb0_S   = 0;
@@ -253,12 +253,12 @@ Pulse pulse;
 	//It's done in the First function for the scoop and goop parts.
 
 
-	if(g_DsblFlBck_B31_S == 0) //If Disable Foldback is not set, then set T[31] = 1 to disable foldback.
+	if(g_Trim_DsblFlBck_B31_S_Trimops == 0) //If Disable Foldback is not set, then set T[31] = 1 to disable foldback.
 	{                          //Need to enable foldback at the end of the test program.
 		//Set T[31]=1 to disable foldback .
-		Set_EEprBit(EEpr_Array[1], 15, 1);
+		Set_EEprBit(EEpr_Bank_S[E2], 15, 1);
 	}
-	if (g_Trim_Enable_S != 0)
+	if (g_Burn_Enable_S)
 	{
 		Program_All_TrimRegister();
 	}
@@ -275,53 +275,53 @@ Pulse pulse;
 	//Need to turn off switching on Boost pin.
 	FB_ovi3->set_voltage(FB_ch, 2, VOLT_5_RANGE); // DVI_11_0
 
-if (g_Trim_Enable_S)
-{
-	// BFreq_S_Code //
-	// Find which trim code will make BFreq_Pre closest to target //
-	smallest_diff_val = 999999.9;
-	smallest_diff_idx = 0;
-	for (i=0; i<8; i++)
+	if (g_Burn_Enable_S)
 	{
-		temp_1 = (BFreq_pt_S * (1 + (BFreq_S_TrimWt[i]/100)) -  BFreq_Target_S);
-		if (temp_1 < 0)	// Get rid of negatives //
-			temp_1 *= -1.0;
-		if (temp_1 < smallest_diff_val)
+		// BFreq_S_Code //
+		// Find which trim code will make BFreq_Pre closest to target //
+		smallest_diff_val = 999999.9;
+		smallest_diff_idx = 0;
+		for (i=0; i<8; i++)
 		{
-			smallest_diff_val = temp_1;
-			smallest_diff_idx = i;
+			temp_1 = (BFreq_pt_S * (1 + (BFreq_S_TrimWt[i]/100)) -  BFreq_Target_S);
+			if (temp_1 < 0)	// Get rid of negatives //
+				temp_1 *= -1.0;
+			if (temp_1 < smallest_diff_val)
+			{
+				smallest_diff_val = temp_1;
+				smallest_diff_idx = i;
+			}
 		}
+
+
+		//Manual forcing:
+		//smallest_diff_idx = 0;
+
+		BFreq_TrCode_S = BFreq_S_code[smallest_diff_idx];
+		BFreq_ExpChg   = BFreq_S_TrimWt[smallest_diff_idx];
+
+		BFreq_ExpValue = (BFreq_pt_S * (1 + (BFreq_S_TrimWt[smallest_diff_idx]/100)));
+
+		TrimCode_To_TrimBit(BFreq_TrCode_S, "Bfreq_S", 's');
+
+
+	////////	//Convert Trimcode to readable datalog file.
+	////////	///*if(CLK1M_S_code[smallest_diff_idx]>=0 && CLK1M_S_code[smallest_diff_idx] <= 7)
+	////////	//{
+	////////	//	CLK1M_BitCode_S = -1*VADC_TrCode_S; 
+	////////	//}
+	////////	//else
+	////////	//{
+	////////	//	VADC_BitCode_S = VADC_TrCode_S - 7;
+	////////	//}*/
+	////////
+
+		EEpr_Bank_S[E0] = EEpr_Bank_S[E0] | (BFreq_TrCode_S<<(12-startbit));
+
+		Program_Single_TrimRegister(g_EEP_W_E0);
+
+
 	}
-
-
-	//Manual forcing:
-	//smallest_diff_idx = 0;
-
-	BFreq_TrCode_S = BFreq_S_code[smallest_diff_idx];
-	BFreq_ExpChg   = BFreq_S_TrimWt[smallest_diff_idx];
-
-	BFreq_ExpValue = (BFreq_pt_S * (1 + (BFreq_S_TrimWt[smallest_diff_idx]/100)));
-
-	TrimCode_To_TrimBit(BFreq_TrCode_S, "Bfreq_S", 's');
-
-
-////////	//Convert Trimcode to readable datalog file.
-////////	///*if(CLK1M_S_code[smallest_diff_idx]>=0 && CLK1M_S_code[smallest_diff_idx] <= 7)
-////////	//{
-////////	//	CLK1M_BitCode_S = -1*VADC_TrCode_S; 
-////////	//}
-////////	//else
-////////	//{
-////////	//	VADC_BitCode_S = VADC_TrCode_S - 7;
-////////	//}*/
-////////
-
-	EEpr_Array[0] = EEpr_Array[0] | (BFreq_TrCode_S<<(12-startbit));
-
-	Program_Single_TrimRegister(g_EEP_W_E0);
-
-
-}
 
 //////	int TrimBank[5];
 //////
@@ -341,10 +341,10 @@ if (g_Trim_Enable_S)
 		BFreq_PrgChg = 100*(BFreq_prg_S - BFreq_pt_S) / BFreq_pt_S;
 	}
 
-	if(g_DsblFlBck_B31_S == 0)
+	if(g_Trim_DsblFlBck_B31_S_Trimops == 0)
 	{
 		//ReSet T[31]=0 to enable foldback .
-		Set_EEprBit(EEpr_Array[1], 15, 0);
+		Set_EEprBit(EEpr_Bank_S[E2], 15, 0);
 	}
 	//---------------------------------------------------------------------------------
 	//--------------------------------------------------------------------------------
@@ -390,7 +390,7 @@ if (g_Trim_Enable_S)
 
 	PiDatalog(func, A_BFreq_pt_S,		  BFreq_pt_S,               26, POWER_KILO);
 	
-	if (g_Trim_Enable_S)
+	if (g_Burn_Enable_S)
 	{
 		PiDatalog(func, A_BFreq_target_S,     BFreq_Target_S,           26, POWER_KILO);
 		PiDatalog(func, A_BFreq_TrCode_S,     BFreq_TrCode_S,           26, POWER_UNIT);
@@ -400,7 +400,7 @@ if (g_Trim_Enable_S)
 		PiDatalog(func, A_Eetr12_tfb0_S,      g_S_TrimRegisterTemp[12],     26, POWER_UNIT);
 		PiDatalog(func, A_Eetr13_tfb1_S,      g_S_TrimRegisterTemp[13],     26, POWER_UNIT);
 		PiDatalog(func, A_Eetr14_tfb2_S,      g_S_TrimRegisterTemp[14],     26, POWER_UNIT);
-		PiDatalog(func, A_Bin2Dec1_S,         EEpr_Array[0],           26, POWER_UNIT);
+		PiDatalog(func, A_Bin2Dec1_S,         EEpr_Bank_S[E0],           26, POWER_UNIT);
 		PiDatalog(func, A_BFreq_prg_S,         BFreq_prg_S,             26, POWER_KILO);
 		PiDatalog(func, A_BFreq_prgchg_S,      BFreq_PrgChg,            26, POWER_UNIT);
 	}

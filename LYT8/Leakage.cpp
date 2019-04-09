@@ -797,8 +797,8 @@ Pulse pulse;
 ////	BPS_dvi->set_current(BPS_ch, 30.0e-3, RANGE_30_MA);
 ////	D_dvi->set_voltage(D_ch, 0.0, VOLT_10_RANGE); // DVI_11_0
 ////	D_dvi->set_current(D_ch, 300.0e-3, RANGE_300_MA);
-////	BPP_dvi->set_voltage(BPP_ch, 0.0, RANGE_10_V); // OVI_1_0
-////	BPP_dvi->set_current(BPP_ch, 30e-3, RANGE_30_MA);
+////	BPP_ovi->set_voltage(BPP_ch, 0.0, RANGE_10_V); // OVI_1_0
+////	BPP_ovi->set_current(BPP_ch, 30e-3, RANGE_30_MA);
 ////	IS_dvi2k->set_voltage(IS_ch, 0.0, VOLT_10_RANGE); // DVI_21_0
 ////	IS_dvi2k->set_current(IS_ch, 200.0e-6, RANGE_200_UA);
 ////	FW_dvi->set_voltage(FW_ch, 0.0, VOLT_5_RANGE); // DVI_11_1
@@ -830,9 +830,9 @@ Pulse pulse;
 ////	//If BPP is set to 5.5V, Vpin at 20V will fail (It has to go through the BPP power cycle)
 ////	VBPP_ramp_up(0, 5.5, 0.2); // Prevent overshoot //
 ////	wait.delay_10_us(50);
-////	BPP_dvi->set_voltage(BPP_ch, 4.5, VOLT_10_RANGE); //Leave BPP power-up  (Wonder if it should go through BPP cycle)
+////	BPP_ovi->set_voltage(BPP_ch, 4.5, VOLT_10_RANGE); //Leave BPP power-up  (Wonder if it should go through BPP cycle)
 ////	wait.delay_10_us(100);
-////	BPP_dvi->set_voltage(BPP_ch, 5.1, VOLT_10_RANGE); //Leave BPP power-up  (Wonder if it should go through BPP cycle)
+////	BPP_ovi->set_voltage(BPP_ch, 5.1, VOLT_10_RANGE); //Leave BPP power-up  (Wonder if it should go through BPP cycle)
 ////
 ////
 ////	// Vpin leakage //
@@ -846,7 +846,7 @@ Pulse pulse;
 ////	ILL_UV = VPIN_ovi->measure_average(5);		
 ////
 ////	//Primary pins set to 0V
-////	//BPP_dvi->set_voltage(BPP_ch, 0.0, VOLT_10_RANGE); 
+////	//BPP_ovi->set_voltage(BPP_ch, 0.0, VOLT_10_RANGE); 
 ////	VBPP_ramp_down(5.1, 0, 0.2); // Prevent undershoot //
 ////	D_dvi->set_voltage(D_ch, 0.0, VOLT_10_RANGE); 
 ////

@@ -131,8 +131,8 @@ void BPS_STRESS(test_function& func)
 	D_dvi->set_current(D_ch, 30e-3, RANGE_30_MA); // DVI_11_0 //
 
 	// BPP //
-	BPP_dvi->set_voltage(BPP_ch, 0.0, RANGE_10_V); // OVI_1_0 //
-	BPP_dvi->set_current(BPP_ch, 30e-3, RANGE_30_MA); // OVI_1_0 //
+	BPP_ovi->set_voltage(BPP_ch, 0.0, RANGE_10_V); // OVI_1_0 //
+	BPP_ovi->set_current(BPP_ch, 30e-3, RANGE_30_MA); // OVI_1_0 //
 
 	// V pin //
 	VPIN_ovi->disconnect(VPIN_ch);
@@ -286,7 +286,7 @@ void BPS_STRESS(test_function& func)
 	wait.delay_10_us(200);
 
 	// Finish primary powerup //	
-	BPP_dvi->set_current(BPP_ch, 2e-3, RANGE_30_MA);
+	BPP_ovi->set_current(BPP_ch, 2e-3, RANGE_30_MA);
 	VBPP_ramp_up(gVBPP_M_Init-200e-3, gVBPP_P_final, 10e-3);
 
 	// Bring Vout above CV to abort soft start and go full frequency //
@@ -298,9 +298,9 @@ void BPS_STRESS(test_function& func)
 	//FB_ovi->set_voltage(FB_ch, 1, RANGE_2_V); // OVI_1_2 //
 
 	// VBP_P drops when secondary has control //
-	BPP_dvi->set_voltage(BPP_ch, g_VBPP_P_s_final+0.1, RANGE_10_V); // prevent undershoot //
+	BPP_ovi->set_voltage(BPP_ch, g_VBPP_P_s_final+0.1, RANGE_10_V); // prevent undershoot //
 	wait.delay_10_us(8);
-	BPP_dvi->set_voltage(BPP_ch, g_VBPP_P_s_final, RANGE_10_V);
+	BPP_ovi->set_voltage(BPP_ch, g_VBPP_P_s_final, RANGE_10_V);
 	wait.delay_10_us(10);
 	BPS_dvi->set_meas_mode(BPS_ch, DVI_MEASURE_CURRENT);
 	wait.delay_10_us(105);
@@ -322,7 +322,7 @@ void BPS_STRESS(test_function& func)
 	pv3_4->open_switch(PV3_HIGH_SENSE_1);
 	Open_relay(K3); // Drain to RL pullup
 	VBPP_ramp_down(3, 0.0, 0.05);
-	BPP_dvi->set_current(BPP_ch, 30e-3, RANGE_30_MA); // OVI_1_0 //
+	BPP_ovi->set_current(BPP_ch, 30e-3, RANGE_30_MA); // OVI_1_0 //
 	FB_ovi->connect(2);
 	FB_ovi->set_voltage(FB_ch, 0, RANGE_2_V); // OVI_1_2 //
 	ddd_7->ddd_run_pattern(Low_pat_start, Low_pat_stop);
@@ -361,8 +361,8 @@ void BPS_STRESS(test_function& func)
 	D_dvi->set_current(D_ch, 300e-3,RANGE_300_MA); // DVI_11_0 //	
 
 	// BPP //
-	BPP_dvi->set_voltage(BPP_ch, 0.0, RANGE_10_V); // OVI_1_0 //
-	BPP_dvi->set_current(BPP_ch, 30e-3, RANGE_30_MA); // OVI_1_0 //
+	BPP_ovi->set_voltage(BPP_ch, 0.0, RANGE_10_V); // OVI_1_0 //
+	BPP_ovi->set_current(BPP_ch, 30e-3, RANGE_30_MA); // OVI_1_0 //
 
 	// V pin //
 	VPIN_ovi->connect(VPIN_ch);
@@ -473,9 +473,9 @@ void BPS_STRESS(test_function& func)
 	wait.delay_10_us(350);
 
 	// VBP_P drops when secondary has control //
-	BPP_dvi->set_voltage(BPP_ch, g_VBPP_P_s_final+0.1, RANGE_10_V); // prevent undershoot //
+	BPP_ovi->set_voltage(BPP_ch, g_VBPP_P_s_final+0.1, RANGE_10_V); // prevent undershoot //
 	wait.delay_10_us(8);
-	BPP_dvi->set_voltage(BPP_ch, g_VBPP_P_s_final, RANGE_10_V);
+	BPP_ovi->set_voltage(BPP_ch, g_VBPP_P_s_final, RANGE_10_V);
 	wait.delay_10_us(10);
 
 	// Bring FB pin or Vout voltage up to stop switching.  fOVL fault will occur if secondary 
@@ -515,13 +515,13 @@ void BPS_STRESS(test_function& func)
 
 
 	// Make sure VBPP is below shunt otherwise current reading will be wrong. //
-	//BPP_dvi->set_voltage(BPP_ch, gVBPP_P_Init-0.100, RANGE_10_V); // Keep below shunt voltage //
-	BPP_dvi->set_voltage(BPP_ch, g_VBPP_P_S_Init_S+0.100, RANGE_10_V); // Test condition per datasheet //
+	//BPP_ovi->set_voltage(BPP_ch, gVBPP_P_Init-0.100, RANGE_10_V); // Keep below shunt voltage //
+	BPP_ovi->set_voltage(BPP_ch, g_VBPP_P_S_Init_S+0.100, RANGE_10_V); // Test condition per datasheet //
 	//VBPP_ramp_down(gVBPP_P_final, g_VBPP_P_S_Init_S+0.100, 0.01);
-	BPP_dvi->set_current(BPP_ch, 3e-3, RANGE_3_MA);
-	BPP_dvi->set_meas_mode(BPP_ch, OVI_MEASURE_CURRENT);
+	BPP_ovi->set_current(BPP_ch, 3e-3, RANGE_3_MA);
+	BPP_ovi->set_meas_mode(BPP_ch, OVI_MEASURE_CURRENT);
 	wait.delay_10_us(120);
-	g_BPP_IS2_Pre = BPP_dvi->measure_average(5);
+	g_BPP_IS2_Pre = BPP_ovi->measure_average(5);
 
 	//	tmu_6->start_holdoff(0,FALSE);
 	//	tmu_6->stop_holdoff(0,FALSE);
@@ -545,10 +545,10 @@ void BPS_STRESS(test_function& func)
 	// BPP_IS1_Pre
 	// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
 	// Make sure VBPP is below shunt otherwise current reading will be wrong //
-	BPP_dvi->set_voltage(BPP_ch, g_VBPP_P_S_Init_S+0.100, RANGE_10_V); // Test condition per datasheet //
-	BPP_dvi->set_meas_mode(BPP_ch, OVI_MEASURE_CURRENT);
+	BPP_ovi->set_voltage(BPP_ch, g_VBPP_P_S_Init_S+0.100, RANGE_10_V); // Test condition per datasheet //
+	BPP_ovi->set_meas_mode(BPP_ch, OVI_MEASURE_CURRENT);
 	wait.delay_10_us(175);
-	g_BPP_IS1_Pre = BPP_dvi->measure_average(5);
+	g_BPP_IS1_Pre = BPP_ovi->measure_average(5);
 
 	// Powerdown //
 	Mux20_Open_relay(K50); // SR pin hard short to GND with relay //
@@ -572,7 +572,7 @@ void BPS_STRESS(test_function& func)
 	Mux20_Open_relay(K39); 
 	VPIN_ovi->set_voltage(VPIN_ch, 0.0, RANGE_10_V); // OVI_1_1 //
 	VPIN_ovi->set_current(VPIN_ch, 30e-3, RANGE_30_MA); // OVI_1_1 //
-	BPP_dvi->set_current(BPP_ch, 30e-3, RANGE_30_MA); // OVI_1_0 //
+	BPP_ovi->set_current(BPP_ch, 30e-3, RANGE_30_MA); // OVI_1_0 //
 	VBPP_ramp_down(4, 0, 0.2);
 	wait.delay_10_us(10);
 	VO_dvi->set_voltage(VO_ch, 0, VOLT_10_RANGE); // DVI_9_0 //
@@ -639,8 +639,8 @@ void BPS_STRESS(test_function& func)
 	wait.delay_10_us(300);
 	
 	// Set BPP 100mV to prevent BPP undershoot when drain comes up. //
-	BPP_dvi->set_voltage(BPP_ch, 0.1, RANGE_10_V); // OVI_1_0 //
-	BPP_dvi->set_current(BPP_ch, 30e-3, RANGE_30_MA); // OVI_1_0 //
+	BPP_ovi->set_voltage(BPP_ch, 0.1, RANGE_10_V); // OVI_1_0 //
+	BPP_ovi->set_current(BPP_ch, 30e-3, RANGE_30_MA); // OVI_1_0 //
 	wait.delay_10_us(20);
 
 	// Set D = 40V / 100mA
@@ -724,8 +724,8 @@ void BPS_STRESS(test_function& func)
 	//wait.delay_10_us(40);
 
 	// BPP //
-	BPP_dvi->set_voltage(BPP_ch, 0.0, RANGE_10_V); // OVI_1_0 //
-	BPP_dvi->set_current(BPP_ch, 30e-3, RANGE_30_MA); // OVI_1_0 //
+	BPP_ovi->set_voltage(BPP_ch, 0.0, RANGE_10_V); // OVI_1_0 //
+	BPP_ovi->set_current(BPP_ch, 30e-3, RANGE_30_MA); // OVI_1_0 //
 
 	// FW //
 	Close_relay(K18);
@@ -898,7 +898,7 @@ void BPS_STRESS(test_function& func)
 
 	// BPP //
 	g_BPP_Stress_Volt = 8.0;
-	BPP_dvi->set_current(BPP_ch, 30e-3, RANGE_30_MA); // OVI_1_0 //
+	BPP_ovi->set_current(BPP_ch, 30e-3, RANGE_30_MA); // OVI_1_0 //
 	VBPP_ramp_up(0.0, g_BPP_Stress_Volt, 0.3);
 
 	// IS pin. 0-200mV, 8.7kHz (Using DVI, 50us Low, 50us High) //
@@ -1002,8 +1002,8 @@ void BPS_STRESS(test_function& func)
 	wait.delay_10_us(300);
 	
 	// Set BPP 100mV to prevent BPP undershoot when drain comes up. //
-	BPP_dvi->set_voltage(BPP_ch, 0.1, RANGE_10_V); // OVI_1_0 //
-	BPP_dvi->set_current(BPP_ch, 30e-3, RANGE_30_MA); // OVI_1_0 //
+	BPP_ovi->set_voltage(BPP_ch, 0.1, RANGE_10_V); // OVI_1_0 //
+	BPP_ovi->set_current(BPP_ch, 30e-3, RANGE_30_MA); // OVI_1_0 //
 	wait.delay_10_us(20);
 
 	// Set D = 40V / 100mA
@@ -1072,8 +1072,8 @@ void BPS_STRESS(test_function& func)
 	BPS_dvi->set_current(BPS_ch, 30.0e-3, RANGE_30_MA);
 	D_dvi->set_voltage(D_ch, 0.0, VOLT_10_RANGE); // DVI_11_0
 	D_dvi->set_current(D_ch, 300.0e-3, RANGE_300_MA);
-	BPP_dvi->set_voltage(BPP_ch, 0.0, RANGE_10_V); // OVI_1_0
-	BPP_dvi->set_current(BPP_ch, 30e-3, RANGE_30_MA);
+	BPP_ovi->set_voltage(BPP_ch, 0.0, RANGE_10_V); // OVI_1_0
+	BPP_ovi->set_current(BPP_ch, 30e-3, RANGE_30_MA);
 	IS_dvi2k->set_voltage(IS_ch, 0.0, VOLT_10_RANGE); // DVI_21_0
 	IS_dvi2k->set_current(IS_ch, 200.0e-6, RANGE_200_UA);
 	FW_dvi->set_voltage(FW_ch, 0.0, VOLT_5_RANGE); // DVI_11_1
@@ -1105,9 +1105,9 @@ void BPS_STRESS(test_function& func)
 	//If BPP is set to 5.5V, Vpin at 20V will fail (It has to go through the BPP power cycle)
 	//VBPP_ramp_up(0, 5.5, 0.2); // Prevent overshoot //
 	//wait.delay_10_us(50);
-	//BPP_dvi->set_voltage(BPP_ch, 4.5, VOLT_10_RANGE); //Leave BPP power-up  (Wonder if it should go through BPP cycle)
+	//BPP_ovi->set_voltage(BPP_ch, 4.5, VOLT_10_RANGE); //Leave BPP power-up  (Wonder if it should go through BPP cycle)
 	//wait.delay_10_us(100);
-	//BPP_dvi->set_voltage(BPP_ch, 5.1, VOLT_10_RANGE); //Leave BPP power-up  (Wonder if it should go through BPP cycle)
+	//BPP_ovi->set_voltage(BPP_ch, 5.1, VOLT_10_RANGE); //Leave BPP power-up  (Wonder if it should go through BPP cycle)
 
 
 	// Vpin leakage //
@@ -1117,7 +1117,7 @@ void BPS_STRESS(test_function& func)
 	//ILL_UV = VPIN_ovi->measure_average(5);		
 
 	//Primary pins set to 0V
-	//BPP_dvi->set_voltage(BPP_ch, 0.0, VOLT_10_RANGE); 
+	//BPP_ovi->set_voltage(BPP_ch, 0.0, VOLT_10_RANGE); 
 	//VBPP_ramp_down(5.1, 0, 0.2); // Prevent undershoot //
 	//D_dvi->set_voltage(D_ch, 0.0, VOLT_10_RANGE); 
 

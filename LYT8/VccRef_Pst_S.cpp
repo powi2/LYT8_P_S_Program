@@ -173,8 +173,7 @@ Pulse pulse;
 	//Enter TM
 	Analog_TM_Enable_Secondary();
 
-		DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
-
+	DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
 
 	TestMode_Check(0); //Set 1 to step into loop.  Set 0 to skip Test Mode check.
 
@@ -201,8 +200,7 @@ Pulse pulse;
 
 	VccRef_Pst_S = FB_ovi3->measure_average(100);
 	
-
-	if(g_Trim_Enable_S && g_VccRef_Pre != 0)
+	if(g_Burn_Enable_S && g_VccRef_Pre != 0)
 	{
 		VccRef_Delta_S = 100*(VccRef_Pst_S - g_VccRef_Pre) / g_VccRef_Pre;
 	}
@@ -246,7 +244,7 @@ Pulse pulse;
 
 	PiDatalog(func, A_VccRef_Pst_S,			VccRef_Pst_S,            26, POWER_MILLI);
 
-	if (g_Trim_Enable_S)
+	if (g_Burn_Enable_S)
 	{
 		PiDatalog(func, A_VccRef_Delta_S,      VccRef_Delta_S,        26, POWER_UNIT);
 	}

@@ -199,7 +199,7 @@ Pulse pulse;
 	VADC_Post_S = FB_ovi3->measure_average(25);
 
 
-	if (g_Trim_Enable_S&& g_VADC_Pre != 0.0)
+	if (g_Burn_Enable_S&& g_VADC_Pre != 0.0)
 	{
 		VADC_Delta_S = 100*(VADC_Post_S - g_VADC_Pre) / g_VADC_Pre;
 	}
@@ -239,7 +239,7 @@ Pulse pulse;
 
 
 	PiDatalog(func, A_VADC_Post_S,		  VADC_Post_S,               26, POWER_UNIT);
-	if (g_Trim_Enable_S)
+	if (g_Burn_Enable_S)
 	{
 		PiDatalog(func, A_VADC_Delta_S,      VADC_Delta_S,           26, POWER_UNIT);
 	}

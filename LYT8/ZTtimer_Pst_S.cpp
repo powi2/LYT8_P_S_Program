@@ -51,7 +51,7 @@ void ZTtimer_Pst_S(test_function& func)
 	//if (g_Burn_Enable_P == 0)
 //		return;
 
-	///*if (g_Trim_Enable_S == 0)
+	///*if (g_Burn_Enable_S == 0)
 	//	return;*/
 
 	//if (g_Fn_ZTtimer_Pre == 0 )  return;
@@ -244,7 +244,7 @@ Pulse pulse;
 
 	ZTtimer_Pst_S = Average_Value(tmeas_array, 1e-6, 2e-6);
 
-	if (g_Trim_Enable_S && g_ZTtimer_Pre != 0)
+	if (g_Burn_Enable_S && g_ZTtimer_Pre != 0)
 	{
 		ZTtimer_pct_delta_S = 100*(ZTtimer_Pst_S - g_ZTtimer_Pre) / g_ZTtimer_Pre;
 	}
@@ -436,7 +436,7 @@ Pulse pulse;
 	valid_count = 0;
 	for(i=0;i<num_loop;i++)
 	{
-		if(DPulseTx_PulseWidth[i] > 0 && FW_Pulse_Width[i] < 1)
+		if(DPulseTx_PulseWidth[i] > 1e-6 && FW_Pulse_Width[i] < 10e-6)
 		{
 			DPulseTx_PW = DPulseTx_PW + DPulseTx_PulseWidth[i];
 			valid_count++;
@@ -509,14 +509,14 @@ Pulse pulse;
 
 
 	PiDatalog(func, A_ZTtimer_pst_S, ZTtimer_Pst_S,              26, POWER_MICRO);
-	if (g_Trim_Enable_S)
+	if (g_Burn_Enable_S)
 	{
 		PiDatalog(func, A_ZTtimer_Pct_Delta_S, ZTtimer_pct_delta_S, 26, POWER_UNIT);
 
 	}
 	PiDatalog(func, A_ZTimer_DPTx_S, ZTtimer_DPulseWidth,              26, POWER_NANO);
 
-	if(g_ZEE_50KStr_B63_S == 1)
+	if(g_Trim_ZEE_50KStr_B63_S_Trimops == 1)
 	{
 		PiDatalog(func, A_tHS_Window2_S, tHS_Window_S,              26, POWER_MICRO);
 	}

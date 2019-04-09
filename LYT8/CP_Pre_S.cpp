@@ -46,8 +46,8 @@ void CP_Pre_S(test_function& func)
 	if (AbortTest)
 		return;
 
-	// Skip trimming if g_Trim_Enable_S is not set //
-	if (g_Trim_Enable_S == 0 && g_GRR == 0)
+	// Skip trimming if g_Burn_Enable_S is not set //
+	if (g_Burn_Enable_S == 0 && g_GRR_Enable == 0)
 		return;
 
 	//if (g_Fn_VccRef_Pre == 0 )  return;
@@ -66,14 +66,14 @@ void CP_Pre_S(test_function& func)
 	// Test Names //
 	float CP_IS_pt_S     = 0;
 	float CP_IS_prg_S    = 0;
-	float CP_IS_Target_S = 0;
+	float CP_IS_Target_S = g_CP_IS_Target_S_Trimops;
 	if(g_Device_ID_S == 6160||g_Device_ID_S == 6159||g_Device_ID_S==6155)
 	{
-		CP_IS_Target_S = 201e-3; 
+		//CP_IS_Target_S = 201e-3; 
 	}
 	else
 	{
-		CP_IS_Target_S = 120e-3; 
+		//CP_IS_Target_S = 120e-3; 
 	}
 	int CP_IS_TrCode_S   = 0;
 	int CP_IS_BitCode_S  = 0;
@@ -319,66 +319,67 @@ Pulse pulse;
 	Open_relay(K4_IS_SPI_IB);       //Remove GND from GND_ANA on IS buffer.
 	wait.delay_10_us(250);
 
-	if (g_Trim_Enable_S != 0)
+	if (g_Burn_Enable_S)
 	{
 		Program_All_TrimRegister();
 	}
 	CP_IS_TH = 0;
 
-g_Debug = 0;
-	Gage_Find_CP(&CP_IS_TH, &CP_BOFF_TH, &CP_PFOFF_TH);
-g_Debug = 0;
+	g_Debug = 0;
+		Gage_Find_CP(&CP_IS_TH, &CP_BOFF_TH, &CP_PFOFF_TH);
+	g_Debug = 0;
+
 	CP_IS_pt_S = CP_IS_TH;
 
 	g_CP_IS_Pre = CP_IS_pt_S;
 
-if (g_Trim_Enable_S)
-{
-
-	// CP_Pre can be either trimmed up or down only.  
-	// CP_S_Code //
-	// Find which trim code will make CP_Pre closest to target //
-	smallest_diff_val = 999999.9;
-	smallest_diff_idx = 0;
-	for (i=0; i<13; i++)
+	if (g_Burn_Enable_S)
 	{
-		temp_1 = (CP_IS_pt_S * (1 + (CP_IS_S_TrimWt[i]/100)) -  CP_IS_Target_S);
-		if (temp_1 < 0)	// Get rid of negatives //
-			temp_1 *= -1.0;
-		if (temp_1 < smallest_diff_val)
+
+		// CP_Pre can be either trimmed up or down only.  
+		// CP_S_Code //
+		// Find which trim code will make CP_Pre closest to target //
+		smallest_diff_val = 999999.9;
+		smallest_diff_idx = 0;
+		for (i=0; i<13; i++)
 		{
-			smallest_diff_val = temp_1;
-			smallest_diff_idx = i;
+			temp_1 = (CP_IS_pt_S * (1 + (CP_IS_S_TrimWt[i]/100)) -  CP_IS_Target_S);
+			if (temp_1 < 0)	// Get rid of negatives //
+				temp_1 *= -1.0;
+			if (temp_1 < smallest_diff_val)
+			{
+				smallest_diff_val = temp_1;
+				smallest_diff_idx = i;
+			}
 		}
+
+
+		//Manual forcing:
+		//smallest_diff_idx = 0;
+
+		CP_IS_TrCode_S   = CP_IS_S_code[smallest_diff_idx];
+		CP_IS_ExpChg     = CP_IS_S_TrimWt[smallest_diff_idx];
+
+		CP_IS_ExpValue = (CP_IS_pt_S * (1 + (CP_IS_S_TrimWt[smallest_diff_idx]/100)));
+
+		TrimCode_To_TrimBit(CP_IS_TrCode_S, "CP_S", 's');
+
+
+		//Convert Trimcode to readable datalog file.
+		if(CP_IS_S_code[smallest_diff_idx]>=0 && CP_IS_S_code[smallest_diff_idx] <= 7)
+		{
+			CP_IS_BitCode_S = -1*CP_IS_TrCode_S; 
+		}
+		else
+		{
+			CP_IS_BitCode_S = CP_IS_BitCode_S - 7;
+		}
+
+		EEpr_Bank_S[E2] = EEpr_Bank_S[E2] | (CP_IS_TrCode_S<<(23-startbit));
+
+		Program_Single_TrimRegister(g_EEP_W_E2);
+
 	}
-
-
-	//Manual forcing:
-	//smallest_diff_idx = 0;
-
-	CP_IS_TrCode_S   = CP_IS_S_code[smallest_diff_idx];
-	CP_IS_ExpChg     = CP_IS_S_TrimWt[smallest_diff_idx];
-
-	CP_IS_ExpValue = (CP_IS_pt_S * (1 + (CP_IS_S_TrimWt[smallest_diff_idx]/100)));
-
-	TrimCode_To_TrimBit(CP_IS_TrCode_S, "CP_S", 's');
-
-
-	//Convert Trimcode to readable datalog file.
-	if(CP_IS_S_code[smallest_diff_idx]>=0 && CP_IS_S_code[smallest_diff_idx] <= 7)
-	{
-		CP_IS_BitCode_S = -1*CP_IS_TrCode_S; 
-	}
-	else
-	{
-		CP_IS_BitCode_S = CP_IS_BitCode_S - 7;
-	}
-
-	EEpr_Array[1] = EEpr_Array[1] | (CP_IS_TrCode_S<<(23-startbit));
-
-	Program_Single_TrimRegister(g_EEP_W_E2);
-
-}
 	wait.delay_10_us(500);
 	CP_IS_TH = 0;
 
@@ -458,7 +459,7 @@ if (g_Trim_Enable_S)
 
 	PiDatalog(func, A_CP_pt_S,			CP_IS_pt_S,			  26, POWER_MILLI);
 	
-	if (g_Trim_Enable_S)
+	if (g_Burn_Enable_S)
 	{
 		PiDatalog(func, A_CP_target_S,      CP_IS_Target_S,       26, POWER_MILLI);
 		PiDatalog(func, A_CP_TrCode_S,      CP_IS_TrCode_S,       26, POWER_UNIT);
@@ -469,7 +470,7 @@ if (g_Trim_Enable_S)
 		PiDatalog(func, A_Eetr24_Tcp1_S,    g_S_TrimRegisterTemp[24], 26, POWER_UNIT);
 		PiDatalog(func, A_Eetr25_Tcp2_S,    g_S_TrimRegisterTemp[25], 26, POWER_UNIT);
 		PiDatalog(func, A_Eetr26_Tcp3_S,    g_S_TrimRegisterTemp[26], 26, POWER_UNIT);
-		PiDatalog(func, A_Bin2Dec1_S,		EEpr_Array[1],		  26, POWER_UNIT);
+		PiDatalog(func, A_Bin2Dec1_S,		EEpr_Bank_S[E2],		  26, POWER_UNIT);
 		PiDatalog(func, A_CP_prg_S,         CP_IS_prg_S,          26, POWER_MILLI);
 		PiDatalog(func, A_CP_prgchg_S,      CP_IS_PrgChg,         26, POWER_UNIT);
 	}
