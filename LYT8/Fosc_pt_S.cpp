@@ -47,12 +47,10 @@ void Fosc_pt_S(test_function& func)
 	if (AbortTest)
 		return;
 
-	// Skip trimming if g_Burn_Enable_P set //
-	//if (g_Burn_Enable_P == 0)
-//		return;
-
-
 	if (g_Burn_Enable_S == 0 && g_GRR_Enable == 0)
+		return;
+
+	if (g_OPCODE==4250 || g_OPCODE==4300 || g_OPCODE==4500)
 		return;
 
 	//if (g_Fn_CLK1M_Pre == 0 )  return;
@@ -371,7 +369,7 @@ Pulse pulse;
 
 	g_Fosc_Pre = Fosc_pt_S;
 
-	if (g_Burn_Enable_S && g_OPCODE==4200)
+	if (g_Burn_Enable_S)
 	{
 
 		// Fosc_S_Code //

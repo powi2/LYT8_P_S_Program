@@ -47,15 +47,12 @@ void BFreq_Pre_S(test_function& func)
 	if (AbortTest)
 		return;
 
-	// Skip trimming if g_Burn_Enable_P set //
-	//if (g_Burn_Enable_P == 0)
-//		return;
-
 	// Skip trimming if g_Burn_Enable_S is not set //
 	if (g_Burn_Enable_S == 0 && g_GRR_Enable == 0)
 		return;
 
-	//if (g_Fn_BFreq_Pre == 0 )  return;
+	if (g_OPCODE==4250 || g_OPCODE==4300 || g_OPCODE==4500)
+		return;
 
 	// Test Time Begin //
 	if (g_TstTime_Enble_P)
@@ -275,7 +272,7 @@ Pulse pulse;
 	//Need to turn off switching on Boost pin.
 	FB_ovi3->set_voltage(FB_ch, 2, VOLT_5_RANGE); // DVI_11_0
 
-	if (g_Burn_Enable_S && g_OPCODE==4200)
+	if (g_Burn_Enable_S)
 	{
 		// BFreq_S_Code //
 		// Find which trim code will make BFreq_Pre closest to target //

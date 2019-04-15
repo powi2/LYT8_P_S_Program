@@ -106,13 +106,18 @@
 04/03/19 HL v0.0070 - Added FOSC-FeedForward tests in the FOSC posttrim functions.
                     - Added Fosc Min functions.
 04/04/19 HL v0.0071	- Added Fosc Jitter measurements to the FOSC_PST functions.
-04/04/19 CX v0.01CXa- Merge Primary/Secondary program and Compile pass.   
+04/04/19 CX v0.01CXa- Merge Primary/Secondary program and Compile pass. 
 04/04/19 HL v0.01HLb- Debugged secondary of new merged test program (First, Cont, Lkg & EEpromID: Not Erase or Burn yet)
 04/05/19 HL v0.01HLc- Added secondary trimops variables.
 04/08/19 HL v0.01HLd- Assigned secondary trimops targets and options to secondary test functions.
 04/09/19 HL v0.01HLe- Merged with latest primary test program.
+                    - Updated trim section for both Pri and Sec.
+04/11/19 HL v0.01HLf- Updated powerup & down sequence for primary.
+04/14/19 HL v0.01HLg- Fixed ILIM sim in the ILIM pre function.
 04/08/19 CX v0.01CXb- Added Char function for vBPPth
 04/09/19 CX v0.01CXc- Added XY plot for vBPP_PV, Minus, Plus thresholds
+04/09/19 CX v0.01CXd- Added coding for production test vBPP_PV, Minus, Plus and global final variables use for zigzag
+04/15/19 CX v0.01A   - Merge 0.01CXd with 0.01HLg.  Fail NTC after the merge.  0.01CXd pass a lot more consistent.
 
 History Revisions (Above)
 */
@@ -380,12 +385,14 @@ float	g_BFreq_Target_S_Trimops						= 0,
 //int  g_First_Time_Run =1;
 bool  g_Require_PartID = true;
 int	  AbortTest =0; 
-int	  g_Sim_Enable_P =0;
-int	  g_Burn_Enable_P = 0;
-int   g_Burn_Enable_S = 0;
-int	  g_Erase_Enable_P =0;
-int   g_Erase_Enable_S = 0;
+int	  g_Sim_Enable_P    = 0;
+int   g_Sim_Enable_S    = 0;
+int	  g_Burn_Enable_P   = 0;
+int   g_Burn_Enable_S   = 0;
+int	  g_Erase_Enable_P  = 0;
+int   g_Erase_Enable_S  = 0;
 int   g_TstTime_Enble_P = 0;
+
 char* g_Part_ID_Trimops;
 char *PrgRev;
 char *FamilyName;
@@ -559,7 +566,7 @@ float	gBVD_Hot_Trimops=0.0;
 /*============================    VBP function   ===============================*/
 float gVshunt_BPP =0.0, gVshunt_BPS =0.0;
 float gVBPP_P_Init =0.0, gVBPP_P_final=0.0, gVBPS_P_Init =0.0,  gVBPS_final=0.0, 
-	  gVBPP_M_Init =0.0, gVBPS_M_Init =0.0, gVBPP_PV_Init=0, gVBPP_PV_final=0; 
+	  gVBPP_M_Init =0.0, gVBPS_M_Init =0.0, gVBPP_PV_Init=0, gVBPP_PV_final=0, gVBPP_M_final=0; 
 float g_VBPP_P_S_Init_S = 0;
 float g_VBPP_P_s_final = 0;
 float gVBPP_VCEN=0.0;
@@ -2260,7 +2267,7 @@ void user_load(void)
 	theLimitSetName >> Part_ID_LimitSet  >> g_OperCode >> dummy >> dummy;
 
 	// Test Program Rev //
-	PrgRev = "0.01CXc"; // This should be identical to PiSetProgramName() function call. //
+	PrgRev = "0.01A"; // This should be identical to PiSetProgramName() function call. //
 	FamilyName = "LYT8"; // This should be identical to PiSetProgramName() function call. //
 
 	// Modify AutoCorrReport file to share one golden unit for multiple devices of same family. //
@@ -2316,7 +2323,7 @@ void user_load(void)
 	PiEnableGoldenUnit();
 
 	// Test Program Rev //
-	PiSetProgramName("LYT8 0.01CXc");
+	PiSetProgramName("LYT8 0.01A");
 
 	// Setup //
 	PiUserLoad( );
@@ -6842,205 +6849,179 @@ void search_VBPP_th( float* vBPP_pV, float* vBPP_m, float* vBPP_p, float* vBPP_p
  * 5. Increase BPP to around 5.4V VBPP-shunt when the device stops switching and IBPP = 11.3mA > 10mA (DE don't need this)		*
  ********************************************************************************************************************************/
 
-////	float imeas=0, vfrc=0, vstep=0, vramp_pt=0;
-////	float vstart=0, vstop=0, vBPP_P_Expect=0;
-////	float ich_th=0;
-////	int   lcnt1=0, lcnt2=0, rcnt =0;
-////
-////	int		dly_BPP_p47uF, dly_BPP_4p7uF;
-////	Pulse pulse;
-////
-////	dly_BPP_p47uF = 1; //ms
-////	dly_BPP_4p7uF = 3; //ms
-////
-////	//vBPP_P_Expect = 5.5;
-////	vBPP_P_Expect = LowerLimit;
-////
-////	//VBPP_ramp_down(3, 0.0, 0.05);
-////	//BPP_dvi->set_current(BPP_ch, 30e-3, RANGE_30_MA);   
-////	//BPP_dvi->set_meas_mode(BPP_ch, OVI_MEASURE_CURRENT);
-////	//wait.delay_10_us(30);
-////
-////	// ** VBPP_PV
-////	lcnt1 =0;
-////	lcnt2 =0;
-////	ich_th = 1.3e-3;			// threshold to decide if device is switching or not
-////
-////	VBPP_ramp_up(0.0, 5.0, 100e-3);    //BPP ramp up from 0V to 4.5V in 100mV step    (Needed for -40C)
-////	if(BPP_4p7uF) delay(3);
-////	if(BPP_p47uF) delay(1);
-////	wait.delay_10_us(10);
-////	imeas = BPP_dvi->measure_average(5);
-////
-////	if (imeas >ich_th)
-////	{	
-////		*vBPP_pV = 0.0;	
-////		return;
-////	}
-////	vstep = 0.1;	// used to be 0.2
-////	vfrc = 4.5;
-////	while (vstep >=0.1)
-////	{
-////		if (imeas < ich_th)
-////		{	
-////			vfrc+=vstep;
-////			if (vfrc > 5.6) // Prevent overvoltage on BPP pin //
-////			{
-////				*vBPP_pV = 0;
-////				BPP_dvi->set_voltage(BPP_ch, 0, RANGE_10_V);
-////				return;
-////			}
-////			BPP_dvi->set_voltage(BPP_ch, vfrc, RANGE_10_V); // Starting search point
-////			if(BPP_4p7uF) delay(3);
-////			if(BPP_p47uF) delay(dly_BPP_p47uF);
-////			wait.delay_10_us(10);
-////			imeas = BPP_dvi->measure_average(5);
-////		}
-////		else			
-////		{	
-////			// Reset device and reduce searching step
-////			vfrc -=  1.25* vstep;	// Back down 1.25 step
-////			vstep = 0.0025;			// Fine search, used to be 0.01
-////			// Reset device
-////			VBPP_ramp_down(3, 0.0, 0.05);
-////			wait.delay_10_us(10);
-////			VBPP_ramp_up(0.0, vfrc, 50e-3);	//BPP ramp up from 0V to vfrc in 50mV step
-////			if(BPP_4p7uF) delay(3);
-////			if(BPP_p47uF) delay(dly_BPP_p47uF);
-////			wait.delay_10_us(10);
-////			imeas = BPP_dvi->measure_average(5);				//expect device not switching here.
-////			if (imeas >ich_th)
-////			{	
-////				*vBPP_p = -1.0;	
-////				return;
-////			}
-////			while (imeas < ich_th)
-////			{	
-////				vfrc+=vstep;
-////				if (vfrc > 5.6) // Prevent overvoltage on BPP pin //
-////				{
-////					*vBPP_pV = 0;
-////					BPP_dvi->set_voltage(BPP_ch, 0, RANGE_10_V);
-////					return;
-////				}
-////				BPP_dvi->set_voltage(BPP_ch, vfrc,	RANGE_10_V);	// Starting search point
-////				if(BPP_4p7uF) delay(3);
-////				if(BPP_p47uF) delay(dly_BPP_p47uF);
-////				wait.delay_10_us(10);
-////				imeas = BPP_dvi->measure_average(5);
-////			}
-////		} 
-////	}
-////
-////	*vBPP_pV = vfrc;
-////
-////
-////	// VBPP_M
-////
-////	D_dvi->set_voltage(D_ch, 45, VOLT_50_RANGE);  
-////
-////	lcnt1 =0;	
-////	lcnt2 =0;
-////	ich_th = 0.9e-3;
-////
-////	BPP_dvi->set_voltage(BPP_ch, vfrc,	RANGE_10_V);	// Starting search point
-////	wait.delay_10_us(15);	// JD was 5, tester correlation
-////	if(BPP_4p7uF) delay(3);
-////	if(BPP_p47uF) delay(dly_BPP_p47uF);
-////	imeas = BPP_dvi->measure_average(15);	// JD was 5, tester correlation
-////	if (imeas <ich_th)
-////	{	
-////		*vBPP_m = 0.0;	
-////		return;
-////	}
-////
-////	vstep = 0.1;
-////	while ((vstep >=0.1) && (vfrc > 2))
-////	{
-////		if (imeas >ich_th)
-////		{	
-////			vfrc-=vstep;
-////			BPP_dvi->set_voltage(BPP_ch, vfrc,	RANGE_10_V);	// Starting search point
-////			if(BPP_4p7uF) delay(3);
-////			if(BPP_p47uF) delay(dly_BPP_p47uF);
-////			wait.delay_10_us(10);
-////			imeas = BPP_dvi->measure_average(5);	
-////		}
-////		else			
-////		{	
-////			vstep = 0.0025;			// Fine search
-////			ich_th = 0;
-////			while ((imeas > ich_th) && (vfrc > 2))
-////			{	
-////				vfrc-=vstep;
-////				BPP_dvi->set_voltage(BPP_ch, vfrc,	RANGE_10_V);	// Starting search point
-////				if(BPP_4p7uF) delay(3);
-////				if(BPP_p47uF) delay(dly_BPP_p47uF);
-////				wait.delay_10_us(15);	// JD was 5, tester correlation
-////				imeas = BPP_dvi->measure_average(15);	// JD was 5, tester correlation
-////			}
-////		} 
-////	}
-////	*vBPP_m = vfrc;
-////
-////if (*vBPP_m < 0.0) 
-////	*vBPP_m =0.0;
-////
-////
-////// ** VBPP_P
-////	lcnt1 =0;
-////	lcnt2 =0;
-////	ich_th = -2e-3;			// threshold to decide if device is switching or not
-////	vstep = 0.1;	// used to be 0.2
-////
-////	BPP_dvi->set_voltage(BPP_ch, vfrc-10e-3,	RANGE_10_V);
-////	wait.delay_10_us(5);
-////	imeas = BPP_dvi->measure_average(5);
-////
-////	while (vstep >=0.1)
-////	{
-////		if ( imeas<ich_th && vfrc<(vBPP_P_Expect-150e-3) )
-////		{	
-////			vfrc+=vstep;
-////			if (vfrc > 5.6) // Prevent overvoltage on BPP pin //
-////			{
-////				*vBPP_p = 0;
-////				BPP_dvi->set_voltage(BPP_ch, 0, RANGE_10_V);
-////				return;
-////			}
-////			BPP_dvi->set_voltage(BPP_ch, vfrc,	RANGE_10_V);	// Starting search point
-////			if(BPP_4p7uF) delay(3);
-////			if(BPP_p47uF) delay(dly_BPP_p47uF);
-////			wait.delay_10_us(10);
-////			imeas = BPP_dvi->measure_average(5);
-////		}
-////		else			
-////		{	
-////			vstep = 0.0025;			// Fine search, used to be 0.01
-////			while (imeas < ich_th)
-////			{	
-////				vfrc+=vstep;
-////				if (vfrc > 5.6) // Prevent overvoltage on BPP pin //
-////				{
-////					*vBPP_p = 0;
-////					BPP_dvi->set_voltage(BPP_ch, 0, RANGE_10_V);
-////					return;
-////				}
-////				BPP_dvi->set_voltage(BPP_ch, vfrc,	RANGE_10_V);	// Starting search point
-////				if(BPP_4p7uF) delay(3);
-////				if(BPP_p47uF) delay(dly_BPP_p47uF);
-////				wait.delay_10_us(10);
-////				imeas = BPP_dvi->measure_average(5);
-////			}
-////		} 
-////	}
-////
-////	*vBPP_p = vfrc;
-////
-////	// Take anothe measurement to get more accurate value //
-////	wait.delay_10_us(100);
-////	imeas = BPP_dvi->measure_average(5);
-////
+	float imeas=0, vfrc=0, vstep=0, vramp_pt=0;
+	float vstart=0, vstop=0, vBPP_P_Expect=0;
+	float ich_th=0;
+	int   lcnt1=0, lcnt2=0, rcnt =0;
+
+	Pulse pulse;
+
+
+	//vBPP_P_Expect = 5.5;
+	vBPP_P_Expect = LowerLimit;
+
+	// ** VBPP_PV
+	lcnt1 =0;
+	lcnt2 =0;
+	ich_th = 1.3e-3;			// threshold to decide if device is switching or not
+
+	VBPP_ramp_up(0.0, 5.0, 100e-3);    //BPP ramp up from 0V to 4.5V in 100mV step    (Needed for -40C)
+	wait.delay_10_us(10);
+	imeas = BPP_dvi->measure_average(5);
+
+	if (imeas >ich_th)
+	{	
+		*vBPP_pV = 0.0;	
+		return;
+	}
+	vstep = 0.1;	// used to be 0.2
+	vfrc = 4.5;
+	while (vstep >=0.1)
+	{
+		if (imeas < ich_th)
+		{	
+			vfrc+=vstep;
+			if (vfrc > 5.6) // Prevent overvoltage on BPP pin //
+			{
+				*vBPP_pV = 0;
+				BPP_dvi->set_voltage(BPP_ch, 0, RANGE_10_V);
+				return;
+			}
+			BPP_dvi->set_voltage(BPP_ch, vfrc, RANGE_10_V); // Starting search point
+			wait.delay_10_us(10);
+			imeas = BPP_dvi->measure_average(5);
+		}
+		else			
+		{	
+			// Reset device and reduce searching step
+			vfrc -=  1.25* vstep;	// Back down 1.25 step
+			vstep = 0.0025;			// Fine search, used to be 0.01
+			// Reset device
+			VBPP_ramp_down(3, 0.0, 0.05);
+			wait.delay_10_us(10);
+			VBPP_ramp_up(0.0, vfrc, 50e-3);	//BPP ramp up from 0V to vfrc in 50mV step
+			wait.delay_10_us(10);
+			imeas = BPP_dvi->measure_average(5);				//expect device not switching here.
+			if (imeas >ich_th)
+			{	
+				*vBPP_p = -1.0;	
+				return;
+			}
+			while (imeas < ich_th)
+			{	
+				vfrc+=vstep;
+				if (vfrc > 5.6) // Prevent overvoltage on BPP pin //
+				{
+					*vBPP_pV = 0;
+					BPP_dvi->set_voltage(BPP_ch, 0, RANGE_10_V);
+					return;
+				}
+				BPP_dvi->set_voltage(BPP_ch, vfrc,	RANGE_10_V);	// Starting search point
+				wait.delay_10_us(10);
+				imeas = BPP_dvi->measure_average(5);
+			}
+		} 
+	}
+
+	*vBPP_pV = vfrc;
+
+
+	// VBPP_M
+
+	D_dvi->set_voltage(D_ch, 45, VOLT_50_RANGE);  
+
+	lcnt1 =0;	
+	lcnt2 =0;
+	ich_th = 0.9e-3;
+
+	BPP_dvi->set_voltage(BPP_ch, vfrc,	RANGE_10_V);	// Starting search point
+	wait.delay_10_us(15);	// JD was 5, tester correlation
+	imeas = BPP_dvi->measure_average(15);	// JD was 5, tester correlation
+	if (imeas <ich_th)
+	{	
+		*vBPP_m = 0.0;	
+		return;
+	}
+
+	vstep = 0.1;
+	while ((vstep >=0.1) && (vfrc > 2))
+	{
+		if (imeas >ich_th)
+		{	
+			vfrc-=vstep;
+			BPP_dvi->set_voltage(BPP_ch, vfrc,	RANGE_10_V);	// Starting search point
+			wait.delay_10_us(10);
+			imeas = BPP_dvi->measure_average(5);	
+		}
+		else			
+		{	
+			vstep = 0.0025;			// Fine search
+			ich_th = 0;
+			while ((imeas > ich_th) && (vfrc > 2))
+			{	
+				vfrc-=vstep;
+				BPP_dvi->set_voltage(BPP_ch, vfrc,	RANGE_10_V);	// Starting search point
+				wait.delay_10_us(15);	// JD was 5, tester correlation
+				imeas = BPP_dvi->measure_average(15);	// JD was 5, tester correlation
+			}
+		} 
+	}
+	*vBPP_m = vfrc;
+
+if (*vBPP_m < 0.0) 
+	*vBPP_m =0.0;
+
+
+// ** VBPP_P
+	lcnt1 =0;
+	lcnt2 =0;
+	ich_th = -2e-3;			// threshold to decide if device is switching or not
+	vstep = 0.1;	// used to be 0.2
+
+	BPP_dvi->set_voltage(BPP_ch, vfrc-10e-3,	RANGE_10_V);
+	wait.delay_10_us(5);
+	imeas = BPP_dvi->measure_average(5);
+
+	while (vstep >=0.1)
+	{
+		if ( imeas<ich_th && vfrc<(vBPP_P_Expect-150e-3) )
+		{	
+			vfrc+=vstep;
+			if (vfrc > 5.6) // Prevent overvoltage on BPP pin //
+			{
+				*vBPP_p = 0;
+				BPP_dvi->set_voltage(BPP_ch, 0, RANGE_10_V);
+				return;
+			}
+			BPP_dvi->set_voltage(BPP_ch, vfrc,	RANGE_10_V);	// Starting search point
+			wait.delay_10_us(10);
+			imeas = BPP_dvi->measure_average(5);
+		}
+		else			
+		{	
+			vstep = 0.0025;			// Fine search, used to be 0.01
+			while (imeas < ich_th)
+			{	
+				vfrc+=vstep;
+				if (vfrc > 5.6) // Prevent overvoltage on BPP pin //
+				{
+					*vBPP_p = 0;
+					BPP_dvi->set_voltage(BPP_ch, 0, RANGE_10_V);
+					return;
+				}
+				BPP_dvi->set_voltage(BPP_ch, vfrc,	RANGE_10_V);	// Starting search point
+				wait.delay_10_us(10);
+				imeas = BPP_dvi->measure_average(5);
+			}
+		} 
+	}
+
+	*vBPP_p = vfrc;
+
+	////// Take anothe measurement to get more accurate value //
+	////wait.delay_10_us(100);
+	////imeas = BPP_dvi->measure_average(5);
+
 //////4. Increase BPP to around 5.1V to see IBPP drops to +200uA (this is where the high-voltage current source turns off)			*
 ////// ** VBPP_P_iHVoff
 ////	lcnt1 =0;
@@ -7931,7 +7912,8 @@ void Gage_Find_Ilim(float *Idmax_ave, float *DiDt_ave, float *Ton_ave, float *Rd
 //		for(icnt = start_addr; icnt< start_addr + Sample_per_cycle + 125 ; icnt++)		
 		for(icnt = start_addr; icnt< start_addr + 300 ; icnt++)	// To avoid intermittence failure for RDSON reading. HQL 07/08/14	
 		{// Searching window = Period + 2.5us(from next pulse). 
-			if((Gage_chan_a_voltage[icnt] > g_Idmax[pulse_cnt])&& Gage_chan_a_voltage[icnt]>50e-3)
+			//Problem with algorithm.  HL changed from 50e-3 to 100e-3
+			if((Gage_chan_a_voltage[icnt] > g_Idmax[pulse_cnt])&& Gage_chan_a_voltage[icnt]>200e-3)
 			{
 				g_Idmax[pulse_cnt] = Gage_chan_a_voltage[icnt];
 				g_Idmax_addr[pulse_cnt] = icnt;
@@ -8087,13 +8069,13 @@ void Gage_Find_Ilim(float *Idmax_ave, float *DiDt_ave, float *Ton_ave, float *Rd
 			break;
 	}
 
-	// Average Peak results
-	if(( PULSE_NUM_PROCESSED>= 16)) //Sometimes the first pulse miss-trigger.  Expect 22 if no missing trigger
+	// Average Peak results   
+	if(( PULSE_NUM_PROCESSED>=16)) //Sometimes the first pulse miss-trigger.  Expect 22 if no missing trigger
 	{
 		// Number of pulses used for ILIM_ave, Ton_ave, Didt_ave, Vdson_peak_ave, Rdson_spec_ave
 		//ave_start_pulse	= 4;	//good for size x8 but not size x5
-		ave_start_pulse	= 6;	//good for both size x8 and x5
-		ave_pulses		= 10;
+		ave_start_pulse	= 6;	//good for both size x8 and x5 
+		ave_pulses		= 10;   
 		ave_end_pulse	= ave_start_pulse + ave_pulses;
 		// Taking average Needed pulses peak values (Must skip the first 3 pulses since they are not at ILIM)
 		for (pulse_cnt =ave_start_pulse; pulse_cnt< ave_end_pulse; pulse_cnt++)
@@ -16475,7 +16457,7 @@ void DSM_I2C_Write(char byte_or_word, uint8_t reg_addr, uint16_t word_entered)
 		if(ret_code)
 		{
 			DSM_write_I2C_buffer(DSM_CONTEXT, address, num_read_bytes, writeDataBuffer );
-			printf("ret_code active.  DSM write again\n");
+			printf("ret_code active.  DSM write again.  Function # %i\n", gFuncNum);
 		}
 
 
@@ -16540,7 +16522,7 @@ void DSM_I2C_Pri_Write(char byte_or_word, uint8_t reg_addr, uint16_t word_entere
 		if(ret_code)
 		{
 			DSM_write_I2C_buffer(DSM_CONTEXT, address, num_read_bytes, writeDataBuffer );
-			printf("ret_code active.  DSM write again\n");
+			printf("ret_code active.  DSM write again.  Function # %i\n", gFuncNum);
 		}
 
 
@@ -17675,7 +17657,7 @@ void Load_100Khz_Pulses_TS()
 {
 
 	Dclk_period = 0.1e-6;
-	g_DDD_Low = 0.01; 
+	g_DDD_Low = 0.00; 
 	g_DDD_High = 2.0; 
 	
 	ddd_7->init();
@@ -17687,6 +17669,7 @@ void Load_100Khz_Pulses_TS()
 	ddd_7->ddd_set_hi_level(g_DDD_High);	
 	wait.delay_10_us(100);
 	ddd_7->ddd_connect_drivers();	
+
 	ddd_7->ddd_set_voltage_ref(1.0);
 	ddd_7->ddd_set_no_delay();
 
@@ -17755,15 +17738,15 @@ void Load_FW_DDD_1_Pulse(int StartAddr)
 	
 	for(i = StartAddr; i < StartAddr+100; i++)	
 	{
-		ddd_7->ddd_load_pattern(i, "X0XXXXXX");		
+		ddd_7->ddd_load_pattern(i, "X0XXXXX0");		//HL added for TS
 	}
 	for(i = StartAddr+50; i < StartAddr+100; i++)	
 	{
-		ddd_7->ddd_load_pattern(i, "X1XXXXXX");		
+		ddd_7->ddd_load_pattern(i, "X1XXXXX1");	   //HL added for TS	
 	}
 	for(i = StartAddr+100; i < StartAddr+200; i++)	
 	{
-		ddd_7->ddd_load_pattern(i, "X0XXXXXX");		
+		ddd_7->ddd_load_pattern(i, "X0XXXXX0");		//HL added for TS
 	}
 }
 
@@ -18062,6 +18045,7 @@ void PowerUp_I2C_P()
 {
 	//BPP to 5.0V first.
 	float j = 0.0;
+	BPP_dvi->set_current(BPP_ch, 30e-3, RANGE_30_MA); 
 	while(j<=g_vDSM_pullup_P)
 	{
 		BPP_dvi->set_voltage(BPP_ch, j, VOLT_10_RANGE); // DVI_11_1
@@ -18137,11 +18121,17 @@ void Setup_Resources_for_I2C_P()
 }
 void Power_Down_I2C_P()
 {
-	//SDA = 3.3V via pullup resistor. Ready for I2C.
-	SDA_ovi3->set_voltage(SDA_ch, 0.0, VOLT_10_RANGE); // OVI_3_0
+	//HL-DSM should be disabled before powering down TS & UV pins.
+	DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);	
 
+	//SDA = 3.3V via pullup resistor. Ready for I2C.	
+	SDA_ovi3->set_voltage(SDA_ch, 0.0, VOLT_10_RANGE); // OVI_3_0
 	//SCL = 3.3V via pullup resistor. Ready for I2C.
 	SCL_ovi3->set_voltage(SCL_ch, 0.0, VOLT_10_RANGE); // DVI_21_1
+	wait.delay_10_us(20);
+	//HL added since DSM is at some voltage level.
+	SCL_ovi3->set_current(SCL_ch, 0.01e-3, RANGE_30_MA);      
+	SDA_ovi3->set_current(SDA_ch, 0.01e-3, RANGE_30_MA);
 	wait.delay_10_us(20);
 	dvi_9->set_current(DVI_CHANNEL_1, 30e-3, RANGE_300_MA);
 	dvi_9->set_voltage(DVI_CHANNEL_1, 0.0, VOLT_50_RANGE); // DVI_11_1
@@ -18156,7 +18146,9 @@ void Power_Down_I2C_P()
 	//UV = 0V via pullup resistor. Ready for I2C.
 	UV_dvi->set_voltage(UV_ch, 0.0, VOLT_10_RANGE); // DVI_21_1
 	wait.delay_10_us(10);
-
+	TS_ovi3->set_current(TSovi3_ch, 0.01e-3, RANGE_30_MA);
+	UV_dvi->set_current(UV_ch, 0.01e-3, RANGE_300_MA);
+	wait.delay_10_us(10);
 	BPP_dvi->set_voltage(BPP_ch, 0.0, VOLT_10_RANGE); // DVI_11_1
 	wait.delay_10_us(10);
 	D_dvi->set_voltage(D_ch, 0.0, VOLT_10_RANGE); // DVI_11_0
@@ -18168,7 +18160,7 @@ void Power_Down_I2C_P()
 	//Disconnect DSM from Primary.
 	Open_relay(K1_DSM_TB);	
 	Open_relay(K3_DSM_TB);	
-	delay(1);
+	delay(2);
 }
 
 
@@ -18863,27 +18855,71 @@ void Search_iUVm_P(float *iUVm_th_P)
 	}
 }
 
-void BPP_zigzag(float vBPP1, float vBPP2, float vBPP3)
+void BPP_zigzag(float vBPP1, float vBPP2, float vBPP3, float iBPP)
 {
-	//vBPP1 = 5.5;
-	//vBPP2 = 4.3;
-	//vBPP3 = 5.4;
+	//vBPP1 = 5.5;	PV voltage
+	//vBPP2 = 4.3;	Minus Voltage
+	//vBPP3 = 5.4;	Plus Voltage	(After the Plus, you can go to Shunt.  Limit the current from going to shunt here)
 
-	//BPP zig zag (5V to 5.5V to 4.3V to 5.4V below OV threshold)
+	//////float j = 5.0;
+	//////BPP_dvi->set_current(BPP_ch, iBPP, RANGE_300_MA);
+	//////while(j <=vBPP1)
+	//////{
+	//////	BPP_dvi->set_voltage(BPP_ch, j, VOLT_10_RANGE); // DVI_11_1
+	//////	j = j + 0.02;
+	//////}
+
+	////////BPP zig zag (5V to 5.5V to 4.3V to 5.4V below OV threshold)
+	//////BPP_dvi->set_current(BPP_ch, iBPP, RANGE_300_MA);
+	//////BPP_dvi->set_voltage(BPP_ch, vBPP1, VOLT_10_RANGE); // DVI_11_1
+	//////wait.delay_10_us(20);
+	//////j = vBPP1;
+	//////while(j>=vBPP2-0.2)
+	//////{
+	//////		BPP_dvi->set_voltage(BPP_ch, j, VOLT_10_RANGE); // DVI_11_1	
+	//////		j = j - 0.04;
+	//////}
+	//////BPP_dvi->set_current(BPP_ch, iBPP, RANGE_300_MA);	// This current must be <= 3mA going from vMinus to vPlus.  Vshunt would start >3mA
+	//////BPP_dvi->set_voltage(BPP_ch, vBPP2, VOLT_10_RANGE); // DVI_11_1
+	//////wait.delay_10_us(20);
+	//////j = vBPP2;
+	//////while (j <= vBPP3-0.2)
+	//////{
+
+	//////	BPP_dvi->set_voltage(BPP_ch, j, VOLT_10_RANGE); // DVI_11_1
+	//////	j = j + 0.1;
+	//////}
+	//////BPP_dvi->set_current(BPP_ch, iBPP, RANGE_300_MA);	// Any current above 3mA would have Shunt started
+	//////BPP_dvi->set_voltage(BPP_ch, vBPP3, VOLT_10_RANGE); // DVI_11_1
+	//////wait.delay_10_us(20);
+
+	BPP_dvi->set_current(BPP_ch, iBPP, RANGE_300_MA);	// Any current above 3mA would have Shunt started
+	wait.delay_10_us(20);
 	BPP_dvi->set_voltage(BPP_ch, vBPP1, VOLT_10_RANGE); // DVI_11_1
-	delay(1);
+	wait.delay_10_us(50);
 	BPP_dvi->set_voltage(BPP_ch, vBPP2, VOLT_10_RANGE); // DVI_11_1
-	delay(1);
+	wait.delay_10_us(50);
 	BPP_dvi->set_voltage(BPP_ch, vBPP3, VOLT_10_RANGE); // DVI_11_1
-	delay(1);
+	wait.delay_10_us(50);
+
 }
 
 void Regain_I2C_P(int regain_I2C_mode)
 {
+	//HL moved the reconnection of DSM relays here to avoid hot switching.
+	//Connect relays for I2C use
+	Close_relay(K1_TS_RB);	//Connect Pullup R to TS pin.
+	Close_relay(K1_UV_RB);	//Connect Pullup R to UV pin.
+	//Connect DSM from Primary after releasing VPIN or TS pins
+	Close_relay(K1_DSM_TB);	
+	Close_relay(K3_DSM_TB);	
+	delay(3);
+
 	if(regain_I2C_mode == g_Vpin_Low_to_High)
 	{
 		UV_dvi->set_voltage(UV_ch,		0.0,	VOLT_10_RANGE); // DVI_21_1
 		UV_dvi->set_current(UV_ch,		30e-3,	RANGE_300_MA);	//set really low current for Vmeas
+		TS_ovi3->set_current(TSovi3_ch, 30e-3,	RANGE_30_MA);
 		wait.delay_10_us(10);
 		UV_dvi->set_voltage(UV_ch,		3.3,	VOLT_10_RANGE); // DVI_21_1
 		wait.delay_10_us(10);
@@ -18894,18 +18930,19 @@ void Regain_I2C_P(int regain_I2C_mode)
 	{
 		TS_ovi3->set_voltage(TSovi3_ch, 0.0,	VOLT_10_RANGE); // OVI_3_0
 		TS_ovi3->set_current(TSovi3_ch, 30e-3,	RANGE_30_MA);
+		UV_dvi->set_current(UV_ch,		30e-3,	RANGE_300_MA);	
 		wait.delay_10_us(10);
 		TS_ovi3->set_voltage(TSovi3_ch, 3.3,	VOLT_10_RANGE); // OVI_3_0
 		wait.delay_10_us(10);
 		UV_dvi->set_voltage(UV_ch,		3.3,	VOLT_10_RANGE); // DVI_21_1
 		wait.delay_10_us(10);
 	}
-	//Connect relays for I2C use
-		Close_relay(K1_TS_RB);	//Connect Pullup R to TS pin.
-		Close_relay(K1_UV_RB);	//Connect Pullup R to UV pin.
-		//Connect DSM from Primary after releasing VPIN or TS pins
-		Close_relay(K1_DSM_TB);	
-		Close_relay(K3_DSM_TB);	
+	//////Connect relays for I2C use
+	////	Close_relay(K1_TS_RB);	//Connect Pullup R to TS pin.
+	////	Close_relay(K1_UV_RB);	//Connect Pullup R to UV pin.
+	////	//Connect DSM from Primary after releasing VPIN or TS pins
+	////	Close_relay(K1_DSM_TB);	
+	////	Close_relay(K3_DSM_TB);	
 }
 
 void Disable_n_Disconnect_DSMI2C_via(int release_pin)
@@ -18913,7 +18950,7 @@ void Disable_n_Disconnect_DSMI2C_via(int release_pin)
 	if(release_pin == g_release_TSpin)
 	{
 		//Disable DSM I2C (Any I2C write command will bring back I2C)
-		DSM_set_I2C_timeout(0, 1);
+		DSM_set_I2C_timeout(0, 5);
 		DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
 
 		//Disconnect DSM from Primary after releasing VPIN or TS pins
@@ -20332,6 +20369,7 @@ void Characterize_vBPPth()
 
 	vstep	= 50e-3;
 	i		= 0;
+	vfrc	= 0;
 	while(vfrc < 3.0)
 	{
 		vfrc += vstep;
@@ -20372,6 +20410,7 @@ void Characterize_vBPPth()
 	D_dvi->set_voltage(D_ch,	 45,		VOLT_50_RANGE);  
 	D_dvi->set_meas_mode(D_ch, DVI_MEASURE_VOLTAGE);
 	wait.delay_10_us(5);
+	vmeas = 0;
 	while(vmeas<44 && i<50)			//vDrain has to be high in order for vBPP_M to work properly
 	{
 		vmeas = D_dvi->measure();

@@ -47,11 +47,11 @@ void ZTtimer_Pre(test_function& func)
 	if (AbortTest)
 		return;
 
-	// Skip trimming if g_Burn_Enable_P set //
-	//if (g_Burn_Enable_P == 0)
-//		return;
 
 	if (g_Burn_Enable_S == 0 && g_GRR_Enable == 0)
+		return;
+
+	if (g_OPCODE==4250 || g_OPCODE==4300 || g_OPCODE==4500)
 		return;
 
 	//if (g_Fn_ZTtimer_Pre == 0 )  return;
@@ -258,7 +258,7 @@ Pulse pulse;
 	//HSG_ovi->set_voltage(HSG_ch, 5, VOLT_20_RANGE); 
 
 	DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
-	if (g_Burn_Enable_S != 0)
+	if (g_Burn_Enable_S)
 	{
 		//Loading previous trimming before performing the test.
 		Program_All_TrimRegister();
@@ -301,11 +301,8 @@ Pulse pulse;
 
 	g_ZTtimer_Pre = ZTtimer_pt_S;
 
-	if (g_Burn_Enable_S && g_OPCODE==4200)
-
+	if (g_Burn_Enable_S)
 	{
-
-
 		// ZTtimer_S_Code //
 		// Find which trim code will make ZTtimer_Pre closest to target //
 		smallest_diff_val = 999999.9;

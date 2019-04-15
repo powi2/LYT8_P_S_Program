@@ -224,7 +224,8 @@ void NTC_P(test_function& func)
 														//				 to Drain switching.  Code diff observed is 1 bit less @5V)
 		wait.delay_10_us(20);
 
-	BPP_zigzag(5.5, 4.3, 5.3);
+	BPP_zigzag(gVBPP_PV_final, gVBPP_M_final, gVBPP_P_final, 2.5e-3);
+	//BPP_zigzag(5.5, 4.3, 5.3, 2.5e-3);
 
 	//Initial observation: Drain output --> expect 101 on TSMODE<2:0> bits using negative duty cycle 
 	//										to determine if it's 1 (2us width) or 0 (1us width).

@@ -47,8 +47,11 @@ void TonSlpOfst_Pre_P(test_function& func)
 	if (AbortTest)
 		return;
 
-	//// Skip trimming if g_Sim_Enable_P set //
-	if (g_Sim_Enable_P == 0)
+	// Skip trimming if g_Sim_Enable_P set //
+	if (g_Sim_Enable_P == 0&& g_GRR_Enable == 0)
+		return;
+
+	if (g_OPCODE==4250 || g_OPCODE==4300 || g_OPCODE==4500)
 		return;
 
 	//if (g_Fn_Ton_Pre_P == 0 )  return;
@@ -194,13 +197,13 @@ void TonSlpOfst_Pre_P(test_function& func)
 
 
 	Pulse pulse;
-	pulse.do_pulse();	
+	
 
 
 	Setup_Resources_for_I2C_P();
 	PowerUp_I2C_P();
 
-	if(g_Load_previous_RegBits)	//Always set to 1 for PRODUCTION use at 4200 or 4200RTR
+	if(g_Load_previous_RegBits&& g_GRR_Enable == 0)	//Always set to 1 for PRODUCTION use at 4200 or 4200RTR
 	{
 		EEPROM_Write_Enable_P();
 		Program_All_TrimRegister_P();	//Loading previous trimming before performing the test.
@@ -215,7 +218,16 @@ void TonSlpOfst_Pre_P(test_function& func)
 
 	DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);	//Disable DSM I2C
 
-
+		//HL-Question: Should TS/UV pins be powered down before opening relays?
+		//This can be hot-switching the DSM relays on the primary sides.
+		//Disconnect DSM from Primary after releasing VPIN or TS pins
+		TS_ovi3->set_voltage(TSovi3_ch, 0.0, VOLT_10_RANGE); // OVI_3_0
+		//UV = 0V via pullup resistor. Ready for I2C.
+		UV_dvi->set_voltage(UV_ch, 0.0, VOLT_10_RANGE); // DVI_21_1
+		wait.delay_10_us(10);
+		TS_ovi3->set_current(TSovi3_ch, 0.01e-3, RANGE_30_MA);
+		UV_dvi->set_current(UV_ch, 0.01e-3, RANGE_300_MA);
+		wait.delay_10_us(10);
 	//--------------------------------------------------------------------------------------------
 	//Setup for TS to run 100kHz
 		//Disconnect DSM from Primary after releasing VPIN or TS pins
@@ -241,7 +253,8 @@ void TonSlpOfst_Pre_P(test_function& func)
 		D_dvi->set_voltage(D_ch, 5.0, VOLT_20_RANGE); // DVI_11_0
 		delay(1);
 	
-	BPP_zigzag(5.5, 4.3, 5.3);
+	BPP_zigzag(gVBPP_PV_final, gVBPP_M_final, gVBPP_P_final, 2.0e-3);
+	//BPP_zigzag(5.5, 4.3, 5.35, 2.0e-3);
 
 		Load_30Khz_Pulses_TS();
 		delay(1);
@@ -263,7 +276,7 @@ void TonSlpOfst_Pre_P(test_function& func)
 
 		tmu_6->stop_trigger_setup(0.3,  POS_SLOPE, TMU_HIZ, TMU_IN_5V);	//update thres to correlate better with scope
 
-		pulse.do_pulse();	
+	
 		Load_80Khz_Pulses_TS();
 		delay(1);
 		Run_80Khz_Pulses_TS();	//DE want 50ns high duty cycle ideally.
@@ -289,7 +302,8 @@ void TonSlpOfst_Pre_P(test_function& func)
 
 	//Datalog
 	PiDatalog(func, A_Slope_pt_P,		Slope_pt_P,					14,	POWER_MICRO);	
-	PiDatalog(func, A_Slope_target_P,	gP_Slope_TARGET_Trimops,	14,	POWER_MICRO);	
+	if(g_GRR_Enable == 0)
+		PiDatalog(func, A_Slope_target_P,	gP_Slope_TARGET_Trimops,	14,	POWER_MICRO);	
 
 	//---------------------------------------------------------------------------------
 	//------- Offset Before Slope_Sim Start ---------------------------
@@ -302,7 +316,8 @@ void TonSlpOfst_Pre_P(test_function& func)
 		Offset_pt_P = (Slope_pt_P * 80) - Ton_80kHz_pt_P;
 
 		PiDatalog(func, A_Offset_pt_P,		Offset_pt_P,				14,	POWER_MICRO);	
-		PiDatalog(func, A_Offset_target_P,	gP_Offset_TARGET_Trimops,	14,	POWER_MICRO);	
+		if(g_GRR_Enable == 0)
+			PiDatalog(func, A_Offset_target_P,	gP_Offset_TARGET_Trimops,	14,	POWER_MICRO);	
 	}
 	//---------------------------------------------------------------------------------
 	//------- Offset Before Slope_Sim Stop ---------------------------
@@ -361,8 +376,13 @@ void TonSlpOfst_Pre_P(test_function& func)
 			Close_relay(K1_DSM_TB);	
 			Close_relay(K3_DSM_TB);	
 			delay(4);
+			//HL added to repower up TS & UV
+			TS_ovi3->set_current(TSovi3_ch, 30e-3, RANGE_30_MA);
+			UV_dvi->set_current(UV_ch, 30e-3, RANGE_300_MA);
+			UV_dvi->set_voltage(UV_ch, 3.3, VOLT_10_RANGE); // DVI_21_1
 			TS_ovi3->set_voltage(TSovi3_ch, 3.3, VOLT_10_RANGE); // OVI_3_0
 			wait.delay_10_us(10);
+
 		Program_Single_TrimRegister_P(g_EEP_W_E2);
 
 		//TS setup for 30kHz and 80kHz toggling
@@ -372,6 +392,14 @@ void TonSlpOfst_Pre_P(test_function& func)
 			wait.delay_10_us(10);
 			Close_relay(K2_TS_TB); //TS disconnect from OVI_3_0_TS_RB
 			Close_relay(K3_TS_IB); //DDD7_1 to Comparator LT1719 to COMP_OUT to TS
+			delay(3);
+			//HL added setting TS & UV ovi to 0V.
+			TS_ovi3->set_voltage(TSovi3_ch, 0.0, VOLT_10_RANGE); // OVI_3_0
+			UV_dvi->set_voltage(UV_ch, 0.0, VOLT_10_RANGE); // DVI_21_1
+			wait.delay_10_us(10);
+			TS_ovi3->set_current(TSovi3_ch, 0.01e-3, RANGE_30_MA);
+			UV_dvi->set_current(UV_ch, 0.01e-3, RANGE_300_MA);
+			wait.delay_10_us(10);
 			//Disconnect DSM from Primary after releasing VPIN or TS pins
 			Open_relay(K1_DSM_TB);	
 			Open_relay(K3_DSM_TB);	
@@ -524,8 +552,7 @@ void TonSlpOfst_Pre_P(test_function& func)
 
 
 				tmu_6->stop_trigger_setup(0.3,  POS_SLOPE, TMU_HIZ, TMU_IN_5V);	//update thres to correlate better with scope
-
-				pulse.do_pulse();	
+	
 				Load_80Khz_Pulses_TS();
 				delay(1);
 				Run_80Khz_Pulses_TS();	//DE want 50ns high duty cycle ideally.
@@ -628,8 +655,13 @@ void TonSlpOfst_Pre_P(test_function& func)
 			Close_relay(K1_DSM_TB);	
 			Close_relay(K3_DSM_TB);	
 			delay(4);
+			//HL added to repower up TS & UV
+			TS_ovi3->set_current(TSovi3_ch, 30e-3, RANGE_30_MA);
+			UV_dvi->set_current(UV_ch, 30e-3, RANGE_300_MA);
+			UV_dvi->set_voltage(UV_ch, 3.3, VOLT_10_RANGE); // DVI_21_1
 			TS_ovi3->set_voltage(TSovi3_ch, 3.3, VOLT_10_RANGE); // OVI_3_0
 			wait.delay_10_us(10);
+
 		Program_Single_TrimRegister_P(g_EEP_W_E0);
 
 		//TS setup for 30kHz and 80kHz toggling
@@ -639,6 +671,14 @@ void TonSlpOfst_Pre_P(test_function& func)
 			wait.delay_10_us(10);
 			Close_relay(K2_TS_TB); //TS disconnect from OVI_3_0_TS_RB
 			Close_relay(K3_TS_IB); //DDD7_1 to Comparator LT1719 to COMP_OUT to TS
+			delay(3);
+			//HL added setting TS & UV ovi to 0V.
+			TS_ovi3->set_voltage(TSovi3_ch, 0.0, VOLT_10_RANGE); // OVI_3_0
+			UV_dvi->set_voltage(UV_ch, 0.0, VOLT_10_RANGE); // DVI_21_1
+			wait.delay_10_us(10);
+			TS_ovi3->set_current(TSovi3_ch, 0.01e-3, RANGE_30_MA);
+			UV_dvi->set_current(UV_ch, 0.01e-3, RANGE_300_MA);
+			wait.delay_10_us(10);
 			//Disconnect DSM from Primary after releasing VPIN or TS pins
 			Open_relay(K1_DSM_TB);	
 			Open_relay(K3_DSM_TB);	
@@ -794,6 +834,12 @@ void TonSlpOfst_Pre_P(test_function& func)
 	}
 	//---- Offset Bitweight CHAR stop --------------------------------- 		
 
+	//HL added.  Power down Drain first before disconnecting TMU
+	D_dvi->set_current(D_ch, 100e-3, RANGE_300_MA); 
+	D_dvi->set_voltage(D_ch, 0.0, VOLT_20_RANGE); // DVI_11_0
+	delay(1);
+	D_dvi->set_current(D_ch, 0.1e-3, RANGE_300_MA); 
+	D_dvi->set_voltage(D_ch, 0.0, VOLT_20_RANGE); // DVI_11_0
 	delay(4);
 	Stop_100Khz_Pulses_TS();
 	Power_Down_I2C_P();

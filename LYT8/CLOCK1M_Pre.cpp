@@ -54,7 +54,9 @@ void CLOCK1M_Pre(test_function& func)
 
 	if (g_Burn_Enable_S == 0 && g_GRR_Enable == 0)
 		return;
-	//if (g_Fn_CLK1M_Pre == 0 )  return;
+	
+	if (g_OPCODE==4250 || g_OPCODE==4300 || g_OPCODE==4500)
+		return;
 
 	// Test Time Begin //
 	if (g_TstTime_Enble_P)
@@ -291,7 +293,7 @@ Pulse pulse;
 
 	g_CLK1M_Pre = CLK1M_pt_S;
 
-	if (g_Burn_Enable_S && g_OPCODE==4200)
+	if (g_Burn_Enable_S)
 
 	{
 

@@ -49,7 +49,11 @@ void NTC_Pre_P(test_function& func)
 		return;
 
 	// Skip trimming if g_Sim_Enable_P set //
-	if (g_Sim_Enable_P == 0)	return;
+	if (g_Sim_Enable_P == 0&& g_GRR_Enable == 0)
+		return;
+
+	if (g_OPCODE==4250 || g_OPCODE==4300 || g_OPCODE==4500)
+		return;
 
 	// Test Time Begin //
 	 if (g_TstTime_Enble_P)
@@ -181,7 +185,7 @@ void NTC_Pre_P(test_function& func)
 	WordArray[15] = g_TrimRegister_P[g_E8_start_bit +15];	//79 TonM_2_P
 
 	Pulse pulse; // External trigger pulse from dvi for debug //
-	pulse.do_pulse();
+
 
 	/*
 	--------------------------------------------------------------------------------------------------------
@@ -253,7 +257,7 @@ void NTC_Pre_P(test_function& func)
 	Setup_Resources_for_I2C_P();
 	PowerUp_I2C_P();
 
-	if(g_Load_previous_RegBits)	//Always set to 1 for PRODUCTION use at 4200 or 4200RTR
+	if(g_Load_previous_RegBits&& g_GRR_Enable == 0)	//Always set to 1 for PRODUCTION use at 4200 or 4200RTR
 	{
 		EEPROM_Write_Enable_P();
 		Program_All_TrimRegister_P();	//Loading previous trimming before performing the test.
@@ -282,7 +286,8 @@ void NTC_Pre_P(test_function& func)
 														//				 to Drain switching.  Code diff observed is 1 bit less @5V)
 		wait.delay_10_us(20);
 
-	BPP_zigzag(5.5, 4.3, 5.3);
+	BPP_zigzag(gVBPP_PV_final, gVBPP_M_final, gVBPP_P_final, 2.5e-3);
+	//BPP_zigzag(5.5, 4.3, 5.35, 2.5e-3);
 
 	//Initial observation: Drain output --> expect 101 on TSMODE<2:0> bits using negative duty cycle 
 	//										to determine if it's 1 (2us width) or 0 (1us width).
@@ -309,7 +314,7 @@ void NTC_Pre_P(test_function& func)
 	DSM_I2C_Write('b', 0x4C, 0x01);				//release TSPIN
 				
 	Disable_n_Disconnect_DSMI2C_via(g_release_TSpin);
-
+//	delay(3);
 	//Force TSPIN voltage to 2.5V and observe lower 9bits for 256		
 	TS_ovi3->set_voltage(TSovi3_ch, 2.5, VOLT_10_RANGE); // OVI_3_0
 	TS_ovi3->set_meas_mode(TSovi3_ch, OVI_MEASURE_CURRENT);
@@ -438,6 +443,16 @@ void NTC_Pre_P(test_function& func)
 
 			PiDatalog(func, A_VTSstop_511,		Dtemp_VTSstop_P,		ours->fail_bin, POWER_UNIT);
 	}
+
+	TS_ovi3->set_voltage(TSovi3_ch, 1.0, VOLT_10_RANGE); // OVI_3_0		
+	delay(1);
+	BPP_dvi->set_voltage(BPP_ch, 1, VOLT_10_RANGE); // DVI_11_1
+	wait.delay_10_us(50);
+	BPP_dvi->set_voltage(BPP_ch, 0, VOLT_10_RANGE); // DVI_11_1
+	wait.delay_10_us(50);
+	D_dvi->set_voltage(D_ch, 0.0,	VOLT_20_RANGE); // DVI_11_0		(5V would be better for seeing the signal but noisy TS due 
+
+
 
 	Power_Down_I2C_P();
 	Open_relay(K2_D_RB);	//D  to RB_82uH_50ohm to K2_D to DVI-11-0		disconnect

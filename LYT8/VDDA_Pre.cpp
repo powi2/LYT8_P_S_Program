@@ -54,6 +54,9 @@ void VDDA_Pre(test_function& func)
 	if (g_Burn_Enable_S == 0 && g_GRR_Enable == 0)
 		return;
 
+	if (g_OPCODE==4250 || g_OPCODE==4300 || g_OPCODE==4500)
+		return;
+
 	//if (g_Fn_CV_Pre == 0 )  return;
 
 	// Test Time Begin //
@@ -224,7 +227,7 @@ Pulse pulse;
 	//0x00 0x44 write 0x08 0x00  ==> ZTMC_VDDA_en
 	DSM_I2C_Write('w', g_ANA_CTRL_0, 0x0008);
  
-	if (g_Burn_Enable_S != 0)
+	if (g_Burn_Enable_S)
 	{
 		//Loading previous trimming before performing the test.
 		Program_All_TrimRegister();
@@ -239,7 +242,7 @@ Pulse pulse;
 
 	g_VDDA_Pre = VDDA_pt_S;
 
-	if (g_Burn_Enable_S && g_OPCODE==4200)
+	if (g_Burn_Enable_S)
 
 	{
 		

@@ -175,6 +175,8 @@ void First(test_function& func)
 	g_Burn_Enable_S = ours->BURN_Enable_S;
 	g_Erase_Enable_P = ours->force_ERASE_P;
 	g_Erase_Enable_S = ours->force_ERASE_S;
+	g_Sim_Enable_P   = ours->Sim_Enable_P;
+	g_Sim_Enable_S   = ours->Sim_Enable_S;
 	g_GRR_Enable     = ours->GRR_Enable;
 	g_TstTime_Enble_P = ours->TestTime_Enable;
 	p_Rewrite_EPROM = ours->Rewrite_EPROM;
@@ -215,7 +217,7 @@ void First(test_function& func)
 	g_Char_vBPPth			= 1;
 
 	//Global digitizer Awav and Text variables
-	g_Save_Awav_TextDebug_ALL		= 0;
+	g_Save_Awav_TextDebug_ALL		= 1;
 	g_Save_Awav_TextDebug_Dtemp		= 1;
 
 	

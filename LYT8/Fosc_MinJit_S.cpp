@@ -290,7 +290,7 @@ Pulse pulse;
 		tmu_6->start_holdoff(0,FALSE);
 		tmu_6->stop_holdoff(0,FALSE);
 
-	pulse.do_pulse();
+
 		//Monitor min switching on HSG pin.	
 		tmu_6->start_holdoff(15,TRUE);
 		tmu_6->stop_holdoff(15,TRUE);
@@ -360,7 +360,7 @@ Pulse pulse;
 		tmu_6->start_holdoff(0,FALSE);
 		tmu_6->stop_holdoff(0,FALSE);
 
-	pulse.do_pulse();
+
 		//Monitor min switching on HSG pin.	
 		tmu_6->start_holdoff(15,TRUE);
 		tmu_6->stop_holdoff(15,TRUE);

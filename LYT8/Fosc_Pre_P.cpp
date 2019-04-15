@@ -48,7 +48,10 @@ void Fosc_Pre_P(test_function& func)
 		return;
 
 	// Skip trimming if g_Sim_Enable_P set //
-	if (g_Sim_Enable_P == 0)
+	if (g_Sim_Enable_P == 0&& g_GRR_Enable == 0)
+		return;		
+
+	if (g_OPCODE==4250 || g_OPCODE==4300 || g_OPCODE==4500)
 		return;
 
 	//if (g_Fn_Fosc_Pre_P == 0 )  return;
@@ -102,7 +105,7 @@ void Fosc_Pre_P(test_function& func)
 	Fosc_P_TrCode[i]	=	15	;		Fosc_P_SignCode[i] 	=	4	;		 Fosc_P_TrimWt[i] 	=	3.72	;		    i++	;
 
 
-
+//g_Debug = 1;
 	//Bank E0 trim registers
 	/*
 		fOSC_3_P	bit 11
@@ -120,7 +123,7 @@ void Fosc_Pre_P(test_function& func)
 	Setup_Resources_for_I2C_P();
 	PowerUp_I2C_P();
 
-	if(g_Load_previous_RegBits)	//Always set to 1 for PRODUCTION use at 4200 or 4200RTR
+	if(g_Load_previous_RegBits&& g_GRR_Enable == 0)	//Always set to 1 for PRODUCTION use at 4200 or 4200RTR
 	{
 		EEPROM_Write_Enable_P();
 		Program_All_TrimRegister_P();	//Loading previous trimming before performing the test.
@@ -135,13 +138,14 @@ void Fosc_Pre_P(test_function& func)
 
 	Close_relay(K2_D_RB);	//D  to RB_82uH_50ohm to K2_D to DVI-11-0
 	Close_relay(K1_TMU_TB);	//D  to TMU_HIZ1
-		delay(4);
+		//delay(4);
 
-	//Drain setup to connect to Ridder board with RL load and set Drain to 5V and ready for vMeas mode
-		D_dvi->set_current(D_ch, 100e-3, RANGE_300_MA); 
-		delay(1);
-		D_dvi->set_voltage(D_ch, 5.0, VOLT_20_RANGE); // DVI_11_0
-		delay(1);
+	//HL moved Drain settings after connecting TMU
+	////////Drain setup to connect to Ridder board with RL load and set Drain to 5V and ready for vMeas mode
+	//////	D_dvi->set_current(D_ch, 100e-3, RANGE_300_MA); 
+	//////	delay(1);
+	//////	D_dvi->set_voltage(D_ch, 5.0, VOLT_20_RANGE); // DVI_11_0
+	//////	delay(1);
 
 	//Drain signal shows sharper rising edge, hence use START/STOP POSITIVE/POSITIVE
 	tmu_6->close_relay(TMU_HIZ_DUT1);    // Connect TMU HIZ to Drain 
@@ -154,6 +158,12 @@ void Fosc_Pre_P(test_function& func)
 	wait.delay_10_us(100);
 	delay(4);
 
+//Drain setup to connect to Ridder board with RL load and set Drain to 5V and ready for vMeas mode
+		D_dvi->set_current(D_ch, 100e-3, RANGE_300_MA); 
+		delay(1);
+		D_dvi->set_voltage(D_ch, 5.0, VOLT_20_RANGE); // DVI_11_0
+		delay(1);
+
 	tmu_6->arm();				
 	delay(1);					
 	tmeas = tmu_6->read(1e-3);	
@@ -162,8 +172,9 @@ void Fosc_Pre_P(test_function& func)
 
 	//
 	//Datalog
-	PiDatalog(func, A_Fosc_pt_P,		Fosc_pt_P,					14,	POWER_MEGA);	
-	PiDatalog(func, A_Fosc_target_P,	gP_Fosc_TARGET_Trimops,	14,	POWER_MEGA);	
+	PiDatalog(func, A_Fosc_pt_P,		Fosc_pt_P,					14,	POWER_MEGA);
+	if(g_GRR_Enable == 0)
+		PiDatalog(func, A_Fosc_target_P,	gP_Fosc_TARGET_Trimops,	14,	POWER_MEGA);	
 
 
 	//*********************************************************************************************
@@ -252,11 +263,23 @@ void Fosc_Pre_P(test_function& func)
 	}
 	//---------------------------------
 
+	//--------------------------------------------------------------
+	//HL added...need to set D = 0V before opening the relays.
+	D_dvi->set_current(D_ch, 100e-3, RANGE_300_MA); 
+	D_dvi->set_voltage(D_ch, 0.0, VOLT_20_RANGE); // DVI_11_0
+	delay(1);
+	D_dvi->set_current(D_ch, 0.001e-3, RANGE_300_MA); 
+	D_dvi->set_voltage(D_ch, 0.0, VOLT_20_RANGE); // DVI_11_0
+	delay(1);
+	//--------------------------------------------------------------
+
+	Power_Down_I2C_P();
+
 	tmu_6->open_relay(TMU_HIZ_DUT1);    //TMU HIZ1 to Drain 
 	Open_relay(K2_D_RB);	//D  to RB_82uH_50ohm to K2_D to DVI-11-0
 	Open_relay(K1_TMU_TB);	//D  to TMU_HIZ1
 	delay(4);
-	Power_Down_I2C_P();
+	//Power_Down_I2C_P();
 
 
 
@@ -277,7 +300,7 @@ void Fosc_Pre_P(test_function& func)
 
 
 
-
+//g_Debug = 0;
 
 
 

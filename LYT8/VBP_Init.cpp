@@ -47,7 +47,7 @@ void VBP_Init(test_function& func)
 	if (AbortTest)
 		return;
 
-	//if (g_Fn_VBP_Init == 0 )  return;
+//	if (g_Fn_VBP_Init == 0 )  return;
 
 	// Test Time Begin //
 	 if (g_TstTime_Enble_P)
@@ -139,6 +139,22 @@ void VBP_Init(test_function& func)
 
 	PiDatalog(func, A_Vshunt_Init_Pr, Vshunt_Init_Pr, 12, POWER_UNIT);	
 
+	//---------------------------------------------------------------------------------------
+	//HL added...powerdown for easy debugging.
+	//------------------------------------------------------------------------------------
+
+	BPP_dvi->set_voltage(BPP_ch, 1,	VOLT_10_RANGE);	
+	wait.delay_10_us(100);
+	BPP_dvi->set_voltage(BPP_ch, 0,	VOLT_10_RANGE);	
+	wait.delay_10_us(100);
+
+	D_dvi->set_voltage(D_ch, 0, VOLT_10_RANGE);  
+	wait.delay_10_us(100);
+
+	Open_relay(K2_D_RB); // Drain to L1,R27 pullup from dvi-11-0
+	delay(3);
+
+
 	////// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
 	////// 	VShunt_2mA-S									
 	////// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
@@ -162,38 +178,44 @@ void VBP_Init(test_function& func)
 	////D_dvi->set_voltage(D_ch, 0.0, VOLT_50_RANGE);  
 	////wait.delay_10_us(10);
 
+	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
+	// 					Primary: VBPP_Init_P, VBPP_Init_M, VBPP_Init_HYS
+	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
+	VBPP_ramp_down(3, 0.0, 0.05);
+	BPP_dvi->set_current(BPP_ch, 30e-3, RANGE_30_MA);   
+	BPP_dvi->set_meas_mode(BPP_ch, OVI_MEASURE_CURRENT);
+	wait.delay_10_us(30);
+	LowerLimit = (func.dlog->tests[A_VBPP_P_Init].f_min_limit_val[0]); // Get lower search limit //
+	search_VBPP_th(&VBPP_PV_Init, &VBPP_M_Init, &VBPP_P_Init, &VBPP_P_iHVoff, &VBPP_Vshunt_PUseq, LowerLimit);
+	
+	// Save global variables for later //
+	gVBPP_PV_Init	= VBPP_PV_Init;
+	gVBPP_PV_final	= VBPP_PV_Init + 0.05;
+	gVBPP_P_Init	= VBPP_P_Init;
+	gVBPP_P_final	= VBPP_P_Init  + 0.05;
+	gVBPP_M_final	= VBPP_M_Init  - 0.05;
+
+	if (gVBPP_M_Init > 5.0) // Prevent setting BPP too high later in test program. //
+	{
+		gVBPP_M_Init = 0;
+		g_Error_Flag = -201;
+	}
+
+	// Power down VBPP test
+	VBPP_ramp_down(3, 0.0, 0.05);
+
+	D_dvi->set_current(D_ch, 300e-3, RANGE_300_MA);		
+	D_dvi->set_voltage(D_ch, 0.0, VOLT_50_RANGE); // DVI_11_0	
+	wait.delay_10_us(5);
+
+	PiDatalog(func, A_VBPP_PV_Init, VBPP_PV_Init, 12, POWER_UNIT);	
+	PiDatalog(func, A_VBPP_M_Init, VBPP_M_Init, 12,	POWER_UNIT);	
+	PiDatalog(func, A_VBPP_P_Init, VBPP_P_Init, 12,	POWER_UNIT);	
+
+
 //if(1)
 //{
-//	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
-//	// 					Primary: VBPP_Init_P, VBPP_Init_M, VBPP_Init_HYS
-//	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
-//	VBPP_ramp_down(3, 0.0, 0.05);
-//	BPP_dvi->set_current(BPP_ch, 30e-3, RANGE_30_MA);   
-//	BPP_dvi->set_meas_mode(BPP_ch, OVI_MEASURE_CURRENT);
-//	wait.delay_10_us(30);
-//	LowerLimit = (func.dlog->tests[A_VBPP_P_Init].f_min_limit_val[0]); // Get lower search limit //
-//	search_VBPP_th(&VBPP_PV_Init, &VBPP_M_Init, &VBPP_P_Init, &VBPP_P_iHVoff, &VBPP_Vshunt_PUseq, LowerLimit);
-//	
-//	// Save global variables for later //
-//	gVBPP_PV_Init = VBPP_PV_Init;
-//	gVBPP_PV_final = VBPP_PV_Init + 0.05;
-//	gVBPP_P_Init = VBPP_P_Init;
-//	gVBPP_P_final = VBPP_P_Init + 0.05;
-//	gVBPP_M_Init = VBPP_M_Init;
-//	if (gVBPP_M_Init > 5.3) // Prevent setting BPP too high later in test program. //
-//	{
-//		gVBPP_M_Init = 0;
-//		g_Error_Flag = -201;
-//	}
-//
-//	// Power down VBPP test
-//	VBPP_ramp_down(3, 0.0, 0.05);
-//
-//	D_dvi->set_current(D_ch, 300e-3, RANGE_300_MA);		
-//	D_dvi->set_voltage(D_ch, 0.0, VOLT_50_RANGE); // DVI_11_0	
-//	wait.delay_10_us(5);
-//	//Open_relay(K3);			   
-//
+
 //	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
 //	// 					Secondary: VBPS_Init_P, VBPS_Init_M, VBPS_Init_HYS				  
 //	// VBPS_Init_P:																		  
@@ -611,9 +633,6 @@ void VBP_Init(test_function& func)
 //
 //	//Datalog
 //	PiDatalog(func, A_Vshunt_Init_Se, Vshunt_Init_Se, 12, POWER_UNIT);
-//	PiDatalog(func, A_VBPP_PV_Init, VBPP_PV_Init, 12, POWER_UNIT);	
-//	PiDatalog(func, A_VBPP_M_Init, VBPP_M_Init, 12,	POWER_UNIT);	
-//	PiDatalog(func, A_VBPP_P_Init, VBPP_P_Init, 12,	POWER_UNIT);	
 //	PiDatalog(func, A_VBPP_P_S_Init_S, VBPP_P_S_Init_S, 12,	POWER_UNIT);
 //	PiDatalog(func, A_VBPP_P_iHVoff, VBPP_P_iHVoff, 12, POWER_UNIT);	
 //	PiDatalog(func, A_VBPP_HYS_Init, VBPP_HYS_Init, 12,	POWER_UNIT);

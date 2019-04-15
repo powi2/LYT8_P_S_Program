@@ -60,7 +60,7 @@ void EEprom_DevID(test_function& func)
 		pE6_data=0,
 		pE8_data=0;
 
-	g_Burn_Enable_S = 0;
+	
 
 	// Increment function number //
 	gFuncNum++;	
@@ -212,6 +212,7 @@ void EEprom_DevID(test_function& func)
 		{
 			g_Erase_Enable_P = 1;
 			g_Burn_Enable_P	 = 1;
+			g_Sim_Enable_P	 = 1;
 		}
 		else
 		{
@@ -228,20 +229,34 @@ void EEprom_DevID(test_function& func)
 			}
 			else
 			{
-				g_Sim_Enable_P   = 0;
+				//HL: manually forcing Simulation for primary
+				if(g_Sim_Enable_P == 0)
+				{
+					g_Sim_Enable_P   = 0;
+				}
 				g_Burn_Enable_P	 = 0;
 				Pri_Untrimmed	 = 0;
 			}
 
 		}
 
-		g_Sim_Enable_P = 1;	//for DEBUG ONLY
+		//HL-Check First function.
+		//g_Sim_Enable_P = 1;	//for DEBUG ONLY
 
 		PiDatalog(func, A_Pri_UnTrimmed, Pri_Untrimmed, 20, POWER_UNIT);
 		//-------------------------------------------------------------
 		// Read EEprom Primary.  Detect & Decide Erase/Trim flag *END
 		//-----------------------------------------------------------------------------------------------------------------
 
+		if(g_GRR_Enable || g_OPCODE==4250 || g_OPCODE==4300 || g_OPCODE==4500)
+		{
+			g_Erase_Enable_P = 0;
+			if(g_Sim_Enable_P==0)
+			{
+				g_Sim_Enable_P	 = 0;
+			}
+			g_Burn_Enable_P	 = 0;
+		}
 
 
 		//-----------------------------------------------------------------------------------------------------------------
@@ -582,6 +597,14 @@ void EEprom_DevID(test_function& func)
 
 	}
 	
+
+	
+		if(g_GRR_Enable|| g_OPCODE==4250 || g_OPCODE==4300 || g_OPCODE==4500)
+		{
+			g_Erase_Enable_S = 0;
+			g_Sim_Enable_S	 = 0;
+			g_Burn_Enable_S	 = 0;
+		}
 
 	
 	//-------------------------------------

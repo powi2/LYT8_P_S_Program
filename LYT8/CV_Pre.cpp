@@ -50,6 +50,10 @@ void CV_Pre(test_function& func)
 	if (g_Burn_Enable_S == 0 && g_GRR_Enable == 0)
 		return;
 
+
+	if (g_OPCODE==4250 || g_OPCODE==4300 || g_OPCODE==4500)
+		return;
+
 	//if (g_Fn_CV_Pre == 0 )  return;
 
 	// Test Time Begin //
@@ -310,45 +314,42 @@ Pulse pulse;
 	// Find which trim code will make CV_Pre closest to target //
 
 
-if (g_Burn_Enable_S && g_OPCODE==4200)
-{
-	
-	
-
-	smallest_diff_val = 999999.9;
-	smallest_diff_idx = 0;
-	for (i=0; i<16; i++)
+	if (g_Burn_Enable_S)
 	{
-		temp_1 = (CV_pt_S * (1 + (CV_S_TrimWt[i]/100)) -  CV_Target_S);
-		if (temp_1 < 0)	// Get rid of negatives //
-			temp_1 *= -1.0;
-		if (temp_1 < smallest_diff_val)
+		smallest_diff_val = 999999.9;
+		smallest_diff_idx = 0;
+		for (i=0; i<16; i++)
 		{
-			smallest_diff_val = temp_1;
-			smallest_diff_idx = i;
+			temp_1 = (CV_pt_S * (1 + (CV_S_TrimWt[i]/100)) -  CV_Target_S);
+			if (temp_1 < 0)	// Get rid of negatives //
+				temp_1 *= -1.0;
+			if (temp_1 < smallest_diff_val)
+			{
+				smallest_diff_val = temp_1;
+				smallest_diff_idx = i;
+			}
 		}
+
+		//Manual Forcing
+		//smallest_diff_idx = 0;
+
+		CV_TrCode_S = CV_S_code[smallest_diff_idx];
+		CV_ExpChg   = CV_S_TrimWt[smallest_diff_idx];
+		TrimCode_To_TrimBit(CV_TrCode_S, "CV_S", 's');
+
+		if(CV_TrCode_S >=0 && CV_TrCode_S <=7)
+		{
+			CV_BitCode_S = -1*CV_TrCode_S;
+		}
+		else
+		{
+			CV_BitCode_S = CV_TrCode_S - 7;
+		}
+
+		EEpr_Bank_S[E4] = EEpr_Bank_S[E4] | (CV_TrCode_S<<(38-startbit));
+
+		Program_Single_TrimRegister(g_EEP_W_E4);
 	}
-
-	//Manual Forcing
-	//smallest_diff_idx = 0;
-
-	CV_TrCode_S = CV_S_code[smallest_diff_idx];
-	CV_ExpChg   = CV_S_TrimWt[smallest_diff_idx];
-	TrimCode_To_TrimBit(CV_TrCode_S, "CV_S", 's');
-
-	if(CV_TrCode_S >=0 && CV_TrCode_S <=7)
-	{
-		CV_BitCode_S = -1*CV_TrCode_S;
-	}
-	else
-	{
-		CV_BitCode_S = CV_TrCode_S - 7;
-	}
-
-	EEpr_Bank_S[E4] = EEpr_Bank_S[E4] | (CV_TrCode_S<<(38-startbit));
-
-	Program_Single_TrimRegister(g_EEP_W_E4);
-}
 	if(input_direct)
 	{
 		wait.delay_10_us(100);	

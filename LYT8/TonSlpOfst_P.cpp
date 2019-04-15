@@ -99,20 +99,30 @@ void TonSlpOfst_P(test_function& func)
 
 	DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);	//Disable DSM I2C
 
+	//HL-Question: Should TS/UV pins be powered down before opening relays?
+	//This can be hot-switching the DSM relays on the primary sides.
+	//Disconnect DSM from Primary after releasing VPIN or TS pins
+	TS_ovi3->set_voltage(TSovi3_ch, 0.0, VOLT_10_RANGE); // OVI_3_0
+	//UV = 0V via pullup resistor. Ready for I2C.
+	UV_dvi->set_voltage(UV_ch, 0.0, VOLT_10_RANGE); // DVI_21_1
+	wait.delay_10_us(10);
+	TS_ovi3->set_current(TSovi3_ch, 0.01e-3, RANGE_30_MA);
+	UV_dvi->set_current(UV_ch, 0.01e-3, RANGE_300_MA);
+	wait.delay_10_us(10);
 
 	//--------------------------------------------------------------------------------------------
 	//Setup for TS to run 100kHz
-		//Disconnect DSM from Primary after releasing VPIN or TS pins
-		Open_relay(K1_DSM_TB);	
-		Open_relay(K3_DSM_TB);	
-		delay(1);
+	//Disconnect DSM from Primary after releasing VPIN or TS pins
+	Open_relay(K1_DSM_TB);	
+	Open_relay(K3_DSM_TB);	
+	delay(3);
 
 	TS_ovi3->set_voltage(TSovi3_ch, 0.0, VOLT_10_RANGE); // OVI_3_0
 	wait.delay_10_us(10);
 
 	Close_relay(K2_TS_TB); //TS disconnect from OVI_3_0_TS_RB
 	Close_relay(K3_TS_IB); //DDD7_1 to Comparator LT1719 to COMP_OUT to TS
-	delay(4);
+	delay(3);
 
 	TS_ovi->set_voltage(TSovi1_ch, 1.0, VOLT_1_RANGE); // OVI_1_5 for Comparator LT1719 Vref input
 	wait.delay_10_us(10);
@@ -125,7 +135,8 @@ void TonSlpOfst_P(test_function& func)
 		D_dvi->set_voltage(D_ch, 5.0, VOLT_20_RANGE); // DVI_11_0
 		delay(1);
 	
-	BPP_zigzag(5.5, 4.3, 5.3);
+	BPP_zigzag(gVBPP_PV_final, gVBPP_M_final, gVBPP_P_final, 2.0e-3);
+	//BPP_zigzag(5.5, 4.3, 5.35, 2.0e-3);
 
 		Load_30Khz_Pulses_TS();
 		delay(1);
@@ -192,12 +203,17 @@ void TonSlpOfst_P(test_function& func)
 	//------- Offset Stop ---------------------------
 	//---------------------------------------------------------------------------------
 
+	//HL added.  Power down Drain first before disconnecting TMU
+	D_dvi->set_current(D_ch, 100e-3, RANGE_300_MA); 
+	D_dvi->set_voltage(D_ch, 0.0, VOLT_20_RANGE); // DVI_11_0
+	delay(1);
+	D_dvi->set_current(D_ch, 0.1e-3, RANGE_300_MA); 
+	D_dvi->set_voltage(D_ch, 0.0, VOLT_20_RANGE); // DVI_11_0
 	delay(4);
 	Stop_100Khz_Pulses_TS();
 	Power_Down_I2C_P();
 	Open_relay(K2_D_RB);
 	Open_relay(K2_TS_TB); //TS to OVI_3_0_TS_RB								Connect
 	Open_relay(K3_TS_IB); //DDD7_1 to Comparator LT1719 to COMP_OUT to TS	Disconnect
-
 
 }

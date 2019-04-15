@@ -105,13 +105,23 @@ void ILIM_P(test_function& func)
 
 	DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);	//Disable DSM I2C
 
+	
+	//HL-Question: Should TS/UV pins be powered down before opening relays?
+	//This can be hot-switching the DSM relays on the primary sides.
+	//Disconnect DSM from Primary after releasing VPIN or TS pins
+	TS_ovi3->set_voltage(TSovi3_ch, 0.0, VOLT_10_RANGE); // OVI_3_0
+	//UV = 0V via pullup resistor. Ready for I2C.
+	UV_dvi->set_voltage(UV_ch, 0.0, VOLT_10_RANGE); // DVI_21_1
+	wait.delay_10_us(10);
+	TS_ovi3->set_current(TSovi3_ch, 0.01e-3, RANGE_30_MA);
+	UV_dvi->set_current(UV_ch, 0.01e-3, RANGE_300_MA);
+	wait.delay_10_us(10);
 	//--------------------------------------------------------------------------------------------
 	//Setup for TS to run 100kHz
-		//Disconnect DSM from Primary after releasing VPIN or TS pins
-		Open_relay(K1_DSM_TB);	
-		Open_relay(K3_DSM_TB);	
-		delay(1);
-
+	//Disconnect DSM from Primary after releasing VPIN or TS pins
+	Open_relay(K1_DSM_TB);	
+	Open_relay(K3_DSM_TB);	
+	delay(3);
 
 	TS_ovi3->set_voltage(TSovi3_ch, 0.0, VOLT_10_RANGE); // OVI_3_0
 	wait.delay_10_us(10);
@@ -144,16 +154,19 @@ void ILIM_P(test_function& func)
 		PV3_Connect_Drain_and_DriveON(gVind_RM); // Drive Voltage
 	}
 
-	BPP_zigzag(5.5, 4.3, 5.3);
-
-		Load_100Khz_Pulses_TS();
-		wait.delay_10_us(50);
+	Load_100Khz_Pulses_TS();
+	wait.delay_10_us(50);
+	BPP_zigzag(gVBPP_PV_final, gVBPP_M_final, gVBPP_P_final, 2e-3);
+	//BPP_zigzag(5.5, 4.3, 5.3, 2e-3);
+	BPP_dvi->set_current(BPP_ch, 5.0e-3, RANGE_300_MA);
+		
+	Run_100Khz_Pulses_TS();	//DE want 50ns high duty cycle ideally.
+	//wait.delay_10_us(50);
 	Gage_Start_Capture(0);
-		Run_100Khz_Pulses_TS();	//DE want 50ns high duty cycle ideally.
-		wait.delay_10_us(50);
+		
 	Gage_Wait_For_Capture_Complete();
 	pv3_4->drive_off();	
-		Stop_100Khz_Pulses_TS();
+	Stop_100Khz_Pulses_TS();
 
 DEBUG=0;
 g_Debug=0;

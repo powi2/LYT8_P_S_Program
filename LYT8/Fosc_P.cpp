@@ -111,14 +111,24 @@ void Fosc_P(test_function& func)
 	PiDatalog(func, A_Fosc_Tgt_P,	gP_Fosc_TARGET_Trimops,	14,	POWER_MEGA);	
 
 
+
+	//--------------------------------------------------------------
+	//HL added...need to set D = 0V before opening the relays.
+	D_dvi->set_current(D_ch, 100e-3, RANGE_300_MA); 
+	D_dvi->set_voltage(D_ch, 0.0, VOLT_20_RANGE); // DVI_11_0
+	delay(1);
+	D_dvi->set_current(D_ch, 0.001e-3, RANGE_300_MA); 
+	D_dvi->set_voltage(D_ch, 0.0, VOLT_20_RANGE); // DVI_11_0
+	delay(1);
+	//--------------------------------------------------------------
+
+	Power_Down_I2C_P();
+
 	tmu_6->open_relay(TMU_HIZ_DUT1);    //TMU HIZ1 to Drain 
 	Open_relay(K2_D_RB);	//D  to RB_82uH_50ohm to K2_D to DVI-11-0
 	Open_relay(K1_TMU_TB);	//D  to TMU_HIZ1
 	delay(4);
-	Power_Down_I2C_P();
-
-
-
+	
 	// Test Time End //
 	if (g_TstTime_Enble_P)
 	{

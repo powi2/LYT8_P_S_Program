@@ -48,7 +48,12 @@ void ILIM_Pre_P(test_function& func)
 		return;
 
 	// Skip trimming if g_Sim_Enable_P set //
-	if (g_Sim_Enable_P == 0)	return;
+	if (g_Sim_Enable_P == 0&& g_GRR_Enable == 0)
+		return;
+
+	if (g_OPCODE==4250 || g_OPCODE==4300 || g_OPCODE==4500)
+		return;
+
 
 	//if (g_Fn_ILIM_Pre == 0 )  return;
 
@@ -151,7 +156,8 @@ void ILIM_Pre_P(test_function& func)
 	PV3_Check_Charge(RANGE_100_V);
 	pv3_4->charge_off();
 
-	g_SAMPLE_SIZE = GAGE_POST_32K;
+	//g_SAMPLE_SIZE = GAGE_POST_32K;
+	g_SAMPLE_SIZE = GAGE_POST_16K;
 	BINNO_Gage_ChanAB_setup(0.15);	// Only do it if g_SAMPLE_SIZE is diff from previous. (Each input/trig control function takes 4ms)
 	//vrng_b = 0;
 	//ChB_vrng = 0;
@@ -159,7 +165,7 @@ void ILIM_Pre_P(test_function& func)
 	Setup_Resources_for_I2C_P();
 	PowerUp_I2C_P();
 
-	if(g_Load_previous_RegBits)	//Always set to 1 for PRODUCTION use at 4200 or 4200RTR
+	if(g_Load_previous_RegBits&& g_GRR_Enable == 0)	//Always set to 1 for PRODUCTION use at 4200 or 4200RTR
 	{
 		EEPROM_Write_Enable_P();
 		Program_All_TrimRegister_P();	//Loading previous trimming before performing the test.
@@ -172,13 +178,23 @@ void ILIM_Pre_P(test_function& func)
 
 	DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);	//Disable DSM I2C
 
+	//HL-Question: Should TS/UV pins be powered down before opening relays?
+	//This can be hot-switching the DSM relays on the primary sides.
+	//Disconnect DSM from Primary after releasing VPIN or TS pins
+	TS_ovi3->set_voltage(TSovi3_ch, 0.0, VOLT_10_RANGE); // OVI_3_0
+	//UV = 0V via pullup resistor. Ready for I2C.
+	UV_dvi->set_voltage(UV_ch, 0.0, VOLT_10_RANGE); // DVI_21_1
+	wait.delay_10_us(10);
+	TS_ovi3->set_current(TSovi3_ch, 0.01e-3, RANGE_30_MA);
+	UV_dvi->set_current(UV_ch, 0.01e-3, RANGE_300_MA);
+	wait.delay_10_us(10);
+
 	//--------------------------------------------------------------------------------------------
 	//Setup for TS to run 100kHz
-		//Disconnect DSM from Primary after releasing VPIN or TS pins
-		Open_relay(K1_DSM_TB);	
-		Open_relay(K3_DSM_TB);	
-		delay(1);
-
+	//Disconnect DSM from Primary after releasing VPIN or TS pins
+	Open_relay(K1_DSM_TB);	
+	Open_relay(K3_DSM_TB);	
+	delay(1);
 
 	TS_ovi3->set_voltage(TSovi3_ch, 0.0, VOLT_10_RANGE); // OVI_3_0
 	wait.delay_10_us(10);
@@ -187,6 +203,8 @@ void ILIM_Pre_P(test_function& func)
 	Close_relay(K3_TS_IB); //DDD7_1 to Comparator LT1719 to COMP_OUT to TS
 	delay(4);
 
+	//HL added TS current here.
+	TS_ovi3->set_current(TSovi3_ch, 30e-3, RANGE_30_MA);
 	TS_ovi->set_voltage(TSovi1_ch, 1.0, VOLT_1_RANGE); // OVI_1_5 for Comparator LT1719 Vref input
 	wait.delay_10_us(10);
 
@@ -195,32 +213,39 @@ void ILIM_Pre_P(test_function& func)
 		//Drain setup to connect to Ridder board with RL load and set Drain to 5V and ready for vMeas mode
 		Close_relay(K2_D_RB);
 		delay(4);
-			D_dvi->set_current(D_ch, 100e-3, RANGE_300_MA); 
-			delay(1);
-			D_dvi->set_voltage(D_ch, 45.0, VOLT_50_RANGE); // DVI_11_0
-			delay(1);
+		D_dvi->set_current(D_ch, 100e-3, RANGE_300_MA); 
+		delay(1);
+		D_dvi->set_voltage(D_ch, 45.0, VOLT_50_RANGE); // DVI_11_0
+		delay(1);
 	}
 	else	//Observe from Inductor pullup
 	{
 		//Connect Drain to IM with PV3
 		Close_relay(K3_D_TB);	// disconnect	Drain from RL pullup 
 		Close_relay(K9_D_TB);	// Connect		Drain to CT- to Pearson to CT+ & CT2+
-				//Close_relay(K1_D_RB);	// Connect		Iped to CT2+ to CT2-
+		//Close_relay(K1_D_RB);	// Connect		Iped to CT2+ to CT2-
 		Close_relay(K1_IM_TB);	// Connect		Vind to CT2+ to CT2-
 		delay(5);
 		PV3_Connect_Drain_and_DriveON(gVind_RM); // Drive Voltage
 	}
 
-	BPP_zigzag(5.5, 4.3, 5.3);
-
-		Load_100Khz_Pulses_TS();
-		wait.delay_10_us(50);
+	//Observation: TS pin droops below ground and then recover.  This causes problem for ILIM.  
+	//             The solution is to move the clocking on TS first before doing the ZigZag on BPP.
+	Load_100Khz_Pulses_TS();
+	//Run_100Khz_Pulses_TS();  //DE want 50ns high duty cycle ideally.
+	wait.delay_10_us(5);
+//pulse.do_pulse();
+	BPP_zigzag(gVBPP_PV_final, gVBPP_M_final, gVBPP_P_final, 2e-3);
+	//BPP_zigzag(5.5, 4.3, 5.3, 2e-3);
+	BPP_dvi->set_current(BPP_ch, 5.0e-3, RANGE_300_MA);
+	
+	Run_100Khz_Pulses_TS();  //DE want 50ns high duty cycle ideally.
+	//wait.delay_10_us(5);
+	
 	Gage_Start_Capture(0);
-		Run_100Khz_Pulses_TS();	//DE want 50ns high duty cycle ideally.
-		wait.delay_10_us(50);
 	Gage_Wait_For_Capture_Complete();
 	pv3_4->drive_off();	
-		Stop_100Khz_Pulses_TS();
+	Stop_100Khz_Pulses_TS();
 
 DEBUG=0;
 g_Debug=0;
@@ -233,7 +258,8 @@ g_Debug=0;
 	PiDatalog(func, A_ILIM_pt_P,		ILIM_pt_P,					ours->fail_bin, POWER_MILLI);
 	PiDatalog(func, A_ILIM_pt_didt_P,	ILIM_pt_didt_P,				ours->fail_bin, POWER_MILLI);
 	PiDatalog(func, A_ILIM_pt_ton_P,	ILIM_pt_ton_P,				ours->fail_bin, POWER_MICRO);
-	PiDatalog(func, A_ILIM_target_P,	gP_ILIM_TARGET_Trimops,	ours->fail_bin, POWER_MILLI);
+	if(g_GRR_Enable == 0)
+		PiDatalog(func, A_ILIM_target_P,	gP_ILIM_TARGET_Trimops,	ours->fail_bin, POWER_MILLI);
 	
 	//*********************************************************************************************
 	//*** ILIM_P Simulation  Start ****************************************************************
@@ -257,7 +283,7 @@ g_Debug=0;
 			//smallest_diff_idx	= 5;	//expect sim result to be the same if 0.  
 			//EEpr_Bank_P[E2]		= 0;	//
 		//Debug only stop for Manual forcing
-
+//smallest_diff_idx = 0;
 		ILIM_TrCode_P   = smallest_diff_idx;
 		ILIM_TrCode_P   = ILIM_P_TrCode[smallest_diff_idx];
 		ILIM_BitCode_P  = ILIM_P_SignCode[smallest_diff_idx];
@@ -278,66 +304,120 @@ g_Debug=0;
 		TrCode_shift_n_bits = gP_Reg_Start_Bit_ILIM - g_E2_start_bit;
 		EEpr_Bank_P[E2] = EEpr_Bank_P[E2] | ( ILIM_TrCode_P << TrCode_shift_n_bits );
 
+		//---------------------------------------------------------------------------------------------
+		//HL- Not sure why unable to measure sim Ilim without powering down and up again.
 		//Program in the trimcode
-			Stop_100Khz_Pulses_TS();
-			TS_ovi->set_voltage(TSovi1_ch, 0.0, VOLT_1_RANGE); // OVI_1_5 for Comparator LT1719 Vref input
-			wait.delay_10_us(10);
-			Open_relay(K2_TS_TB); //TS disconnect from OVI_3_0_TS_RB
-			Open_relay(K3_TS_IB); //DDD7_1 to Comparator LT1719 to COMP_OUT to TS
-			//Connect DSM from Primary after releasing VPIN or TS pins
-			Close_relay(K1_DSM_TB);	
-			Close_relay(K3_DSM_TB);	
-			delay(4);
-			TS_ovi3->set_voltage(TSovi3_ch, 3.3, VOLT_10_RANGE); // OVI_3_0
-			wait.delay_10_us(10);
-		Program_Single_TrimRegister_P(g_EEP_W_E2);
+		//Again, the simulation section will be turned off in production mode.  Therefore, powering down 
+		//and up again won't affect test time.
+		//--------------------------------------------------------------------------------------------
+		Stop_100Khz_Pulses_TS();
+		TS_ovi->set_voltage(TSovi1_ch, 0.0, VOLT_1_RANGE); // OVI_1_5 for Comparator LT1719 Vref input
+		wait.delay_10_us(10);
+		Open_relay(K2_TS_TB); //TS disconnect from OVI_3_0_TS_RB
+		Open_relay(K3_TS_IB); //DDD7_1 to Comparator LT1719 to COMP_OUT to TS
+		delay(3);
 
 
+		pv3_4->set_current(0.1e-9);						
+		pv3_4->set_voltage(0, RANGE_100_V);
+		wait.delay_10_us(10);
+		pv3_4->open_switch(PV3_LOW_FORCE_2);
+		pv3_4->open_switch(PV3_LOW_SENSE_2);
+		pv3_4->open_switch(PV3_HIGH_FORCE_1);
+		pv3_4->open_switch(PV3_HIGH_SENSE_1);
+		delay(1);
+		pv3_4->charge_on();	
 
-			Stop_100Khz_Pulses_TS();
-			TS_ovi->set_voltage(TSovi1_ch, 0.0, VOLT_1_RANGE); // OVI_1_5 for Comparator LT1719 Vref input
-			wait.delay_10_us(10);
-			Open_relay(K2_TS_TB); //TS disconnect from OVI_3_0_TS_RB
-			Open_relay(K3_TS_IB); //DDD7_1 to Comparator LT1719 to COMP_OUT to TS
-			//Connect DSM from Primary after releasing VPIN or TS pins
-			Close_relay(K1_DSM_TB);	
-			Close_relay(K3_DSM_TB);	
-			delay(4);
-			TS_ovi3->set_voltage(TSovi3_ch, 3.3, VOLT_10_RANGE); // OVI_3_0
-			wait.delay_10_us(10);
+		Power_Down_I2C_P();
+		Open_relay(K2_D_RB);				//D			to RB_82uH_50ohm to K2_D to DVI-11-0		Disconnect
+		Open_relay(K2_TS_TB);				//TS		to OVI_3_0_TS_RB							Connect
+		Open_relay(K3_TS_IB);				//DDD7_1	to Comparator LT1719 to COMP_OUT to TS		Disconnect
 
-			Program_Single_TrimRegister_P(g_EEP_W_E2);
-			wait.delay_10_us(1);
+		//disconnect Drain from IM
+		Open_relay(K3_D_TB);	// Connect			Drain to RL pullup 
+		Open_relay(K9_D_TB);	// disConnect		Drain to CT2-
+		Open_relay(K1_IM_TB);	// disConnect		Vind to CT2+ to CT2-
+		delay(3);
+		
+		PV3_CHARGE_ON(RANGE_100_V);	//Prepare PV3 before power-up
+		PV3_Check_Charge(RANGE_100_V);
+		pv3_4->charge_off();
 
-			TS_ovi3->set_voltage(TSovi3_ch, 0.0, VOLT_10_RANGE); // OVI_3_0
-			wait.delay_10_us(10);
-			Close_relay(K2_TS_TB); //TS disconnect from OVI_3_0_TS_RB
-			Close_relay(K3_TS_IB); //DDD7_1 to Comparator LT1719 to COMP_OUT to TS
-			//Disconnect DSM from Primary after releasing VPIN or TS pins
-			Open_relay(K1_DSM_TB);	
-			Open_relay(K3_DSM_TB);	
-			delay(4);
+		Setup_Resources_for_I2C_P();
+		PowerUp_I2C_P();
 
+		EEPROM_Write_Enable_P();
+		Program_All_TrimRegister_P();	//Loading previous trimming before performing the test.
+		
+		DSM_I2C_Write('b', g_TM_CTRL, 0x06);		//0x40, 0x06 (enable analog mode + core_en)
+		DSM_I2C_Write('w', g_ANA_CTRL_1, 0x2804);	//0x46, 0x2804
+		DSM_I2C_Write('w', 0x44, 0x0402);			//choose min ON time and allow flux link thru TSPIN + disable receiver output
+		DSM_I2C_Write('b', 0x4C, 0x01);				//release TS pin
 
-			PV3_Connect_Drain_and_DriveON(gVind_RM); // Drive Voltage
-			delay(15);
-			TS_ovi->set_voltage(TSovi1_ch, 1.0, VOLT_1_RANGE); // OVI_1_5 for Comparator LT1719 Vref input
-			wait.delay_10_us(10);
+		DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);	//Disable DSM I2C
 
-				Load_100Khz_Pulses_TS();
-				wait.delay_10_us(50);
-			Gage_Start_Capture(0);
-				Run_100Khz_Pulses_TS();	//DE want 50ns high duty cycle ideally.
-				wait.delay_10_us(50);
-			Gage_Wait_For_Capture_Complete();
-			pv3_4->drive_off();	
-				Stop_100Khz_Pulses_TS();
-			
-			TS_ovi3->set_voltage(TSovi3_ch, 0.0, VOLT_10_RANGE); // OVI_3_0
-			wait.delay_10_us(10);
+		//HL-Question: Should TS/UV pins be powered down before opening relays?
+		//This can be hot-switching the DSM relays on the primary sides.
+		//Disconnect DSM from Primary after releasing VPIN or TS pins
+		TS_ovi3->set_voltage(TSovi3_ch, 0.0, VOLT_10_RANGE); // OVI_3_0
+		//UV = 0V via pullup resistor. Ready for I2C.
+		UV_dvi->set_voltage(UV_ch, 0.0, VOLT_10_RANGE); // DVI_21_1
+		wait.delay_10_us(10);
+		TS_ovi3->set_current(TSovi3_ch, 0.01e-3, RANGE_30_MA);
+		UV_dvi->set_current(UV_ch, 0.01e-3, RANGE_300_MA);
+		wait.delay_10_us(10);
 
+		//--------------------------------------------------------------------------------------------
+		//Setup for TS to run 100kHz
+		//Disconnect DSM from Primary after releasing VPIN or TS pins
+		Open_relay(K1_DSM_TB);	
+		Open_relay(K3_DSM_TB);	
+		delay(3);
+
+		TS_ovi3->set_voltage(TSovi3_ch, 0.0, VOLT_10_RANGE); // OVI_3_0
+		wait.delay_10_us(10);
+
+		Close_relay(K2_TS_TB); //TS disconnect from OVI_3_0_TS_RB
+		Close_relay(K3_TS_IB); //DDD7_1 to Comparator LT1719 to COMP_OUT to TS
+		delay(3);
+
+		//HL added TS current here.
+		TS_ovi3->set_current(TSovi3_ch, 30e-3, RANGE_30_MA);
+		TS_ovi->set_voltage(TSovi1_ch, 1.0, VOLT_1_RANGE); // OVI_1_5 for Comparator LT1719 Vref input
+		wait.delay_10_us(10);
+
+	
+		//Connect Drain to IM with PV3
+		Close_relay(K3_D_TB);	// disconnect	Drain from RL pullup 
+		Close_relay(K9_D_TB);	// Connect		Drain to CT- to Pearson to CT+ & CT2+
+		Close_relay(K1_IM_TB);	// Connect		Vind to CT2+ to CT2-
+		delay(3);
+		PV3_Connect_Drain_and_DriveON(gVind_RM); // Drive Voltage
+	
+
+		//Observation: TS pin droops below ground and then recover.  This causes problem for ILIM.  
+		//             The solution is to move the clocking on TS first before doing the ZigZag on BPP.
+		Load_100Khz_Pulses_TS();
+		//Run_100Khz_Pulses_TS();  //DE want 50ns high duty cycle ideally.
+		wait.delay_10_us(20);
+
+		BPP_zigzag(gVBPP_PV_final, gVBPP_M_final, gVBPP_P_final, 2e-3);
+		//BPP_zigzag(5.5, 4.3, 5.3, 2e-3);
+		BPP_dvi->set_current(BPP_ch, 5.0e-3, RANGE_300_MA);
+		Run_100Khz_Pulses_TS(); 
+
+		Gage_Start_Capture(0);
+		Gage_Wait_For_Capture_Complete();
+		pv3_4->drive_off();	
+		Stop_100Khz_Pulses_TS();
+
+	
+DEBUG=0;
+g_Debug=0;
+g_WAVE_NAME =  "ILIM_Sim";
 			Gage_Find_Ilim(&ILIM_Sim_P, &ILIM_Sim_didt_P, &ILIM_Sim_ton_P, &Dummy_rdson_peak, &Dummy_rdson_spec);
-
+DEBUG=0;
+g_Debug=0;
 			ILIM_Sim_Chg_P = (ILIM_Sim_P/ILIM_pt_P -1.0)*100.0;
 
 			PiDatalog(func, A_ILIM_Sim_P,		ILIM_Sim_P,			ours->fail_bin, POWER_UNIT);
@@ -416,24 +496,32 @@ g_Debug=0;
 			Close_relay(K2_TS_TB); //TS disconnect from OVI_3_0_TS_RB
 			Close_relay(K3_TS_IB); //DDD7_1 to Comparator LT1719 to COMP_OUT to TS
 			//Disconnect DSM from Primary after releasing VPIN or TS pins
+			//HL added setting TS & UV ovi to 0V.
+			TS_ovi3->set_voltage(TSovi3_ch, 0.0, VOLT_10_RANGE); // OVI_3_0
+			UV_dvi->set_voltage(UV_ch, 0.0, VOLT_10_RANGE); // DVI_21_1
+			wait.delay_10_us(10);
+			TS_ovi3->set_current(TSovi3_ch, 0.01e-3, RANGE_30_MA);
+			UV_dvi->set_current(UV_ch, 0.01e-3, RANGE_300_MA);
+			wait.delay_10_us(10);
 			Open_relay(K1_DSM_TB);	
 			Open_relay(K3_DSM_TB);	
 			delay(4);
-
 
 			PV3_Connect_Drain_and_DriveON(gVind_RM); // Drive Voltage
 			delay(15);
 			TS_ovi->set_voltage(TSovi1_ch, 1.0, VOLT_1_RANGE); // OVI_1_5 for Comparator LT1719 Vref input
 			wait.delay_10_us(10);
 
-				Load_100Khz_Pulses_TS();
-				wait.delay_10_us(50);
+			Load_100Khz_Pulses_TS();
+			wait.delay_10_us(50);
+			Run_100Khz_Pulses_TS();	//DE want 50ns high duty cycle ideally.
+			wait.delay_10_us(20);
 			Gage_Start_Capture(0);
-				Run_100Khz_Pulses_TS();	//DE want 50ns high duty cycle ideally.
-				wait.delay_10_us(50);
+				//Run_100Khz_Pulses_TS();	//DE want 50ns high duty cycle ideally.
+				//wait.delay_10_us(50);
 			Gage_Wait_For_Capture_Complete();
 			pv3_4->drive_off();	
-				Stop_100Khz_Pulses_TS();
+			Stop_100Khz_Pulses_TS();
 			
 			TS_ovi3->set_voltage(TSovi3_ch, 0.0, VOLT_10_RANGE); // OVI_3_0
 			wait.delay_10_us(10);
@@ -465,7 +553,7 @@ g_Debug=0;
 	Open_relay(K9_D_TB);	// disConnect		Drain to CT2-
 	//Open_relay(K1_D_RB);	// disConnect		Iped to CT2+ to CT2-
 	Open_relay(K1_IM_TB);	// disConnect		Vind to CT2+ to CT2-
-	delay(1);
+	delay(3);
 
 
 

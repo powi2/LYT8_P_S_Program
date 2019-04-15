@@ -101,7 +101,20 @@ void IOV_P(test_function& func)
 
 		//Release Vpin and expect Vpin drop to ~2.3V after command issued.
 		DSM_I2C_Write('b', g_PINSDA_CTRL, 0x01);	//0x4E, 0x01 (release Vpin)
-		//DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);	//Disable DSM I2C
+		DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);	//Disable DSM I2C
+
+		
+		//HL-Question: Should TS/UV pins be powered down before opening relays?
+		//This can be hot-switching the DSM relays on the primary sides.
+		//Disconnect DSM from Primary after releasing VPIN or TS pins
+		TS_ovi3->set_voltage(TSovi3_ch, 0.0, VOLT_10_RANGE); // OVI_3_0
+		//UV = 0V via pullup resistor. Ready for I2C.
+		UV_dvi->set_voltage(UV_ch, 0.0, VOLT_10_RANGE); // DVI_21_1
+		wait.delay_10_us(10);
+		TS_ovi3->set_current(TSovi3_ch, 0.01e-3, RANGE_30_MA);
+		UV_dvi->set_current(UV_ch, 0.01e-3, RANGE_300_MA);
+		wait.delay_10_us(10);
+
 
 		//Disconnect DSM from Primary after releasing VPIN or TS pins
 		Open_relay(K1_DSM_TB);	
@@ -132,12 +145,15 @@ void IOV_P(test_function& func)
 			Search_iOVm_P(&iOVm_P);  
 				PiDatalog(func, 	A_iOVm_P,      iOVm_P,					26, POWER_MICRO);
 
+		//HL-move powerdown function before opening relays.
+		Power_Down_I2C_P();
+
 		Open_relay(K1_UV_RB);	//UV to RB_10kohm
 		Open_relay(K2_UV_RB);	//UV to RB_600k to K2_UV to DVI-21-1
 		Open_relay(K2_D_RB);	//D  to RB_82uH_50ohm to K2_D to DVI-11-0
 		delay(1);
 
-		Power_Down_I2C_P();
+		
 	}
 
 
@@ -193,12 +209,14 @@ void IOV_P(test_function& func)
 			Search_iOVp_P(&iOVp_P);
 			PiDatalog(func, 	A_iOVp_P,      iOVp_P,              26, POWER_MICRO);
 
+			Power_Down_I2C_P();
+
 			Open_relay(K1_UV_RB);	//UV to RB_10kohm
 			Open_relay(K2_UV_RB);	//UV to RB_600k to K2_UV to DVI-21-1
 			Open_relay(K2_D_RB);	//D  to RB_82uH_50ohm to K2_D to DVI-11-0
 			delay(1);
 
-		Power_Down_I2C_P();
+	
 	}
 
 

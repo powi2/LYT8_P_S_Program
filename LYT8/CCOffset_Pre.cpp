@@ -51,8 +51,12 @@ void CCOffset_Pre(test_function& func)
 	// Skip trimming if g_Burn_Enable_P set //
 	//if (g_Burn_Enable_P == 0)
 //		return;
-if (g_Burn_Enable_S == 0 && g_GRR_Enable == 0)
+	if (g_Burn_Enable_S == 0 && g_GRR_Enable == 0)
 		return;
+
+	if (g_OPCODE==4250 || g_OPCODE==4300 || g_OPCODE==4500)
+		return;
+
 	//if (g_Fn_CCOffset_Pre == 0 )  return;
 
 	// Test Time Begin //
@@ -237,7 +241,7 @@ DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
 	
 	g_CCOffset_Pre = CCOffset_pt_S;
 
-	if (g_Burn_Enable_S && g_OPCODE==4200)
+	if (g_Burn_Enable_S)
 	{
 
 		// CCOffset can be either trimmed up or down only.  

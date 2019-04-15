@@ -36,6 +36,13 @@ void EEPROM_Pre(test_function& func)
     EEPROM_Pre_params *ours;
     ours = (EEPROM_Pre_params *)func.params;
 
+	// Increment function number //
+	gFuncNum++;	
+
+	// Datalog gFuncNum variable //
+	if(gDisplay_FuncNum)
+		PiDatalog(func, A_fNum_Eeprom_Pre, gFuncNum, 24,	POWER_UNIT);
+
 	int		func_fail_bin = ours->fail_bin;
 
 	/////*int	E0_data_P	=0,
@@ -218,7 +225,7 @@ void EEPROM_Pre(test_function& func)
 	int start_datalog_S = A_E0_Si_ID_0_S;
 	int EEpr_S[80] = {0};
 
-
+//g_Debug = 1;
 // Skip Test if AbortTest set 
 	if (AbortTest)
 		return;
@@ -433,14 +440,18 @@ void EEPROM_Pre(test_function& func)
 
 
 	//Power Down Primary
+	DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
 	//Power down.
 
 	//SDA = 3.3V via pullup resistor. Ready for I2C.
+	SDA_ovi3->set_current(SDA_ch, 0.01e-3, RANGE_30_MA);
 	SDA_ovi3->set_voltage(SDA_ch, 0.0, VOLT_10_RANGE); // OVI_3_0
 
 	//SCL = 3.3V via pullup resistor. Ready for I2C.
+	SCL_ovi3->set_current(SCL_ch, 0.01e-3, RANGE_30_MA);
 	SCL_ovi3->set_voltage(SCL_ch, 0.0, VOLT_10_RANGE); // DVI_21_1
-	delay(5);
+	delay(2);
+		        
 	dvi_9->set_current(DVI_CHANNEL_1, 30e-3, RANGE_300_MA);
 	dvi_9->set_voltage(DVI_CHANNEL_1, 0.0, VOLT_50_RANGE); // DVI_11_1
 	delay(10);
@@ -450,18 +461,19 @@ void EEPROM_Pre(test_function& func)
 	delay(5);
 
 	//Set pullup voltage at TS @ UV pins.
+	TS_ovi3->set_current(TSovi3_ch, 0.01e-3, RANGE_30_MA);
 	TS_ovi3->set_voltage(TSovi3_ch, 0.0, VOLT_10_RANGE); // OVI_3_0
 	//UV = 0V via pullup resistor. Ready for I2C.
+	UV_dvi->set_current(UV_ch, 0.01e-3, RANGE_300_MA);
 	UV_dvi->set_voltage(UV_ch, 0.0, VOLT_10_RANGE); // DVI_21_1
 	wait.delay_10_us(10);
 
 	BPP_dvi->set_voltage(BPP_ch, 0.0, VOLT_10_RANGE); // DVI_11_1
 	wait.delay_10_us(100);
 
-	//Connect Pullup R to TS pin.
+	//Disconnect Pullup R to TS pin.
 	mux_20->open_relay(MUX_3_2);
-
-	//Connect Pullup R to UV pin.
+	//Disconnect Pullup R to UV pin.
 	mux_20->open_relay(MUX_1_3);
 
 	//Disconnect DSM from Primary.
@@ -490,8 +502,8 @@ void EEPROM_Pre(test_function& func)
 	//Sometimes, DSM I2C can't be written correctly the first time.
 	//Change the DSM timeout to 1ms since the default timeout is approximately 35ms.
 	//g_Debug = 1;
-	DSM_set_I2C_timeout(0, 1);
-	DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
+	//DSM_set_I2C_timeout(0, 5);
+	//DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);
 
 	//Enter test mode
 	Analog_TM_Enable_Secondary();
@@ -732,6 +744,6 @@ void EEPROM_Pre(test_function& func)
 	PiDatalog(func	,	A_E78_ZTLnt_2_S	,	E78_ZTLnt_2_S	,	func_fail_bin	,	POWER_UNIT);
 	PiDatalog(func	,	A_E79_ZTLnt_3_S	,	E79_ZTLnt_3_S	,	func_fail_bin	,	POWER_UNIT);
 */
-
+//g_Debug = 0;
 
 }

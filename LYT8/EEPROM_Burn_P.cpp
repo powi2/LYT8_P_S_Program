@@ -47,6 +47,13 @@ void EEPROM_Burn_P(test_function& func)
 	if (AbortTest)
 		return;
 
+	// Skip trimming if g_Sim_Enable_P set //
+	if (g_Burn_Enable_P == 0)
+		return;
+
+	if(g_GRR_Enable == 1)
+		return;
+
 	if (g_OPCODE==4250 || g_OPCODE==4300 || g_OPCODE==4500)
 		return;
 

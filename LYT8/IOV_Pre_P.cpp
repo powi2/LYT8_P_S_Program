@@ -51,6 +51,9 @@ void IOV_Pre_P(test_function& func)
 	if (g_Sim_Enable_P == 0&& g_GRR_Enable == 0)
 		return;
 
+	if (g_OPCODE==4250 || g_OPCODE==4300 || g_OPCODE==4500)
+		return;
+
 
 	// Test Time Begin //
 	 if (g_TstTime_Enble_P)
@@ -173,7 +176,7 @@ void IOV_Pre_P(test_function& func)
 		Setup_Resources_for_I2C_P();
 		PowerUp_I2C_P();
 
-		if(g_Load_previous_RegBits)	//Always set to 1 for PRODUCTION use at 4200 or 4200RTR
+		if(g_Load_previous_RegBits&&g_GRR_Enable==0)	//Always set to 1 for PRODUCTION use at 4200 or 4200RTR
 		{
 			EEPROM_Write_Enable_P();
 			Program_All_TrimRegister_P();	//Loading previous trimming before performing the test.
@@ -186,7 +189,20 @@ void IOV_Pre_P(test_function& func)
 
 		//Release Vpin and expect Vpin drop to ~2.3V after command issued.
 		DSM_I2C_Write('b', g_PINSDA_CTRL, 0x01);	//0x4E, 0x01 (release Vpin)
-		//DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);	//Disable DSM I2C
+		
+		
+		DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);	//Disable DSM I2C
+
+		//HL-Question: Should TS/UV pins be powered down before opening relays?
+		//This can be hot-switching the DSM relays on the primary sides.
+		//Disconnect DSM from Primary after releasing VPIN or TS pins
+		TS_ovi3->set_voltage(TSovi3_ch, 0.0, VOLT_10_RANGE); // OVI_3_0
+		//UV = 0V via pullup resistor. Ready for I2C.
+		UV_dvi->set_voltage(UV_ch, 0.0, VOLT_10_RANGE); // DVI_21_1
+		wait.delay_10_us(10);
+		TS_ovi3->set_current(TSovi3_ch, 0.01e-3, RANGE_30_MA);
+		UV_dvi->set_current(UV_ch, 0.01e-3, RANGE_300_MA);
+		wait.delay_10_us(10);
 
 		//Disconnect DSM from Primary after releasing VPIN or TS pins
 		Open_relay(K1_DSM_TB);	
@@ -208,8 +224,12 @@ void IOV_Pre_P(test_function& func)
 			//7. inject current into VPIN starting low to find the IOV+ threshold by looking when drain flips.	
 			//8. Once drain flipped, now search down to find IOV-		
 			Search_iOVp_P(&iOVp_pt_P);
-				PiDatalog(func, 	A_iOVp_pt_P,      iOVp_pt_P,				26, POWER_MICRO);
+
+			PiDatalog(func, 	A_iOVp_pt_P,      iOVp_pt_P,				26, POWER_MICRO);
+			if(g_GRR_Enable==0)
+			{
 				PiDatalog(func, 	A_iOVp_target_P,  gP_iOVp_TARGET_Trimops,  26, POWER_MICRO);
+			}
 
 		//	Open_relay(K1_UV_RB);	//UV to RB_10kohm
 		//	Open_relay(K2_UV_RB);	//UV to RB_600k to K2_UV to DVI-21-1
@@ -218,6 +238,8 @@ void IOV_Pre_P(test_function& func)
 
 		//Power_Down_I2C_P();
 	}
+
+
 	//vForce control iVpin version
 	if(g_USE_VR_600K==true)
 	{
@@ -231,7 +253,7 @@ void IOV_Pre_P(test_function& func)
 
 		//Release Vpin and expect Vpin drop to ~2.3V after command issued.
 		DSM_I2C_Write('b', g_PINSDA_CTRL, 0x01);	//0x4E, 0x01 (release Vpin)
-		DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);	//Disable DSM I2C
+		//DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);	//Disable DSM I2C
 
 		////Force lines could not be connected  (will cause Vpin to go low if connected)
 		//dvi_9->set_meas_mode(DVI_CHANNEL_0, DVI_MEASURE_DIFF);
@@ -270,12 +292,14 @@ void IOV_Pre_P(test_function& func)
 			Search_iOVp_P(&iOVp_pt_P);
 			PiDatalog(func, 	A_iOVp_pt_P,      iOVp_pt_P,              26, POWER_MICRO);
 
+			Power_Down_I2C_P();
+
 			Open_relay(K1_UV_RB);	//UV to RB_10kohm
 			Open_relay(K2_UV_RB);	//UV to RB_600k to K2_UV to DVI-21-1
 			Open_relay(K2_D_RB);	//D  to RB_82uH_50ohm to K2_D to DVI-11-0
 			delay(1);
 
-		Power_Down_I2C_P();
+		
 	}
 
 
@@ -334,7 +358,12 @@ void IOV_Pre_P(test_function& func)
 	{
 		//Setup_Resources_for_I2C_P();
 		//PowerUp_I2C_P();
-
+		//HL-observed DOS prompt==> DSM Write again
+		//Adding DSM disable command.  It doesn't work! Still observing DSM Rewrite.
+		if(g_GRR_Enable)
+		{	
+			Regain_I2C_P(g_TSpin_Low_to_High);
+		}
 		DSM_I2C_Write('b', g_TM_CTRL, 0x06);	//0x40, 0x06 (enable analog mode + core_en)
 
 		//3. write CFG<18:17>=10 on RegAddr 'ANA_CTRL_1' to stay in I2C after powerup.
@@ -342,9 +371,21 @@ void IOV_Pre_P(test_function& func)
 
 		//Release Vpin and expect Vpin drop to ~2.3V after command issued.
 		DSM_I2C_Write('b', g_PINSDA_CTRL, 0x01);	//0x4E, 0x01 (release Vpin)
-		//DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);	//Disable DSM I2C
+		
+		DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);	//Disable DSM I2C
 
+		//HL-Question: Should TS/UV pins be powered down before opening relays?
+		//This can be hot-switching the DSM relays on the primary sides.
 		//Disconnect DSM from Primary after releasing VPIN or TS pins
+		TS_ovi3->set_voltage(TSovi3_ch, 0.0, VOLT_10_RANGE); // OVI_3_0
+		//UV = 0V via pullup resistor. Ready for I2C.
+		UV_dvi->set_voltage(UV_ch, 0.0, VOLT_10_RANGE); // DVI_21_1
+		wait.delay_10_us(10);
+		TS_ovi3->set_current(TSovi3_ch, 0.01e-3, RANGE_30_MA);
+		UV_dvi->set_current(UV_ch, 0.01e-3, RANGE_300_MA);
+		wait.delay_10_us(10);
+
+
 		Open_relay(K1_DSM_TB);	
 		Open_relay(K3_DSM_TB);	
 		delay(1);
@@ -368,27 +409,37 @@ void IOV_Pre_P(test_function& func)
 			iOVp_Sim_Chg_P = ((iOVp_Sim_P/iOVp_pt_P)-1)*100.0;
 
 				PiDatalog(func, 	A_iOVp_Sim_P,      iOVp_Sim_P,              26, POWER_MICRO);
+			if(g_GRR_Enable==0)
+			{
 				PiDatalog(func, 	A_iOVp_Sim_Chg_P,  iOVp_Sim_Chg_P,          26, POWER_UNIT);
+			}
 
 			//g_iOVp_meas_P = iOVp_Sim_P;
 
 			//Search_iOVm_P(&iOVm_pt_P);  //only for TEST to observe iOV- is working here.  No need to datalog.
 
+			//Open_relay(K1_UV_RB);	//UV to RB_10kohm
+			//Open_relay(K2_UV_RB);	//UV to RB_600k to K2_UV to DVI-21-1
+			//Open_relay(K2_D_RB);	//D  to RB_82uH_50ohm to K2_D to DVI-11-0
+			//delay(1);
+
+			Power_Down_I2C_P();
+
 			Open_relay(K1_UV_RB);	//UV to RB_10kohm
 			Open_relay(K2_UV_RB);	//UV to RB_600k to K2_UV to DVI-21-1
 			Open_relay(K2_D_RB);	//D  to RB_82uH_50ohm to K2_D to DVI-11-0
 			delay(1);
-
-		Power_Down_I2C_P();
 	}
 	else
 	{
+		Power_Down_I2C_P();
+
 		Open_relay(K1_UV_RB);	//UV to RB_10kohm
 		Open_relay(K2_UV_RB);	//UV to RB_600k to K2_UV to DVI-21-1
 		Open_relay(K2_D_RB);	//D  to RB_82uH_50ohm to K2_D to DVI-11-0
 		delay(1);
 
-		Power_Down_I2C_P();
+		
 	}
 
 	//vForce control iVpin version
@@ -443,12 +494,14 @@ void IOV_Pre_P(test_function& func)
 			Search_iOVp_P(&iOVp_pt_P);
 			PiDatalog(func, 	A_iOVp_pt_P,      iOVp_pt_P,              26, POWER_MICRO);
 
+			Power_Down_I2C_P();
+
 			Open_relay(K1_UV_RB);	//UV to RB_10kohm
 			Open_relay(K2_UV_RB);	//UV to RB_600k to K2_UV to DVI-21-1
 			Open_relay(K2_D_RB);	//D  to RB_82uH_50ohm to K2_D to DVI-11-0
 			delay(1);
 
-		Power_Down_I2C_P();
+		
 	}
 
 

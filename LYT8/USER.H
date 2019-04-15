@@ -375,6 +375,7 @@ extern int	g_BV_Trimops									,
 extern bool g_Require_PartID;
 extern int	AbortTest; 
 extern int	g_Sim_Enable_P;
+extern int  g_Sim_Enable_S;
 extern int  g_Burn_Enable_P;
 extern int  g_Burn_Enable_S;
 extern int	g_Erase_Enable_P;
@@ -660,7 +661,7 @@ extern float	gBVD_Hot_Trimops;
 
 /*============================    VBP Variables    =================================*/
 extern float gVshunt_BPP, gVshunt_BPS;
-extern float gVBPS_P_Init, gVBPP_P_Init, gVBPP_P_final, gVBPS_final, gVBPP_M_Init, gVBPS_M_Init, gVBPP_PV_Init, gVBPP_PV_final; 
+extern float gVBPS_P_Init, gVBPP_P_Init, gVBPP_P_final, gVBPS_final, gVBPP_M_Init, gVBPS_M_Init, gVBPP_M_final, gVBPP_PV_Init, gVBPP_PV_final; 
 extern float g_VBPP_P_S_Init_S;
 extern float g_VBPP_P_s_final;
 extern float gVBPP_VCEN;
@@ -2525,7 +2526,7 @@ void Search_iOVp_P(float *iOVp_th_P);
 void Search_iOVm_P(float *iOVm_th_P);
 void Search_iUVp_P(float *iUVp_th_P);
 void Search_iUVm_P(float *iUVm_th_P);
-void BPP_zigzag(float vBPP1, float vBPP2, float vBPP3);
+void BPP_zigzag(float vBPP1, float vBPP2, float vBPP3, float iBPP);
 void Regain_I2C_P(int regain_I2C_mode);
 void Disable_n_Disconnect_DSMI2C_via(int release_pin);
 float search_direction(int up);

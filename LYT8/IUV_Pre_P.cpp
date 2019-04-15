@@ -47,8 +47,11 @@ void IUV_Pre_P(test_function& func)
 	if (AbortTest)
 		return;
 
-	// Skip trimming if g_Sim_Enable_P set //
-	if (g_Sim_Enable_P == 0)
+// Skip trimming if g_Sim_Enable_P set //
+	if (g_Sim_Enable_P == 0&& g_GRR_Enable == 0)
+		return;
+
+	if (g_OPCODE==4250 || g_OPCODE==4300 || g_OPCODE==4500)
 		return;
 
 	// Test Time Begin //
@@ -158,7 +161,7 @@ void IUV_Pre_P(test_function& func)
 		Setup_Resources_for_I2C_P();
 		PowerUp_I2C_P();
 
-		if(g_Load_previous_RegBits)	//Always set to 1 for PRODUCTION use at 4200 or 4200RTR
+		if(g_Load_previous_RegBits&& g_GRR_Enable == 0)	//Always set to 1 for PRODUCTION use at 4200 or 4200RTR
 		{
 			EEPROM_Write_Enable_P();
 			Program_All_TrimRegister_P();	//Loading previous trimming before performing the test.
@@ -199,7 +202,8 @@ void IUV_Pre_P(test_function& func)
 			D_dvi->set_meas_mode(D_ch, DVI_MEASURE_VOLTAGE);
 			wait.delay_10_us(20);
 
-	BPP_zigzag(5.5, 4.3, 5.3);
+	BPP_zigzag(gVBPP_PV_final, gVBPP_M_final, gVBPP_P_final, 2e-3);
+	//BPP_zigzag(5.5, 4.3, 5.3, 2e-3);
 	delay(40);
 
 		//7. Ramp up iUV with Voltage source through Resistor for better accuracy until D switch from 0 to 1
@@ -392,7 +396,8 @@ void IUV_Pre_P(test_function& func)
 			D_dvi->set_meas_mode(D_ch, DVI_MEASURE_VOLTAGE);
 			wait.delay_10_us(20);
 
-	BPP_zigzag(5.5, 4.3, 5.3);
+	BPP_zigzag(gVBPP_PV_final, gVBPP_M_final, gVBPP_P_final, 2e-3);
+	//BPP_zigzag(5.5, 4.3, 5.3, 2e-3);
 
 		//7. inject current into VPIN starting low to find the IOV+ threshold by looking when drain flips.	
 			//8. Once drain flipped, now search down to find IOV-		

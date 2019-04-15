@@ -47,11 +47,12 @@ void IRSET_Pre(test_function& func)
 	if (AbortTest)
 		return;
 
-	// Skip trimming if g_Burn_Enable_P set //
-	//if (g_Burn_Enable_P == 0)
-//		return;
 	if (g_Burn_Enable_S == 0 && g_GRR_Enable == 0)
 		return;
+
+	if (g_OPCODE==4250 || g_OPCODE==4300 || g_OPCODE==4500)
+		return;
+
 	//if (g_Fn_IRSET_Pre == 0 )  return;
 
 	// Test Time Begin //
@@ -248,7 +249,7 @@ Pulse pulse;
 
 	g_IRSET_Pre = IRSET_pt_S;
 
-	if (g_Burn_Enable_S && g_OPCODE==4200)
+	if (g_Burn_Enable_S)
 	{
 		// IRSET_S_Code //
 		// Find which trim code will make IRSET_Pre closest to target //

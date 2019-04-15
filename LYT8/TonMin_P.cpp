@@ -83,13 +83,22 @@ void TonMin_P(test_function& func)
 
 	DSM_set_I2C_clock_freq(DSM_CONTEXT, 300);	//Disable DSM I2C
 
-
+	//HL-Question: Should TS/UV pins be powered down before opening relays?
+	//This can be hot-switching the DSM relays on the primary sides.
+	//Disconnect DSM from Primary after releasing VPIN or TS pins
+	TS_ovi3->set_voltage(TSovi3_ch, 0.0, VOLT_10_RANGE); // OVI_3_0
+	//UV = 0V via pullup resistor. Ready for I2C.
+	UV_dvi->set_voltage(UV_ch, 0.0, VOLT_10_RANGE); // DVI_21_1
+	wait.delay_10_us(10);
+	TS_ovi3->set_current(TSovi3_ch, 0.01e-3, RANGE_30_MA);
+	UV_dvi->set_current(UV_ch, 0.01e-3, RANGE_300_MA);
+	wait.delay_10_us(10);
 	//--------------------------------------------------------------------------------------------
 	//Setup for TS to run 100kHz
-		//Disconnect DSM from Primary after releasing VPIN or TS pins
-		Open_relay(K1_DSM_TB);	
-		Open_relay(K3_DSM_TB);	
-		delay(1);
+	//Disconnect DSM from Primary after releasing VPIN or TS pins
+	Open_relay(K1_DSM_TB);	
+	Open_relay(K3_DSM_TB);	
+	delay(1);
 
 	TS_ovi3->set_voltage(TSovi3_ch, 0.0, VOLT_10_RANGE); // OVI_3_0
 	wait.delay_10_us(10);
@@ -109,7 +118,8 @@ void TonMin_P(test_function& func)
 		D_dvi->set_voltage(D_ch, 5.0, VOLT_20_RANGE); // DVI_11_0
 		delay(1);
 
-	BPP_zigzag(5.5, 4.3, 5.3);
+	BPP_zigzag(gVBPP_PV_final, gVBPP_M_final, gVBPP_P_final, 2.0e-3);
+	//BPP_zigzag(5.5, 4.3, 5.35, 2.0e-3);
 
 	Load_100Khz_Pulses_TS();
 	delay(1);
@@ -133,6 +143,14 @@ void TonMin_P(test_function& func)
 	PiDatalog(func, A_TonMin_Tgt_P,	gP_TonMin_TARGET_Trimops,	14,	POWER_MICRO);	
 
 
+	//HL added.  Power down Drain first before disconnecting TMU
+	D_dvi->set_current(D_ch, 100e-3, RANGE_300_MA); 
+	D_dvi->set_voltage(D_ch, 0.0, VOLT_20_RANGE); // DVI_11_0
+	delay(1);
+	D_dvi->set_current(D_ch, 0.1e-3, RANGE_300_MA); 
+	D_dvi->set_voltage(D_ch, 0.0, VOLT_20_RANGE); // DVI_11_0
+	delay(1);
+
 	tmu_6->open_relay(TMU_HIZ_DUT1);    //TMU HIZ1 to Drain									
 	Open_relay(K1_TMU_TB);				//D  to TMU_HIZ1										Disconnect
 	delay(4);
@@ -141,5 +159,6 @@ void TonMin_P(test_function& func)
 	Open_relay(K2_D_RB);				//D			to RB_82uH_50ohm to K2_D to DVI-11-0		Disconnect
 	Open_relay(K2_TS_TB);				//TS		to OVI_3_0_TS_RB							Connect
 	Open_relay(K3_TS_IB);				//DDD7_1	to Comparator LT1719 to COMP_OUT to TS		Disconnect
+	delay(3);
 
 }

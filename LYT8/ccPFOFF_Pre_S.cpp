@@ -51,6 +51,9 @@ void ccPFOFF_Pre_S(test_function& func)
 	if (g_Burn_Enable_S == 0 && g_GRR_Enable == 0)
 		return;
 
+	if (g_OPCODE==4250 || g_OPCODE==4300 || g_OPCODE==4500)
+		return;
+
 	//if (g_Fn_VccRef_Pre == 0 )  return;
 
 	// Test Time Begin //
@@ -336,7 +339,7 @@ Pulse pulse;
 	
 	ccPFOFF_pt_S = delta;
 
-	if (g_Burn_Enable_S && g_OPCODE==4200)
+	if (g_Burn_Enable_S)
 	{
 
 		// ccPFOff can be either trimmed up or down only.  
